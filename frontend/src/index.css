@@ -296,3 +296,16 @@
     transform: scale(1);
   }
 }
+
+/* ---- Quill Editor Overrides ---- */
+.quill-editor-container .ql-toolbar.ql-snow {
+  border: none !important;
+  border-bottom: 1px solid var(--input) !important;
+  border-radius: var(--radius) var(--radius) 0 0 !important;
+  background: hsl(var(--muted) / 0.5);
+}
+
+.quill-editor-container .ql-container.ql-snow {
+  border: none !important;
+  border-radius: 0 0 var(--radius) var(--radius) !important;
+}

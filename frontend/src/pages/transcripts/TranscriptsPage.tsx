@@ -25,7 +25,7 @@ export function TranscriptsPage() {
             {/* Page header */}
             <div>
                 <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-                    <i className="ri-file-text-line text-primary" />
+                    <i className="ri-mic-2-ai-line text-primary" />
                     Transcrições
                 </h1>
                 <p className="text-sm text-muted-foreground">

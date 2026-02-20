@@ -13,7 +13,7 @@ export function TranscriptStats({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="rounded-xl border bg-card p-4 shadow-sm flex items-center gap-4">
                 <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <i className="ri-file-text-line text-primary text-lg" />
+                    <i className="ri-mic-2-ai-line text-primary text-lg" />
                 </div>
                 <div>
                     <p className="text-xs text-muted-foreground font-medium">

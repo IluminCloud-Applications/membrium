@@ -9,6 +9,7 @@ import { FilesPage } from "@/pages/files";
 import { TranscriptsPage } from "@/pages/transcripts";
 import { FAQPage } from "@/pages/faq";
 import { SettingsGeneralPage, IntegrationsPage, AIPage } from "@/pages/settings";
+import { CourseModificationPage } from "@/pages/course_modification";
 
 interface AdminRoutesProps {
     platformName: string;
@@ -38,6 +39,7 @@ export function AdminRoutes({ platformName }: AdminRoutesProps) {
                 <Route index element={<DashboardPage userName={user.name} />} />
 
                 <Route path="cursos" element={<CoursesPage />} />
+                <Route path="course/:id/modification" element={<CourseModificationPage />} />
                 <Route path="alunos" element={<StudentsPage />} />
                 <Route path="vitrine" element={<ShowcasePage />} />
                 <Route path="promocoes" element={<PromotePage />} />

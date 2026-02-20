@@ -25,7 +25,7 @@ export function TranscriptEmptyState({
 
     return (
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-            <i className="ri-file-text-line text-5xl mb-3" />
+            <i className="ri-mic-2-ai-line text-5xl mb-3" />
             <h3 className="font-semibold text-foreground mb-1">
                 Nenhuma transcrição criada
             </h3>

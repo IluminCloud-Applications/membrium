@@ -92,7 +92,7 @@ function TranscriptLessonRow({ item, onView, onEdit, onDelete }: TranscriptLesso
             <TableCell className="font-medium pl-6 px-4">
                 <div className="flex items-center gap-2">
                     <div className="h-8 w-8 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0">
-                        <i className="ri-file-text-line text-primary text-sm" />
+                        <i className="ri-mic-2-ai-line text-primary text-sm" />
                     </div>
                     <p className="truncate max-w-[250px] font-medium text-sm">
                         {item.lessonName}

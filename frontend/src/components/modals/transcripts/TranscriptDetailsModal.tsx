@@ -29,7 +29,7 @@ export function TranscriptDetailsModal({
             <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <i className="ri-file-text-line text-primary" />
+                        <i className="ri-mic-2-ai-line text-primary" />
                         Detalhes da Transcrição
                     </DialogTitle>
                 </DialogHeader>

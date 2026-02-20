@@ -1,0 +1,86 @@
+import type { CourseModificationData } from "@/types/course-modification";
+
+export const mockCourseData: CourseModificationData = {
+    id: 1,
+    name: "Dominando o Instagram para Negócios",
+    description: "Aprenda a criar uma presença profissional no Instagram e transforme seguidores em clientes.",
+    modules: [
+        {
+            id: 1,
+            courseId: 1,
+            name: "Introdução ao Instagram",
+            image: null,
+            order: 1,
+            lessons: [
+                {
+                    id: 1,
+                    moduleId: 1,
+                    title: "Bem-vindo ao Curso",
+                    description: "<p>Nesta aula, você vai conhecer tudo que será abordado.</p>",
+                    videoPlatform: "youtube",
+                    videoUrl: "https://www.youtube.com/watch?v=example1",
+                    customVideoCode: "",
+                    attachments: [
+                        { id: 1, name: "Material de Apoio.pdf", size: "2.4 MB", url: "#" },
+                    ],
+                    hasCta: false,
+                    cta: { text: "", url: "", delaySeconds: 0 },
+                    order: 1,
+                },
+                {
+                    id: 2,
+                    moduleId: 1,
+                    title: "Configurando seu Perfil Profissional",
+                    description: "<p>Passo a passo para transformar seu perfil pessoal em profissional.</p>",
+                    videoPlatform: "youtube",
+                    videoUrl: "https://www.youtube.com/watch?v=example2",
+                    customVideoCode: "",
+                    attachments: [],
+                    hasCta: true,
+                    cta: { text: "Baixar Checklist", url: "https://example.com/checklist", delaySeconds: 30 },
+                    order: 2,
+                },
+            ],
+        },
+        {
+            id: 2,
+            courseId: 1,
+            name: "Criando Conteúdo que Converte",
+            image: null,
+            order: 2,
+            lessons: [
+                {
+                    id: 3,
+                    moduleId: 2,
+                    title: "Os 4 Tipos de Conteúdo",
+                    description: "<p>Entenda os principais formatos de conteúdo para Instagram.</p>",
+                    videoPlatform: "youtube",
+                    videoUrl: "https://www.youtube.com/watch?v=example3",
+                    customVideoCode: "",
+                    attachments: [],
+                    hasCta: false,
+                    cta: { text: "", url: "", delaySeconds: 0 },
+                    order: 1,
+                },
+            ],
+        },
+        {
+            id: 3,
+            courseId: 1,
+            name: "Estratégias de Crescimento",
+            image: null,
+            order: 3,
+            hasDelayedUnlock: true,
+            unlockAfterDays: 7,
+            lessons: [],
+        },
+    ],
+    cover: {
+        desktop: null,
+        mobile: null,
+    },
+    menuItems: [
+        { id: 1, name: "Suporte", url: "https://suporte.example.com", icon: "ri-customer-service-2-line", order: 1 },
+        { id: 2, name: "Comunidade", url: "https://t.me/example", icon: "ri-group-line", order: 2 },
+    ],
+};

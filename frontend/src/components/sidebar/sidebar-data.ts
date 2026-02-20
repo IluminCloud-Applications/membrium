@@ -63,7 +63,7 @@ export const sidebarNavGroups: NavGroup[] = [
             {
                 title: "Transcrições",
                 url: "/admin/transcricoes",
-                icon: "ri-file-text-line",
+                icon: "ri-mic-2-ai-line",
             },
             {
                 title: "Arquivos",
