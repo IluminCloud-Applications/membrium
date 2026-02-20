@@ -1,8 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import {
     TranscriptStats,
     TranscriptFilters,
-    TranscriptTable,
+    TranscriptBreadcrumb,
+    TranscriptCourseTable,
+    TranscriptModuleTable,
+    TranscriptLessonTable,
     TranscriptEmptyState,
 } from "@/components/transcripts";
 import { TranscriptModal } from "@/components/modals/transcripts/TranscriptModal";
@@ -10,95 +13,12 @@ import { TranscriptDetailsModal } from "@/components/modals/transcripts/Transcri
 import { YouTubeImportModal } from "@/components/modals/transcripts/YouTubeImportModal";
 import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModal";
 import type { Transcript } from "@/types/transcript";
-import {
-    mockTranscripts,
-    mockCourses,
-    mockModules,
-    mockLessons,
-} from "./mock-data";
+import { mockTranscripts, mockCourses, mockModules, mockLessons } from "./mock-data";
+import { useTranscriptsPage } from "./useTranscriptsPage";
 
 export function TranscriptsPage() {
     const [transcripts] = useState<Transcript[]>(mockTranscripts);
-
-    // Filters
-    const [search, setSearch] = useState("");
-    const [courseFilter, setCourseFilter] = useState("all");
-
-    // Modals
-    const [modalOpen, setModalOpen] = useState(false);
-    const [editingItem, setEditingItem] = useState<Transcript | null>(null);
-    const [detailsItem, setDetailsItem] = useState<Transcript | null>(null);
-    const [deleteTarget, setDeleteTarget] = useState<Transcript | null>(null);
-    const [youtubeOpen, setYoutubeOpen] = useState(false);
-
-    // Filtered transcripts
-    const filteredTranscripts = useMemo(() => {
-        let result = [...transcripts];
-
-        if (search.trim()) {
-            const q = search.toLowerCase();
-            result = result.filter(
-                (t) =>
-                    t.lessonName.toLowerCase().includes(q) ||
-                    t.moduleName.toLowerCase().includes(q) ||
-                    t.courseName.toLowerCase().includes(q) ||
-                    t.keywords.some((k) => k.toLowerCase().includes(q))
-            );
-        }
-
-        if (courseFilter !== "all") {
-            const courseName = mockCourses.find(
-                (c) => c.id === Number(courseFilter)
-            )?.name;
-            if (courseName) {
-                result = result.filter((t) => t.courseName === courseName);
-            }
-        }
-
-        return result;
-    }, [transcripts, search, courseFilter]);
-
-    // Stats
-    const stats = useMemo(() => {
-        const uniqueCourses = new Set(transcripts.map((t) => t.courseName));
-        const totalKeywords = transcripts.reduce(
-            (sum, t) => sum + t.keywords.length,
-            0
-        );
-        return {
-            totalTranscripts: transcripts.length,
-            coursesWithTranscripts: uniqueCourses.size,
-            totalKeywords,
-        };
-    }, [transcripts]);
-
-    const hasActiveFilters =
-        search.trim() !== "" || courseFilter !== "all";
-
-    // Handlers
-    function handleCreateOpen() {
-        setEditingItem(null);
-        setModalOpen(true);
-    }
-
-    function handleEdit(item: Transcript) {
-        setEditingItem(item);
-        setModalOpen(true);
-    }
-
-    function handleView(item: Transcript) {
-        setDetailsItem(item);
-    }
-
-    function handleConfirmDelete() {
-        console.log("Delete:", deleteTarget?.id);
-        setDeleteTarget(null);
-    }
-
-    function handleYoutubeImport(url: string, provider: string) {
-        console.log("YouTube import:", url, provider);
-        setYoutubeOpen(false);
-    }
+    const tp = useTranscriptsPage({ transcripts });
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -113,74 +33,96 @@ export function TranscriptsPage() {
                 </p>
             </div>
 
-            {/* Stats */}
-            <TranscriptStats {...stats} />
+            <TranscriptStats {...tp.stats} />
 
-            {/* Filters */}
             <TranscriptFilters
-                search={search}
-                onSearchChange={setSearch}
-                courseFilter={courseFilter}
-                onCourseFilterChange={setCourseFilter}
-                availableCourses={mockCourses}
-                onCreateTranscript={handleCreateOpen}
+                search={tp.search}
+                onSearchChange={tp.setSearch}
+                onCreateTranscript={tp.handleCreateOpen}
             />
 
-            {/* Content */}
-            {filteredTranscripts.length === 0 ? (
-                <TranscriptEmptyState
-                    hasFilters={hasActiveFilters}
-                    onCreateTranscript={handleCreateOpen}
-                />
-            ) : (
-                <TranscriptTable
-                    items={filteredTranscripts}
-                    onView={handleView}
-                    onEdit={handleEdit}
-                    onDelete={setDeleteTarget}
-                />
-            )}
+            <TranscriptBreadcrumb
+                level={tp.level}
+                courseName={tp.selectedCourseName}
+                moduleName={tp.selectedModuleName}
+                onNavigateCourses={tp.handleNavigateCourses}
+                onNavigateModules={tp.handleNavigateModules}
+            />
+
+            {/* Drill-down content */}
+            <TranscriptContent tp={tp} />
 
             {/* Modals */}
             <TranscriptModal
-                open={modalOpen}
-                onOpenChange={setModalOpen}
-                editItem={editingItem}
+                open={tp.modalOpen}
+                onOpenChange={tp.setModalOpen}
+                editItem={tp.editingItem}
                 courses={mockCourses}
                 modules={mockModules}
                 lessons={mockLessons}
                 onSubmit={(data) => {
-                    console.log(editingItem ? "Update:" : "Create:", data);
-                    setModalOpen(false);
-                    setEditingItem(null);
+                    console.log(tp.editingItem ? "Update:" : "Create:", data);
+                    tp.setModalOpen(false);
+                    tp.setEditingItem(null);
                 }}
-                onYoutubeImport={() => setYoutubeOpen(true)}
+                onYoutubeImport={() => tp.setYoutubeOpen(true)}
             />
 
             <TranscriptDetailsModal
-                open={!!detailsItem}
-                onOpenChange={() => setDetailsItem(null)}
-                item={detailsItem}
+                open={!!tp.detailsItem}
+                onOpenChange={() => tp.setDetailsItem(null)}
+                item={tp.detailsItem}
                 onEdit={(item) => {
-                    setDetailsItem(null);
-                    handleEdit(item);
+                    tp.setDetailsItem(null);
+                    tp.handleEdit(item);
                 }}
             />
 
             <YouTubeImportModal
-                open={youtubeOpen}
-                onOpenChange={setYoutubeOpen}
-                onImport={handleYoutubeImport}
+                open={tp.youtubeOpen}
+                onOpenChange={tp.setYoutubeOpen}
+                onImport={tp.handleYoutubeImport}
             />
 
             <DeleteConfirmModal
-                open={!!deleteTarget}
-                onOpenChange={() => setDeleteTarget(null)}
-                onConfirm={handleConfirmDelete}
+                open={!!tp.deleteTarget}
+                onOpenChange={() => tp.setDeleteTarget(null)}
+                onConfirm={tp.handleConfirmDelete}
                 title="Excluir Transcrição"
-                description={`Tem certeza que deseja excluir a transcrição da aula "${deleteTarget?.lessonName}"? Esta ação não pode ser desfeita.`}
+                description={`Tem certeza que deseja excluir a transcrição da aula "${tp.deleteTarget?.lessonName}"? Esta ação não pode ser desfeita.`}
                 confirmLabel="Excluir Transcrição"
             />
         </div>
+    );
+}
+
+/* ---- Drill-down content ---- */
+
+function TranscriptContent({ tp }: { tp: ReturnType<typeof useTranscriptsPage> }) {
+    if (tp.level === "courses") {
+        return tp.filteredCourseSummaries.length === 0 ? (
+            <TranscriptEmptyState hasFilters={tp.hasActiveFilters} onCreateTranscript={tp.handleCreateOpen} />
+        ) : (
+            <TranscriptCourseTable items={tp.filteredCourseSummaries} onSelectCourse={tp.handleSelectCourse} />
+        );
+    }
+
+    if (tp.level === "modules") {
+        return tp.filteredModuleSummaries.length === 0 ? (
+            <TranscriptEmptyState hasFilters={tp.hasActiveFilters} onCreateTranscript={tp.handleCreateOpen} />
+        ) : (
+            <TranscriptModuleTable items={tp.filteredModuleSummaries} onSelectModule={tp.handleSelectModule} />
+        );
+    }
+
+    return tp.filteredLessonTranscripts.length === 0 ? (
+        <TranscriptEmptyState hasFilters={tp.hasActiveFilters} onCreateTranscript={tp.handleCreateOpen} />
+    ) : (
+        <TranscriptLessonTable
+            items={tp.filteredLessonTranscripts}
+            onView={tp.handleView}
+            onEdit={tp.handleEdit}
+            onDelete={tp.setDeleteTarget}
+        />
     );
 }

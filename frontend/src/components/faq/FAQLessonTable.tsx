@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
     Table,
     TableBody,
@@ -14,22 +15,25 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import type { Transcript } from "@/types/transcript";
+import type { FAQLessonGroup } from "@/types/faq";
 
-interface TranscriptTableProps {
-    items: Transcript[];
-    onView: (item: Transcript) => void;
-    onEdit: (item: Transcript) => void;
-    onDelete: (item: Transcript) => void;
+interface FAQLessonTableProps {
+    items: FAQLessonGroup[];
+    onView: (item: FAQLessonGroup) => void;
+    onEdit: (item: FAQLessonGroup) => void;
+    onDelete: (item: FAQLessonGroup) => void;
 }
 
-export function TranscriptTable({
+/**
+ * Level 3: Shows lessons with FAQs within a module.
+ * Each row has actions to view, edit, or delete.
+ */
+export function FAQLessonTable({
     items,
     onView,
     onEdit,
     onDelete,
-}: TranscriptTableProps) {
+}: FAQLessonTableProps) {
     return (
         <div className="rounded-xl border bg-card shadow-sm overflow-hidden p-2">
             <Table>
@@ -38,15 +42,8 @@ export function TranscriptTable({
                         <TableHead className="font-semibold pl-6 px-4">
                             Aula
                         </TableHead>
-                        <TableHead className="font-semibold px-4">
-                            Módulo
-                        </TableHead>
-                        <TableHead className="font-semibold px-4">
-                            Curso
-                        </TableHead>
-
                         <TableHead className="font-semibold px-4 text-center">
-                            Keywords
+                            Total de FAQs
                         </TableHead>
                         <TableHead className="font-semibold px-4 text-center">
                             Atualizado
@@ -59,8 +56,8 @@ export function TranscriptTable({
 
                 <TableBody>
                     {items.map((item) => (
-                        <TranscriptRow
-                            key={item.id}
+                        <FAQLessonRow
+                            key={item.lessonId}
                             item={item}
                             onView={onView}
                             onEdit={onEdit}
@@ -75,85 +72,40 @@ export function TranscriptTable({
 
 /* ---- Individual row ---- */
 
-interface TranscriptRowProps {
-    item: Transcript;
-    onView: (item: Transcript) => void;
-    onEdit: (item: Transcript) => void;
-    onDelete: (item: Transcript) => void;
+interface FAQLessonRowProps {
+    item: FAQLessonGroup;
+    onView: (item: FAQLessonGroup) => void;
+    onEdit: (item: FAQLessonGroup) => void;
+    onDelete: (item: FAQLessonGroup) => void;
 }
 
-function TranscriptRow({ item, onView, onEdit, onDelete }: TranscriptRowProps) {
-    const maxKeywords = 3;
-    const visibleKeywords = item.keywords.slice(0, maxKeywords);
-    const extraCount = item.keywords.length - maxKeywords;
-
+function FAQLessonRow({ item, onView, onEdit, onDelete }: FAQLessonRowProps) {
     return (
         <TableRow className="group">
-            {/* Lesson name */}
             <TableCell className="font-medium pl-6 px-4">
                 <div className="flex items-center gap-2">
                     <div className="h-8 w-8 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0">
-                        <i className="ri-file-text-line text-primary text-sm" />
+                        <i className="ri-question-answer-line text-primary text-sm" />
                     </div>
-                    <p className="truncate max-w-[200px] font-medium text-sm">
+                    <p className="truncate max-w-[250px] font-medium text-sm">
                         {item.lessonName}
                     </p>
                 </div>
             </TableCell>
 
-            {/* Module */}
-            <TableCell className="px-4 text-sm text-muted-foreground">
-                {item.moduleName}
-            </TableCell>
-
-            {/* Course */}
-            <TableCell className="px-4">
+            <TableCell className="px-4 text-center">
                 <Badge
                     variant="secondary"
                     className="text-[10px] bg-primary/8 text-primary/80"
                 >
-                    {item.courseName}
+                    {item.faqs.length} FAQs
                 </Badge>
             </TableCell>
 
-
-            {/* Keywords */}
-            <TableCell className="px-4 text-center">
-                <div className="flex flex-wrap gap-1 justify-center">
-                    {visibleKeywords.length === 0 ? (
-                        <span className="text-xs text-muted-foreground italic">
-                            —
-                        </span>
-                    ) : (
-                        <>
-                            {visibleKeywords.map((kw, idx) => (
-                                <Badge
-                                    key={idx}
-                                    variant="secondary"
-                                    className="text-[10px] bg-primary/10 text-primary"
-                                >
-                                    {kw}
-                                </Badge>
-                            ))}
-                            {extraCount > 0 && (
-                                <Badge
-                                    variant="secondary"
-                                    className="text-[10px] bg-muted text-muted-foreground"
-                                >
-                                    +{extraCount}
-                                </Badge>
-                            )}
-                        </>
-                    )}
-                </div>
-            </TableCell>
-
-            {/* Updated */}
             <TableCell className="text-center text-sm text-muted-foreground px-4">
                 {item.updatedAt}
             </TableCell>
 
-            {/* Actions */}
             <TableCell className="text-right pr-6 px-4">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>

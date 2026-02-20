@@ -6,7 +6,9 @@ export interface Transcript {
     id: number;
     lessonId: number;
     lessonName: string;
+    moduleId: number;
     moduleName: string;
+    courseId: number;
     courseName: string;
     text: string;
     vector: string;
@@ -38,3 +40,20 @@ export interface TranscriptLesson {
     name: string;
     moduleId: number;
 }
+
+export interface TranscriptCourseSummary {
+    courseId: number;
+    courseName: string;
+    modulesWithTranscript: number;
+    totalTranscripts: number;
+}
+
+export interface TranscriptModuleSummary {
+    moduleId: number;
+    moduleName: string;
+    courseId: number;
+    lessonsWithTranscript: number;
+    totalTranscripts: number;
+}
+
+export type TranscriptDrillLevel = "courses" | "modules" | "lessons";

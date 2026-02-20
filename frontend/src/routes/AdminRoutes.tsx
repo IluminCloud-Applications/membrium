@@ -7,6 +7,7 @@ import { ShowcasePage } from "@/pages/showcase";
 import { PromotePage } from "@/pages/promote";
 import { FilesPage } from "@/pages/files";
 import { TranscriptsPage } from "@/pages/transcripts";
+import { FAQPage } from "@/pages/faq";
 import { SettingsGeneralPage, IntegrationsPage, AIPage } from "@/pages/settings";
 
 interface AdminRoutesProps {
@@ -40,7 +41,7 @@ export function AdminRoutes({ platformName }: AdminRoutesProps) {
                 <Route path="alunos" element={<StudentsPage />} />
                 <Route path="vitrine" element={<ShowcasePage />} />
                 <Route path="promocoes" element={<PromotePage />} />
-                <Route path="faq" element={<PlaceholderPage title="FAQ" />} />
+                <Route path="faq" element={<FAQPage />} />
                 <Route path="transcricoes" element={<TranscriptsPage />} />
                 <Route path="arquivos" element={<FilesPage />} />
 

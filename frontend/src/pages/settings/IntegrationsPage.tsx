@@ -2,6 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SettingsHeader } from "@/components/settings";
 import { BrevoTab } from "@/components/settings/integrations/BrevoTab";
 import { EvolutionTab } from "@/components/settings/integrations/EvolutionTab";
+import { YouTubeTab } from "@/components/settings/integrations/YouTubeTab";
 
 export function IntegrationsPage() {
     return (
@@ -31,6 +32,10 @@ export function IntegrationsPage() {
                         <i className="ri-whatsapp-line" />
                         Evolution API
                     </TabsTrigger>
+                    <TabsTrigger value="youtube" className="text-sm px-4 h-8 gap-1.5">
+                        <i className="ri-youtube-line" />
+                        YouTube
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="brevo" className="mt-4">
@@ -38,6 +43,9 @@ export function IntegrationsPage() {
                 </TabsContent>
                 <TabsContent value="evolution" className="mt-4">
                     <EvolutionTab />
+                </TabsContent>
+                <TabsContent value="youtube" className="mt-4">
+                    <YouTubeTab />
                 </TabsContent>
             </Tabs>
         </div>

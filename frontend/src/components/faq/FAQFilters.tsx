@@ -1,23 +1,23 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-interface TranscriptFiltersProps {
+interface FAQFiltersProps {
     search: string;
     onSearchChange: (value: string) => void;
-    onCreateTranscript: () => void;
+    onCreateFaq: () => void;
 }
 
-export function TranscriptFilters({
+export function FAQFilters({
     search,
     onSearchChange,
-    onCreateTranscript,
-}: TranscriptFiltersProps) {
+    onCreateFaq,
+}: FAQFiltersProps) {
     return (
         <div className="flex items-center gap-3">
             <div className="relative flex-1">
                 <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm" />
                 <Input
-                    placeholder="Buscar transcrição por curso, módulo ou aula..."
+                    placeholder="Buscar FAQ por curso, módulo ou aula..."
                     value={search}
                     onChange={(e) => onSearchChange(e.target.value)}
                     className="pl-9 h-9"
@@ -25,11 +25,11 @@ export function TranscriptFilters({
             </div>
 
             <Button
-                onClick={onCreateTranscript}
+                onClick={onCreateFaq}
                 className="btn-brand h-9 text-sm"
             >
                 <i className="ri-add-line mr-1" />
-                Nova Transcrição
+                Novo FAQ
             </Button>
         </div>
     );
