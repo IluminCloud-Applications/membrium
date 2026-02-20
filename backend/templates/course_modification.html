@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modificação de Curso</title>
+    <link rel="shortcut icon" href="/static/fixed/favicon.webp" type="image/x-icon">
+    <!-- CSS Personalizado -->
+    <link rel="stylesheet" href="/static/src/css/styles.css">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Adiciona CSS do Quill -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <!-- Customize Quill toolbar styles -->
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 50;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 12px;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: fadeIn 0.3s;
+        }
+        #lessonModal .modal-content {
+            margin: 5% auto;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .close {
+            cursor: pointer;
+        }
+        /* Customize Quill toolbar */
+        .ql-toolbar.ql-snow {
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            border-color: #E5E7EB;
+            padding: 8px;
+            background-color: #F9FAFB;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            align-items: center;
+        }
+        
+        .ql-container.ql-snow {
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+            border-color: #E5E7EB;
+            min-height: 120px;
+        }
+        
+        .ql-formats {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 8px !important;
+            padding: 0 !important;
+            gap: 4px;
+        }
+        
+        .ql-formats:last-child {
+            margin-right: 0 !important;
+        }
+
+        .ql-toolbar button {
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .ql-toolbar button:hover {
+            background-color: #EEF2FF;
+        }
+
+        .ql-toolbar button.ql-active {
+            background-color: #EDE9FE;
+            color: #6D28D9;
+        }
+
+        .ql-toolbar .ql-stroke {
+            stroke: currentColor;
+        }
+
+        .ql-toolbar .ql-fill {
+            fill: currentColor;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#B91C1C',
+                        secondary: '#F9FAFB',
+                        dark: '#111827',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+
+        // Definindo o ID do curso globalmente
+        window.courseId = {{ course.id }};
+        window.courseName = "{{ course.name }}";
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+    <!-- Header/Navigation -->
+    <header class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 flex items-center justify-between">
+            <a href="/admin" class="flex items-center text-primary font-bold hover:text-red-700 transition-all">
+                <i data-lucide="arrow-left" class="h-5 w-5 mr-2"></i>
+                Voltar ao painel
+            </a>
+            <h1 class="text-xl font-bold text-gray-800">Edição de Curso</h1>
+            <div class="w-24"></div> <!-- Espaço para balanceamento -->
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Info do curso e botões de ação -->
+        <div class="bg-white rounded-lg shadow-md mb-8 overflow-hidden">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">
+                            <span id="courseName">{{ course.name }}</span>
+                        </h2>
+                        <p class="text-gray-500 mt-1">Organize módulos e aulas para este curso</p>
+                    </div>
+                    <div class="flex flex-wrap gap-3">
+                        <button id="addModuleBtn" class="bg-primary hover:bg-red-700 text-white px-4 py-2 rounded-md flex items-center transition-all">
+                            <i data-lucide="folder-plus" class="h-5 w-5 mr-2"></i>
+                            Adicionar Módulo
+                        </button>
+                        <button id="addCoverBtn" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-md flex items-center transition-all">
+                            <i data-lucide="image-plus" class="h-5 w-5 mr-2"></i>
+                            Gerenciar Cover
+                        </button>
+                        <button id="previewBtn" class="border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-md flex items-center transition-all">
+                            <i data-lucide="eye" class="h-5 w-5 mr-2"></i>
+                            Pré-visualizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input oculto para o cover -->
+        <input type="file" id="coverInput" style="display:none;" accept="image/*">
+
+        <!-- Lista de módulos -->
+        <div id="moduleList" class="space-y-4">
+            <!-- Módulos serão adicionados dinamicamente aqui -->
+        </div>
+
+        <!-- Template para visualização de módulos -->
+        <template id="moduleTemplate">
+            <div class="module bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+                <div class="module-header bg-white p-4 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="drag-handle cursor-move p-1 mr-3 text-gray-400 hover:text-gray-600">
+                                <i data-lucide="grip-vertical" class="h-5 w-5"></i>
+                            </span>
+                            <h3 class="text-lg font-semibold text-gray-800"></h3>
+                        </div>
+                        <div class="module-buttons flex gap-2">
+                            <button class="add-lesson bg-primary hover:bg-red-700 text-white px-3 py-1 rounded flex items-center text-sm transition-all">
+                                <i data-lucide="plus" class="h-4 w-4 mr-1"></i> Aula
+                            </button>
+                            <button class="edit-module bg-gray-800 hover:bg-gray-700 text-white px-3 py-1 rounded flex items-center text-sm transition-all">
+                                <i data-lucide="edit-2" class="h-4 w-4 mr-1"></i> Editar
+                            </button>
+                            <button class="delete-module bg-red-100 text-red-900 hover:bg-red-200 px-3 py-1 rounded flex items-center text-sm transition-all">
+                                <i data-lucide="trash-2" class="h-4 w-4 mr-1"></i> Excluir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="lesson-list p-4 space-y-2 bg-gray-50">
+                    <!-- Aulas serão adicionadas aqui -->
+                </div>
+            </div>
+        </template>
+
+        <!-- Template para visualização de aulas -->
+        <template id="lessonTemplate">
+            <div class="lesson bg-white p-3 rounded-md border border-gray-200 shadow-sm flex items-center justify-between hover:shadow-md transition-all">
+                <div class="flex items-center">
+                    <span class="drag-handle cursor-move p-1 mr-2 text-gray-400 hover:text-gray-600">
+                        <i data-lucide="grip-vertical" class="h-4 w-4"></i>
+                    </span>
+                    <span class="lesson-title font-medium text-gray-700"></span>
+                </div>
+                <div class="lesson-buttons flex gap-1">
+                    <button class="edit-lesson text-gray-800 hover:text-gray-700 p-1 rounded transition-all">
+                        <i data-lucide="edit-2" class="h-4 w-4"></i>
+                    </button>
+                    <button class="delete-lesson text-red-600 hover:text-red-700 p-1 rounded transition-all">
+                        <i data-lucide="trash-2" class="h-4 w-4"></i>
+                    </button>
+                </div>
+            </div>
+        </template>
+
+        <!-- Modal para adicionar/editar módulo -->
+        <div id="moduleModal" class="modal">
+            <div class="modal-content bg-white rounded-lg shadow-xl p-6 max-w-md mx-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 id="moduleModalTitle" class="text-xl font-bold text-gray-800">Adicionar Novo Módulo</h2>
+                    <button type="button" class="close text-gray-500 hover:text-gray-800 cursor-pointer">
+                        <i data-lucide="x" class="h-6 w-6"></i>
+                    </button>
+                </div>
+                <form id="moduleForm" class="space-y-4">
+                    <input type="hidden" id="moduleId">
+                    <div class="form-group">
+                        <label for="moduleName" class="block text-sm font-medium text-gray-700 mb-1">Nome do Módulo:</label>
+                        <input type="text" id="moduleName" name="name" required placeholder="Nome do Módulo"
+                               class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+                    <div class="form-group">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Imagem do Módulo:</label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-md p-4 text-center hover:border-primary transition-all">
+                            <input type="file" id="moduleImage" name="image" accept="image/*" class="hidden">
+                            <label for="moduleImage" class="cursor-pointer">
+                                <i data-lucide="image-plus" class="h-12 w-12 mx-auto text-gray-400 mb-2"></i>
+                                <p class="text-gray-600">Escolha uma imagem ou arraste aqui</p>
+                                <p class="text-xs text-gray-500 mt-1">Recomendado 9:16 (720x1280)</p>
+                            </label>
+                            <div id="moduleImagePreview" class="mt-4" style="display: none;"></div>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-primary text-white py-2 rounded-md hover:bg-red-700 transition-all">
+                        Salvar Módulo
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal para adicionar/editar aula -->
+        <div id="lessonModal" class="modal">
+            <div class="modal-content bg-white rounded-lg shadow-xl p-6 max-w-md mx-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 id="lessonModalTitle" class="text-xl font-bold text-gray-800">Adicionar Nova Aula</h2>
+                    <button type="button" class="close text-gray-500 hover:text-gray-800 cursor-pointer">
+                        <i data-lucide="x" class="h-6 w-6"></i>
+                    </button>
+                </div>
+                <form id="lessonForm" class="space-y-4">
+                    <input type="hidden" id="lessonId">
+                    <input type="hidden" id="lessonModuleId">
+                    
+                    <div>
+                        <label for="lessonTitle" class="block text-sm font-medium text-gray-700 mb-1">Título:</label>
+                        <input type="text" id="lessonTitle" name="title" required placeholder="Título da Aula"
+                               class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+                    
+                    <div>
+                        <label for="lessonDescription" class="block text-sm font-medium text-gray-700 mb-1">Descrição:</label>
+                        <!-- Novo container para o editor -->
+                        <div id="lessonDescriptionEditor" style="height: 150px; border: 1px solid #cacaca;"></div>
+                        <!-- Input oculto para submeter o HTML formatado -->
+                        <input type="hidden" id="lessonDescription" name="description" required>
+                    </div>
+
+                    <div>
+                        <label for="lessonVideoType" class="block text-sm font-medium text-gray-700 mb-1">Plataforma de Vídeo:</label>
+                        <select id="lessonVideoType" name="video_type" 
+                                class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                            <option value="youtube">YouTube</option>
+                            <option value="vturb">VTurb</option>
+                        </select>
+                    </div>
+                    
+                    <div id="youtubeUrlGroup">
+                        <label for="lessonVideoUrl" class="block text-sm font-medium text-gray-700 mb-1">URL do Vídeo:</label>
+                        <input type="url" id="lessonVideoUrl" name="video_url" placeholder="https://www.youtube.com/watch?v=example"
+                               class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+
+                    <div id="vturbCodeGroup" style="display: none;">
+                        <label for="vturbCode" class="block text-sm font-medium text-gray-700 mb-1">Código do VTurb:</label>
+                        <textarea id="vturbCode" name="vturb_code" placeholder="Cole aqui o código do VTurb..."
+                                  class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary h-48 font-mono text-sm"></textarea>
+                    </div>
+                    
+                    <div class="upload-section">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Anexar arquivo:</label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-md p-4 text-center hover:border-primary transition-all">
+                            <input type="file" id="lessonDocuments" name="documents" multiple class="hidden">
+                            <label for="lessonDocuments" class="cursor-pointer">
+                                <i data-lucide="file-plus" class="h-10 w-10 mx-auto text-gray-400 mb-2"></i>
+                                <p class="text-gray-600">Escolha arquivos para anexar</p>
+                            </label>
+                            <span id="lessonDocumentsName" class="mt-2 block text-sm text-gray-600">Nenhum arquivo selecionado</span>
+                        </div>
+                    </div>
+
+                    <div class="existing-files-section" style="display: none;">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Arquivos anexados:</label>
+                        <div id="existingFilesList" class="mb-4 space-y-2">
+                            <!-- Arquivos serão adicionados aqui dinamicamente -->
+                        </div>
+                        
+                        <!-- Botão de upload simples -->
+                        <div class="flex items-center space-x-2">
+                            <input type="file" id="lessonDocuments" name="documents" multiple class="hidden">
+                            <button type="button" onclick="document.getElementById('lessonDocuments').click()" 
+                                    class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                                <i data-lucide="upload" class="h-4 w-4 mr-2"></i>
+                                Anexar arquivos
+                            </button>
+                            <span id="selectedFilesCount" class="text-sm text-gray-500"></span>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" id="hasButton" name="has_button" value="false">
+                    
+                    <div id="ctaSection">
+                        <div class="flex items-center justify-between bg-gray-50 p-3 rounded-md">
+                            <label for="extraOptionsToggle" class="text-sm font-medium text-gray-700">Adicionar CTA (Call to Action):</label>
+                            <div class="relative inline-block w-12 h-6 select-none">
+                                <input type="checkbox" id="extraOptionsToggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer">
+                                <label for="extraOptionsToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                            </div>
+                            <style>
+                                .toggle-checkbox:checked {
+                                    right: 0;
+                                    border-color: #B91C1C;
+                                }
+                                .toggle-label {
+                                    transition: background-color 0.2s ease;
+                                }
+                                .toggle-checkbox:checked + .toggle-label {
+                                    background-color: #FECACA;
+                                }
+                            </style>
+                        </div>
+                        
+                        <div id="extraOptions" class="space-y-4 bg-gray-50 p-4 rounded-md" style="display: none;">
+                            <h3 class="text-sm font-semibold text-gray-700">Opções do Call to Action</h3>
+                            <div>
+                                <label for="buttonText" class="block text-sm font-medium text-gray-700 mb-1">Texto do botão:</label>
+                                <input type="text" id="buttonText" name="button_text" placeholder="Garanta sua vaga!"
+                                       class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                            
+                            <div>
+                                <label for="buttonLink" class="block text-sm font-medium text-gray-700 mb-1">Link do botão:</label>
+                                <input type="url" id="buttonLink" name="button_link" placeholder="https://example.com"
+                                       class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                            
+                            <div>
+                                <label for="appearanceTime" class="block text-sm font-medium text-gray-700 mb-1">Delay do botão (em segundos):</label>
+                                <input type="number" id="appearanceTime" name="appearance_time" min="1" placeholder="5"
+                                       class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-primary text-white py-2 rounded-md hover:bg-red-700 transition-all mt-6">
+                        Salvar Aula
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Novo Modal para Gerenciar Cover -->
+        <div id="coverModal" class="modal">
+          <div class="modal-content bg-white rounded-lg shadow-xl p-6 max-w-md mx-auto">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-xl font-bold text-gray-800">Gerenciar Cover do Curso</h2>
+              <button type="button" class="close text-gray-500 hover:text-gray-800 cursor-pointer">
+                <i data-lucide="x" class="h-6 w-6"></i>
+              </button>
+            </div>
+            <p class="mb-4 text-sm text-gray-700">
+              O Cover é a imagem de apresentação do curso que irá acima dos módulos. Exemplo:
+            </p>
+            <div class="mb-4 text-center">
+              <img src="/static/fixed/example_cover.webp" alt="Exemplo Cover" class="mx-auto rounded-md shadow-sm" style="max-width:100%; height:auto;">
+              <p class="mt-2 text-xs text-gray-500">Recomendado: 1912x424 pixels</p>
+            </div>
+            <div class="mb-4">
+              <label for="coverModalInput" class="block text-sm font-medium text-gray-700 mb-2">Selecionar nova imagem Desktop:</label>
+              <div class="border-2 border-dashed border-gray-300 rounded-md p-4 text-center hover:border-primary transition-all">
+                <input type="file" id="coverModalInput" name="cover" accept="image/*" class="hidden">
+                <label for="coverModalInput" class="cursor-pointer flex flex-col items-center">
+                  <i data-lucide="image-plus" class="h-10 w-10 text-gray-400 mb-2"></i>
+                  <span class="text-sm font-medium text-gray-700">Clique para selecionar uma imagem Desktop</span>
+                  <p class="text-xs text-gray-500 mt-1">Recomendado: 1280x720</p>
+                </label>
+              </div>
+            </div>
+            <div id="coverModalPreview" class="mb-6" style="display:none;"></div>
+            <div class="mb-4">
+              <label for="coverModalInputMobile" class="block text-sm font-medium text-gray-700 mb-2">Selecionar nova imagem Mobile:</label>
+              <div class="border-2 border-dashed border-gray-300 rounded-md p-4 text-center hover:border-primary transition-all">
+                <input type="file" id="coverModalInputMobile" name="cover_mobile" accept="image/*" class="hidden">
+                <label for="coverModalInputMobile" class="cursor-pointer flex flex-col items-center">
+                  <i data-lucide="image-plus" class="h-10 w-10 text-gray-400 mb-2"></i>
+                  <span class="text-sm font-medium text-gray-700">Clique para selecionar uma imagem Mobile</span>
+                  <p class="text-xs text-gray-500 mt-1">Recomendado: 1050x600</p>
+                </label>
+              </div>
+            </div>
+            <div id="coverModalPreviewMobile" class="mb-6" style="display:none;"></div>
+            <div class="flex justify-end space-x-3">
+              <button id="deleteCoverBtn" type="button" class="px-5 py-2.5 font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 transition-all flex items-center">
+                <i data-lucide="trash-2" class="h-4 w-4 mr-2"></i>
+                Apagar Cover
+              </button>
+              <button id="saveCoverBtn" type="button" class="px-5 py-2.5 font-medium rounded-md text-white bg-primary hover:bg-red-700 transition-all shadow-sm flex items-center">
+                <i data-lucide="save" class="h-4 w-4 mr-2"></i>
+                Salvar Cover
+              </button>
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <!-- Inicialização dos ícones Lucide -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            lucide.createIcons();
+            console.log("Curso ID:", window.courseId);
+            console.log("Curso Nome:", window.courseName);
+
+            // Adicionar eventos para fechar os modais diretamente
+            document.querySelectorAll('.close').forEach(function(closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    document.getElementById('moduleModal').style.display = "none";
+                    document.getElementById('lessonModal').style.display = "none";
+                });
+            });
+            
+            // Evento global para fechar modais ao clicar fora deles
+            window.addEventListener('click', function(event) {
+                if (event.target.classList.contains('modal')) {
+                    event.target.style.display = "none";
+                }
+            });
+
+            const lessonDocumentsInput = document.getElementById('lessonDocuments');
+            const lessonDocumentsName = document.getElementById('lessonDocumentsName');
+            
+            if(lessonDocumentsInput && lessonDocumentsName) {
+                lessonDocumentsInput.addEventListener('change', function() {
+                    const fileNames = Array.from(this.files)
+                                           .map(file => file.name)
+                                           .join(', ');
+                    lessonDocumentsName.textContent = fileNames || 'Nenhum arquivo selecionado';
+                });
+            }
+
+            // Configura o Quill com mais opções de formatação
+            const quillConfig = {
+                theme: 'snow',
+                placeholder: 'Digite a descrição da aula...',
+                modules: {
+                    toolbar: [
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        ['link'],
+                        [{ 'color': [] }, { 'background': [] }],
+                        [{ 'align': [] }],
+                        ['clean']
+                    ]
+                }
+            };
+            
+            // Inicializa o Quill com a configuração customizada quando o modal de aula é aberto
+            document.getElementById('lessonModal').addEventListener('show', function() {
+                if (!window.lessonQuill) {
+                    window.lessonQuill = new Quill('#lessonDescriptionEditor', quillConfig);
+                }
+            });
+        });
+    </script>
+    
+    <!-- Adiciona script do Quill -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+    <script src="/static/src/js/course_modification.js"></script>
+</body>
+</html>

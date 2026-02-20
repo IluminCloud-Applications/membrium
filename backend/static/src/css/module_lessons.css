@@ -1,0 +1,250 @@
+/* Estilos para a página de módulos */
+body {
+    background-color: #121212;
+    color: #F9FAFB;
+    background-image: linear-gradient(135deg, rgba(40, 40, 45, 0.8) 0%, rgba(18, 18, 18, 1) 50%, rgba(10, 10, 10, 0.9) 100%);
+    background-attachment: fixed;
+}
+
+/* Glass effect for cards and containers */
+.glass-effect {
+    background: rgba(30, 41, 59, 0.2);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Módulos em formato Netflix/Mobile */
+.module-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+}
+
+.module-card {
+    aspect-ratio: 9/16;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+}
+
+.module-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.module-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.module-card:hover .module-image {
+    transform: scale(1.05);
+}
+
+/* Progress bar style for dark theme */
+.progress-bar {
+    background: linear-gradient(90deg, #B91C1C, #ef4444);
+}
+
+/* Lesson item hover and active state */
+.lesson-hover:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.lesson-item-active {
+    background-color: rgba(185, 28, 28, 0.2);
+    border-left: 3px solid #B91C1C;
+}
+
+.lesson-content, .bg-white, .bg-gray-50, .bg-gray-100 {
+    background-color: rgba(30, 41, 59, 0.2) !important;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #F9FAFB;
+}
+
+/* Adjusting text colors for dark theme */
+.text-gray-800, .text-gray-700, .text-gray-600 {
+    color: #E5E7EB !important;
+}
+
+.text-gray-500 {
+    color: #9CA3AF !important;
+}
+
+.text-gray-400 {
+    color: #D1D5DB !important;
+}
+
+/* CTA button animation and styling */
+.cta-button {
+    background: linear-gradient(45deg, #B91C1C, #DC2626);
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 20px rgba(185, 28, 28, 0.3);
+}
+
+.cta-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 25px rgba(185, 28, 28, 0.4);
+}
+
+@keyframes cta-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(185, 28, 28, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 15px rgba(185, 28, 28, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(185, 28, 28, 0);
+    }
+}
+
+.cta-pulse {
+    animation: cta-pulse 2s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.cta-shimmer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    animation: shimmer 2s infinite;
+}
+
+/* Estilo para o cover grande */
+.course-header {
+    position: relative;
+    height: 400px; /* Cover maior */
+    background-size: cover;
+    background-position: center;
+    padding: 80px 20px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.course-header:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(0deg, rgba(15,23,42,1) 0%, rgba(15,23,42,0.8) 50%, rgba(15,23,42,0.4) 100%);
+    z-index: 1;
+}
+
+.course-header-content {
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+}
+
+/* Nome do curso acima dos módulos */
+.course-title-header {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    margin-top: 20px;
+    color: white;
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding-left: 15px;
+}
+
+.course-title-header:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    height: 24px;
+    width: 4px;
+    background: linear-gradient(to bottom, #B91C1C, #ef4444);
+    border-radius: 2px;
+}
+
+/* Animações para boa experiência de carregamento */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.module-card {
+    animation: fadeInUp 0.5s ease-out forwards;
+    opacity: 0;
+}
+
+/* FAQ styling for dark mode */
+.faq-item {
+    margin-bottom: 10px;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.faq-item button {
+    background-color: rgba(30, 41, 59, 0.4);
+}
+
+.faq-item button:hover {
+    background-color: rgba(30, 41, 59, 0.6);
+}
+
+.faq-answer {
+    background-color: rgba(30, 41, 59, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Mobile doc card styling */
+.mobile-doc-card {
+    background-color: rgba(30, 41, 59, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mobile-doc-btn {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+/* Espaçamento entre módulos */
+#modulesGrid {
+    gap: 20px;
+    padding-bottom: 40px;
+}

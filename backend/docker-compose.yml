@@ -1,0 +1,33 @@
+
+
+
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:Extreme123@postgres:5432/membriumwl
+      - FLASK_APP=app.py
+      - FLASK_ENV=development
+      - SECRET_KEY=dev-secret-key-change-in-production
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:14
+    restart: always
+    environment:
+      POSTGRES_DB: membriumwl
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Extreme123
+    ports:
+      - "5432:5432"
+    volumes:
+      - membrium_data:/var/lib/postgresql/data
+
+volumes:
+  membrium_data:

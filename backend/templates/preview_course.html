@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulos do Curso</title>
+    <link rel="shortcut icon" href="/static/fixed/favicon.webp" type="image/x-icon">
+    <!-- CSS Personalizado -->
+    <link rel="stylesheet" href="/static/src/css/course_modules.css">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#B91C1C',
+                        secondary: '#F9FAFB',
+                        dark: '#121212',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Estilos específicos para o modo de pré-visualização */
+        .preview-badge {
+            background: rgba(185, 28, 28, 0.1);
+            color: #B91C1C;
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        /* Animações para os cards de módulos */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .progress-container {
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 9999px;
+            padding: 10px 15px;
+            backdrop-filter: blur(5px);
+            display: inline-flex;
+            align-items: center;
+            max-width: 100%;
+            width: auto;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #B91C1C 0%, #ef4444 100%);
+            transition: width 1s ease-in-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen font-sans text-gray-100 flex flex-col">
+    <!-- Navegação superior -->
+    <nav class="fixed top-0 left-0 w-full shadow-lg z-10 py-3 px-4">
+        <div class="container flex items-center justify-between">
+            <a id="backLink" href="#" class="text-gray-200 hover:text-primary transition-colors flex items-center">
+                <i data-lucide="chevron-left" class="mr-2 h-4 w-4"></i> 
+                <span>Voltar para o Painel de Administrador</span>
+                <span class="ml-2 preview-badge">
+                    <i data-lucide="eye" class="h-3 w-3 mr-1"></i>
+                    Modo Pré-visualização
+                </span>
+            </a>
+            <div class="w-8 md:w-auto">
+                <!-- Espaço para equilibrar flexbox -->
+            </div>
+        </div>
+    </nav>
+
+    <!-- Cabeçalho do curso com capa -->
+    <div id="courseHeader" class="relative bg-gradient-custom">
+        <!-- Overlay para escurecer a imagem -->
+        <div id="coverOverlay"></div>
+        
+        <!-- Informações do progresso do curso (mostrado abaixo do cabeçalho) -->
+        <div class="container mx-auto px-4 relative z-10 text-center" 
+             style="position: absolute; bottom: 40px; left: 0; right: 0;">
+            <div class="progress-container">
+                <div class="w-full md:w-64 h-2.5 bg-gray-700/50 rounded-full">
+                    <div id="courseProgress" class="progress-bar h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+                <p id="courseCompletion" class="text-sm text-white/90 font-medium ml-3"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteúdo principal -->
+    <div class="w-full px-3 py-0 flex-grow relative z-20">
+        <!-- Container para módulos com navegação -->
+        <div class="modules-container px-2">
+            <!-- Botões de navegação -->
+            <div id="prevButton" class="nav-arrow prev hidden">
+                <i data-lucide="chevron-left" class="h-7 w-7"></i>
+            </div>
+            
+            <div id="nextButton" class="nav-arrow next hidden">
+                <i data-lucide="chevron-right" class="h-7 w-7"></i>
+            </div>
+            
+            <!-- Wrapper para os módulos com scroll horizontal -->
+            <div id="modulesWrapper">
+                <!-- Módulos serão inseridos aqui dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-black border-t border-gray-800 mt-auto">
+        <div class="container px-4 py-6 pl-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <p class="text-gray-400 text-sm">&copy; 2024 <span id="footerPlatformName">MembriumWL</span>. Todos os direitos reservados.</p>
+                <div class="flex space-x-4 mt-4 md:mt-0">
+                    <a href="#" id="supportEmailLink" class="text-gray-400 hover:text-primary transition-colors flex items-center" style="display: none;">
+                        <i data-lucide="mail" class="h-5 w-5 mr-1"></i>
+                        <span id="supportEmail" class="text-sm">suporte@exemplo.com</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/static/src/js/preview_course.js"></script>
+    <script>
+        (function() {
+            // Extrair o course_id da URL atual, assumindo que a URL é do tipo /preview_course/{course_id}
+            var parts = window.location.pathname.split('/');
+            var courseId = parts[parts.length - 1];
+            if(courseId) {
+                document.getElementById('backLink').href = '/admin/course/' + courseId + '/modification';
+            }
+        })();
+    </script>
+</body>
+</html>
