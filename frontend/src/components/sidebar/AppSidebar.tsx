@@ -7,9 +7,8 @@ import {
 } from "@/components/ui/sidebar";
 import { SidebarBrand } from "./SidebarBrand";
 import { NavGroup } from "./NavGroup";
-import { NavBottom } from "./NavBottom";
 import { NavUser } from "./NavUser";
-import { sidebarNavGroups, sidebarBottomItems } from "./sidebar-data";
+import { sidebarNavGroups } from "./sidebar-data";
 
 interface AppSidebarProps {
     platformName: string;
@@ -29,9 +28,6 @@ export function AppSidebar({ platformName, user, onLogout }: AppSidebarProps) {
                 {sidebarNavGroups.map((group) => (
                     <NavGroup key={group.label} label={group.label} items={group.items} />
                 ))}
-
-                {/* Bottom items (settings, help) */}
-                <NavBottom items={sidebarBottomItems} onLogout={onLogout} />
             </SidebarContent>
 
             <SidebarFooter>

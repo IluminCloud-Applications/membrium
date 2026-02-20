@@ -92,6 +92,12 @@ export function NavUser({ user, onLogout }: NavUserProps) {
                                 <i className={`${theme === "dark" ? "ri-sun-line" : "ri-moon-line"} mr-2`} />
                                 {theme === "dark" ? "Modo Claro" : "Modo Escuro"}
                             </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <a href="https://help.membriumwl.com/" target="_blank" rel="noopener noreferrer">
+                                    <i className="ri-lifebuoy-line mr-2" />
+                                    Ajuda
+                                </a>
+                            </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={onLogout}>

@@ -1,0 +1,1 @@
+export { TranscriptsPage } from "./TranscriptsPage";

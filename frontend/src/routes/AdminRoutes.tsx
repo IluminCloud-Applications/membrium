@@ -2,6 +2,12 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { AdminLayout } from "@/components/layout";
 import { DashboardPage } from "@/pages/dashboard";
 import { CoursesPage } from "@/pages/courses";
+import { StudentsPage } from "@/pages/students";
+import { ShowcasePage } from "@/pages/showcase";
+import { PromotePage } from "@/pages/promote";
+import { FilesPage } from "@/pages/files";
+import { TranscriptsPage } from "@/pages/transcripts";
+import { SettingsGeneralPage, IntegrationsPage, AIPage } from "@/pages/settings";
 
 interface AdminRoutesProps {
     platformName: string;
@@ -30,15 +36,18 @@ export function AdminRoutes({ platformName }: AdminRoutesProps) {
             >
                 <Route index element={<DashboardPage userName={user.name} />} />
 
-                {/* Future routes — placeholder */}
                 <Route path="cursos" element={<CoursesPage />} />
-                <Route path="alunos" element={<PlaceholderPage title="Alunos" />} />
-                <Route path="vitrine" element={<PlaceholderPage title="Vitrine" />} />
-                <Route path="promocoes" element={<PlaceholderPage title="Promoções" />} />
+                <Route path="alunos" element={<StudentsPage />} />
+                <Route path="vitrine" element={<ShowcasePage />} />
+                <Route path="promocoes" element={<PromotePage />} />
                 <Route path="faq" element={<PlaceholderPage title="FAQ" />} />
-                <Route path="transcricoes" element={<PlaceholderPage title="Transcrições" />} />
-                <Route path="arquivos" element={<PlaceholderPage title="Arquivos" />} />
-                <Route path="configuracoes" element={<PlaceholderPage title="Configurações" />} />
+                <Route path="transcricoes" element={<TranscriptsPage />} />
+                <Route path="arquivos" element={<FilesPage />} />
+
+                {/* Settings */}
+                <Route path="configuracoes" element={<SettingsGeneralPage />} />
+                <Route path="configuracoes/integracoes" element={<IntegrationsPage />} />
+                <Route path="configuracoes/ia" element={<AIPage />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/admin" replace />} />

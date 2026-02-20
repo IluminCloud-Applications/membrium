@@ -7,6 +7,7 @@ from models import Course, Admin, Student, Module, Lesson, Document, Showcase, P
 from db.utils import ensure_upload_directory, check_installation
 import os
 import re
+import shutil
 
 file_manager_bp = Blueprint('file_manager', __name__, url_prefix='/admin')
 
@@ -294,3 +295,83 @@ def delete_cover():
         return jsonify({'success': True})
     else:
         return jsonify({'success': False, 'message': 'Arquivo não encontrado'}), 404
+
+@file_manager_bp.route('/disk-usage', methods=['GET'])
+@admin_required
+def disk_usage():
+    """Return disk usage stats for the Docker volume."""
+    try:
+        usage = shutil.disk_usage('/')
+        return jsonify({
+            'used': usage.used,
+            'total': usage.total,
+            'free': usage.free,
+            'usedPercentage': round((usage.used / usage.total) * 100, 1) if usage.total > 0 else 0
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@file_manager_bp.route('/files/clean-unused', methods=['DELETE'])
+@admin_required
+def clean_unused_files():
+    """Delete all files that are not referenced by any course, module, showcase, or promotion."""
+    try:
+        uploads_dir = os.path.join('static', 'uploads')
+        physical_files = os.listdir(uploads_dir)
+
+        # Gather all referenced filenames
+        course_images = {c.image for c in Course.query.filter(Course.image.isnot(None)).all()}
+        course_ids = {c.id for c in Course.query.all()}
+        module_images = {m.image for m in Module.query.filter(Module.image.isnot(None)).all()}
+        db_filenames = {d.filename for d in Document.query.all()}
+        showcase_images = {s.image for s in Showcase.query.filter(Showcase.image.isnot(None)).all()}
+        promo_images = {p.media_url for p in Promotion.query.filter(Promotion.media_type == 'image').all()}
+
+        deleted = 0
+        freed_space = 0
+
+        for filename in physical_files:
+            file_path = os.path.join(uploads_dir, filename)
+            if not os.path.isfile(file_path):
+                continue
+
+            # Check if used
+            is_used = False
+
+            cover_match = re.match(r'^cover_(\d+)\.jpg$', filename)
+            if cover_match:
+                if int(cover_match.group(1)) in course_ids:
+                    is_used = True
+            
+            # Also check mobile covers
+            cover_mobile_match = re.match(r'^cover_(\d+)_mobile\.jpg$', filename)
+            if cover_mobile_match:
+                if int(cover_mobile_match.group(1)) in course_ids:
+                    is_used = True
+
+            if filename in course_images or filename in module_images:
+                is_used = True
+            if filename in db_filenames:
+                is_used = True
+            if filename in showcase_images:
+                is_used = True
+            if filename in promo_images:
+                is_used = True
+
+            if not is_used:
+                try:
+                    size = os.path.getsize(file_path)
+                    os.remove(file_path)
+                    deleted += 1
+                    freed_space += size
+                except Exception:
+                    pass
+
+        return jsonify({
+            'success': True,
+            'deleted': deleted,
+            'freedSpace': freed_space
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+

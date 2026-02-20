@@ -8,9 +8,9 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { CourseCategory } from "@/types/course";
+import type { CourseCategory, CourseGroup } from "@/types/course";
 
-export type ViewMode = "grid" | "list";
+export type ViewMode = "grid" | "list" | "groups";
 export type SortOption = "newest" | "oldest" | "name" | "students";
 
 interface CourseFiltersProps {
@@ -23,6 +23,10 @@ interface CourseFiltersProps {
     viewMode: ViewMode;
     onViewModeChange: (value: ViewMode) => void;
     onCreateCourse: () => void;
+    onCreateGroup: () => void;
+    groups: CourseGroup[];
+    activeGroupId: number | null;
+    onGroupChange: (groupId: number | null) => void;
 }
 
 const categories = [
@@ -43,6 +47,10 @@ export function CourseFilters({
     viewMode,
     onViewModeChange,
     onCreateCourse,
+    onCreateGroup,
+    groups,
+    activeGroupId,
+    onGroupChange,
 }: CourseFiltersProps) {
     return (
         <div className="space-y-4">
@@ -59,6 +67,7 @@ export function CourseFilters({
                 </div>
 
                 <div className="flex items-center gap-2">
+                    {/* Sort */}
                     <Select value={sortBy} onValueChange={(v) => onSortChange(v as SortOption)}>
                         <SelectTrigger className="w-[160px] h-9">
                             <SelectValue placeholder="Ordenar por" />
@@ -71,27 +80,58 @@ export function CourseFilters({
                         </SelectContent>
                     </Select>
 
+                    {/* Group filter */}
+                    {groups.length > 0 && (
+                        <Select
+                            value={activeGroupId?.toString() ?? "all"}
+                            onValueChange={(v) => onGroupChange(v === "all" ? null : Number(v))}
+                        >
+                            <SelectTrigger className="w-[170px] h-9">
+                                <SelectValue placeholder="Grupo" />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl">
+                                <SelectItem value="all" className="rounded-lg">Todos os Grupos</SelectItem>
+                                {groups.map((g) => (
+                                    <SelectItem key={g.id} value={g.id.toString()} className="rounded-lg">
+                                        {g.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
+
                     {/* View toggle */}
                     <div className="hidden sm:flex border rounded-lg overflow-hidden">
                         <button
                             onClick={() => onViewModeChange("grid")}
-                            className={`h-9 w-9 flex items-center justify-center transition-colors ${viewMode === "grid"
-                                ? "bg-primary text-primary-foreground"
-                                : "hover:bg-accent"
+                            className={`h-9 w-9 flex items-center justify-center transition-colors ${viewMode === "grid" ? "bg-primary text-primary-foreground" : "hover:bg-accent"
                                 }`}
+                            title="Grid"
                         >
                             <i className="ri-grid-fill text-sm" />
                         </button>
                         <button
                             onClick={() => onViewModeChange("list")}
-                            className={`h-9 w-9 flex items-center justify-center transition-colors ${viewMode === "list"
-                                ? "bg-primary text-primary-foreground"
-                                : "hover:bg-accent"
+                            className={`h-9 w-9 flex items-center justify-center transition-colors ${viewMode === "list" ? "bg-primary text-primary-foreground" : "hover:bg-accent"
                                 }`}
+                            title="Lista"
                         >
                             <i className="ri-list-check text-sm" />
                         </button>
+                        <button
+                            onClick={() => onViewModeChange("groups")}
+                            className={`h-9 w-9 flex items-center justify-center transition-colors ${viewMode === "groups" ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                                }`}
+                            title="Grupos"
+                        >
+                            <i className="ri-stack-line text-sm" />
+                        </button>
                     </div>
+
+                    <Button onClick={onCreateGroup} variant="outline" className="h-9 text-sm">
+                        <i className="ri-stack-line mr-1" />
+                        Agrupar
+                    </Button>
 
                     <Button onClick={onCreateCourse} className="btn-brand h-9 text-sm">
                         <i className="ri-add-line mr-1" />

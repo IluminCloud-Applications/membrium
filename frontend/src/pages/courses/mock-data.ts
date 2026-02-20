@@ -1,4 +1,4 @@
-import type { Course } from "@/types/course";
+import type { Course, CourseGroup } from "@/types/course";
 
 /** Mock courses — will be replaced with API data */
 export const mockCourses: Course[] = [
@@ -12,6 +12,7 @@ export const mockCourses: Course[] = [
         lessonsCount: 45,
         createdAt: "2026-02-01",
         isPublished: true,
+        groupId: 1,
     },
     {
         id: 2,
@@ -23,6 +24,7 @@ export const mockCourses: Course[] = [
         lessonsCount: 32,
         createdAt: "2026-01-15",
         isPublished: true,
+        groupId: 2,
     },
     {
         id: 3,
@@ -34,6 +36,7 @@ export const mockCourses: Course[] = [
         lessonsCount: 8,
         createdAt: "2026-02-10",
         isPublished: true,
+        groupId: 1,
     },
     {
         id: 4,
@@ -45,6 +48,7 @@ export const mockCourses: Course[] = [
         lessonsCount: 12,
         createdAt: "2026-02-05",
         isPublished: true,
+        groupId: 1,
     },
     {
         id: 5,
@@ -56,6 +60,7 @@ export const mockCourses: Course[] = [
         lessonsCount: 3,
         createdAt: "2026-01-20",
         isPublished: true,
+        groupId: 1,
     },
     {
         id: 6,
@@ -67,5 +72,45 @@ export const mockCourses: Course[] = [
         lessonsCount: 58,
         createdAt: "2025-12-10",
         isPublished: false,
+    },
+    {
+        id: 7,
+        name: "Swipe File de Copies",
+        description: "Coleção curada de copies de alta conversão para modelar.",
+        image: "",
+        category: "bonus",
+        studentsCount: 120,
+        lessonsCount: 5,
+        createdAt: "2026-01-25",
+        isPublished: true,
+        groupId: 2,
+    },
+    {
+        id: 8,
+        name: "Workshop de Headlines",
+        description: "Workshop prático para criar headlines magnéticas que capturam atenção.",
+        image: "",
+        category: "upsell",
+        studentsCount: 67,
+        lessonsCount: 10,
+        createdAt: "2026-02-08",
+        isPublished: true,
+        groupId: 2,
+    },
+];
+
+/** Mock course groups */
+export const mockGroups: CourseGroup[] = [
+    {
+        id: 1,
+        name: "Pacote Marketing Digital",
+        principalCourseId: 1,
+        courseIds: [1, 3, 4, 5],
+    },
+    {
+        id: 2,
+        name: "Pacote Copywriting",
+        principalCourseId: 2,
+        courseIds: [2, 7, 8],
     },
 ];

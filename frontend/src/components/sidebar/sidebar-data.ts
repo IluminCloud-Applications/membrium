@@ -72,17 +72,24 @@ export const sidebarNavGroups: NavGroup[] = [
             },
         ],
     },
-];
-
-export const sidebarBottomItems: NavItem[] = [
     {
-        title: "Configurações",
-        url: "/admin/configuracoes",
-        icon: "ri-settings-3-line",
-    },
-    {
-        title: "Ajuda",
-        url: "https://help.membriumwl.com/",
-        icon: "ri-lifebuoy-line",
+        label: "Configurações",
+        items: [
+            {
+                title: "Gerais",
+                url: "/admin/configuracoes",
+                icon: "ri-settings-3-line",
+            },
+            {
+                title: "Integrações",
+                url: "/admin/configuracoes/integracoes",
+                icon: "ri-puzzle-line",
+            },
+            {
+                title: "Int. Artificial",
+                url: "/admin/configuracoes/ia",
+                icon: "ri-robot-2-line",
+            },
+        ],
     },
 ];
