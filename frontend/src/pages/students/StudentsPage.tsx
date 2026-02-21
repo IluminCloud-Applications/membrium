@@ -1,10 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     StudentFilters,
     StudentTable,
     StudentEmptyState,
     StudentStats,
+    StudentPagination,
 } from "@/components/students";
 import { AddStudentModal } from "@/components/modals/students/AddStudentModal";
 import { EditStudentModal } from "@/components/modals/students/EditStudentModal";
@@ -15,17 +16,34 @@ import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModa
 import type { Student } from "@/types/student";
 import { useStudents } from "@/hooks/useStudents";
 
+const DEBOUNCE_MS = 400;
+
 export function StudentsPage() {
     const navigate = useNavigate();
     const {
         students, courses, stats, adminEmail, loading, actionLoading,
+        page, totalPages, totalStudents,
+        goToPage, applyFilters,
         createStudent, updateStudent, deleteStudent,
         addCourse, removeCourse, resendAccess,
     } = useStudents();
 
-    // Filters
+    // Filter inputs (local, debounced)
     const [search, setSearch] = useState("");
     const [courseFilter, setCourseFilter] = useState("all");
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Debounce search + course filter → server
+    useEffect(() => {
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => {
+            const courseId = courseFilter !== "all" ? Number(courseFilter) : undefined;
+            applyFilters(search, courseId);
+        }, DEBOUNCE_MS);
+        return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+    }, [search, courseFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const hasActiveFilters = search.trim() !== "" || courseFilter !== "all";
 
     // Modal states
     const [addModalOpen, setAddModalOpen] = useState(false);
@@ -34,31 +52,6 @@ export function StudentsPage() {
     const [resendTarget, setResendTarget] = useState<Student | null>(null);
     const [quickAccessTarget, setQuickAccessTarget] = useState<Student | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
-
-    // Filtered students
-    const filteredStudents = useMemo(() => {
-        let result = [...students];
-
-        if (search.trim()) {
-            const q = search.toLowerCase();
-            result = result.filter(
-                (s) =>
-                    s.name.toLowerCase().includes(q) ||
-                    s.email.toLowerCase().includes(q)
-            );
-        }
-
-        if (courseFilter !== "all") {
-            const courseId = Number(courseFilter);
-            result = result.filter((s) =>
-                s.courses.some((c) => c.id === courseId)
-            );
-        }
-
-        return result;
-    }, [students, search, courseFilter]);
-
-    const hasActiveFilters = search.trim() !== "" || courseFilter !== "all";
 
     /* ---- Handlers ---- */
 
@@ -139,20 +132,31 @@ export function StudentsPage() {
                 onImport={() => navigate("/admin/alunos/importar")}
             />
 
-            {filteredStudents.length === 0 ? (
+            {students.length === 0 ? (
                 <StudentEmptyState
                     hasFilters={hasActiveFilters}
                     onAddStudent={() => setAddModalOpen(true)}
                 />
             ) : (
-                <StudentTable
-                    students={filteredStudents}
-                    onEdit={setEditTarget}
-                    onManageCourses={setManageCoursesTarget}
-                    onResendAccess={setResendTarget}
-                    onQuickAccess={setQuickAccessTarget}
-                    onDelete={setDeleteTarget}
-                />
+                <>
+                    <StudentTable
+                        students={students}
+                        onEdit={setEditTarget}
+                        onManageCourses={setManageCoursesTarget}
+                        onResendAccess={setResendTarget}
+                        onQuickAccess={setQuickAccessTarget}
+                        onDelete={setDeleteTarget}
+                    />
+
+                    {!hasActiveFilters && (
+                        <StudentPagination
+                            page={page}
+                            totalPages={totalPages}
+                            totalStudents={totalStudents}
+                            onPageChange={goToPage}
+                        />
+                    )}
+                </>
             )}
 
             {/* Modals */}

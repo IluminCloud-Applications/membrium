@@ -15,6 +15,14 @@ export interface StudentFromAPI {
     quickAccessToken: string;
 }
 
+export interface PaginatedStudents {
+    students: StudentFromAPI[];
+    total: number;
+    page: number;
+    per_page: number;
+    pages: number;
+}
+
 export interface StudentStats {
     total: number;
     active: number;
@@ -46,14 +54,25 @@ interface MutationResponse {
     courses?: { id: number; name: string }[];
 }
 
+interface EmailCheckResponse {
+    exists: boolean;
+}
+
 /* ============================================
    STUDENTS SERVICE
    ============================================ */
 
 export const studentsService = {
-    /** List all students */
-    getAll: () =>
-        apiClient.get<StudentFromAPI[]>("/students/"),
+    /** List students (paginated or search) */
+    getAll: (params?: { page?: number; perPage?: number; search?: string; courseId?: number }) => {
+        const qs = new URLSearchParams();
+        if (params?.page) qs.set("page", String(params.page));
+        if (params?.perPage) qs.set("per_page", String(params.perPage));
+        if (params?.search) qs.set("search", params.search);
+        if (params?.courseId) qs.set("course_id", String(params.courseId));
+        const query = qs.toString();
+        return apiClient.get<PaginatedStudents>(`/students/${query ? `?${query}` : ""}`);
+    },
 
     /** Get available courses for dropdowns */
     getCourses: () =>
@@ -62,6 +81,13 @@ export const studentsService = {
     /** Get student stats */
     getStats: () =>
         apiClient.get<StudentStats>("/students/stats"),
+
+    /** Check if student email already exists */
+    checkEmail: (email: string, excludeId?: number) => {
+        const qs = new URLSearchParams({ email });
+        if (excludeId) qs.set("exclude_id", String(excludeId));
+        return apiClient.get<EmailCheckResponse>(`/students/check-email?${qs.toString()}`);
+    },
 
     /** Create a new student */
     create: (data: CreateStudentPayload) =>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
     Dialog,
     DialogContent,
@@ -8,14 +8,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { CourseMultiSelect } from "@/components/students/CourseMultiSelect";
+import { studentsService } from "@/services/students";
 
 interface AddStudentModalProps {
     open: boolean;
@@ -47,6 +41,10 @@ export function AddStudentModal({
     const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([]);
     const [courseToAdd, setCourseToAdd] = useState<string>("");
 
+    // Email validation states
+    const [emailExists, setEmailExists] = useState(false);
+    const [checkingEmail, setCheckingEmail] = useState(false);
+
     useEffect(() => {
         if (!open) resetForm();
     }, [open]);
@@ -57,10 +55,31 @@ export function AddStudentModal({
         setPassword("");
         setSelectedCourseIds([]);
         setCourseToAdd("");
+        setEmailExists(false);
+        setCheckingEmail(false);
     }
 
-    /* ---- Email admin check ---- */
+    /* ---- Email checks ---- */
     const isAdminEmail = adminEmail !== "" && email.trim().toLowerCase() === adminEmail;
+
+    const checkEmailExists = useCallback(async () => {
+        const trimmed = email.trim().toLowerCase();
+        if (!trimmed || isAdminEmail) {
+            setEmailExists(false);
+            return;
+        }
+        setCheckingEmail(true);
+        try {
+            const res = await studentsService.checkEmail(trimmed);
+            setEmailExists(res.exists);
+        } catch {
+            setEmailExists(false);
+        } finally {
+            setCheckingEmail(false);
+        }
+    }, [email, isAdminEmail]);
+
+    const hasEmailError = isAdminEmail || emailExists;
 
     /* ---- Course management ---- */
     const unselectedCourses = useMemo(
@@ -91,7 +110,7 @@ export function AddStudentModal({
         onSubmit({ name, email, password, courseIds: selectedCourseIds });
     }
 
-    const canSubmit = name.trim() && email.trim() && password.trim() && !isAdminEmail;
+    const canSubmit = name.trim() && email.trim() && password.trim() && !hasEmailError;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -123,19 +142,36 @@ export function AddStudentModal({
                         <Label htmlFor="student-email" className="text-sm font-medium">
                             Email
                         </Label>
-                        <Input
-                            id="student-email"
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="aluno@email.com"
-                            required
-                            className={isAdminEmail ? "border-destructive focus-visible:ring-destructive" : ""}
-                        />
+                        <div className="relative">
+                            <Input
+                                id="student-email"
+                                type="email"
+                                value={email}
+                                onChange={(e) => {
+                                    setEmail(e.target.value);
+                                    setEmailExists(false);
+                                }}
+                                onBlur={checkEmailExists}
+                                placeholder="aluno@email.com"
+                                required
+                                className={hasEmailError ? "border-destructive focus-visible:ring-destructive" : ""}
+                            />
+                            {checkingEmail && (
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                    <i className="ri-loader-4-line animate-spin text-muted-foreground" />
+                                </div>
+                            )}
+                        </div>
                         {isAdminEmail && (
                             <div className="flex items-center gap-1.5 text-destructive text-xs">
                                 <i className="ri-error-warning-line text-sm" />
                                 Este é o email do administrador. Use um email diferente.
+                            </div>
+                        )}
+                        {emailExists && !isAdminEmail && (
+                            <div className="flex items-center gap-1.5 text-destructive text-xs">
+                                <i className="ri-error-warning-line text-sm" />
+                                Já existe um aluno cadastrado com este email.
                             </div>
                         )}
                     </div>
@@ -156,69 +192,14 @@ export function AddStudentModal({
                     </div>
 
                     {/* Courses — multi-select */}
-                    <div className="space-y-2">
-                        <Label className="text-sm font-medium">
-                            Cursos (opcional)
-                        </Label>
-
-                        {/* Selected courses chips */}
-                        {selectedCourses.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5">
-                                {selectedCourses.map((course) => (
-                                    <Badge
-                                        key={course.id}
-                                        variant="secondary"
-                                        className="text-xs bg-primary/8 text-primary/80 pr-1 gap-1"
-                                    >
-                                        {course.name}
-                                        <button
-                                            type="button"
-                                            onClick={() => handleRemoveCourse(course.id)}
-                                            className="ml-0.5 h-4 w-4 rounded-full flex items-center justify-center hover:bg-destructive/20 hover:text-destructive transition-colors"
-                                        >
-                                            <i className="ri-close-line text-[10px]" />
-                                        </button>
-                                    </Badge>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Add course selector */}
-                        {unselectedCourses.length > 0 && (
-                            <div className="flex gap-2">
-                                <Select value={courseToAdd} onValueChange={setCourseToAdd}>
-                                    <SelectTrigger className="flex-1">
-                                        <SelectValue placeholder="Selecione um curso" />
-                                    </SelectTrigger>
-                                    <SelectContent className="rounded-xl">
-                                        {unselectedCourses.map((course) => (
-                                            <SelectItem
-                                                key={course.id}
-                                                value={course.id.toString()}
-                                                className="rounded-lg"
-                                            >
-                                                {course.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <Button
-                                    type="button"
-                                    onClick={handleAddCourse}
-                                    className="btn-brand shrink-0"
-                                    disabled={!courseToAdd}
-                                >
-                                    <i className="ri-add-line" />
-                                </Button>
-                            </div>
-                        )}
-
-                        {unselectedCourses.length === 0 && selectedCourses.length > 0 && (
-                            <p className="text-xs text-muted-foreground italic">
-                                Todos os cursos foram adicionados.
-                            </p>
-                        )}
-                    </div>
+                    <CourseMultiSelect
+                        selectedCourses={selectedCourses}
+                        unselectedCourses={unselectedCourses}
+                        courseToAdd={courseToAdd}
+                        onCourseToAddChange={setCourseToAdd}
+                        onAdd={handleAddCourse}
+                        onRemove={handleRemoveCourse}
+                    />
 
                     {/* Buttons */}
                     <div className="flex gap-2 pt-2">

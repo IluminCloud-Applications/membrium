@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
     Dialog,
     DialogContent,
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import type { Student } from "@/types/student";
+import { studentsService } from "@/services/students";
 
 interface EditStudentModalProps {
     open: boolean;
@@ -38,6 +39,8 @@ export function EditStudentModal({
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [emailExists, setEmailExists] = useState(false);
+    const [checkingEmail, setCheckingEmail] = useState(false);
 
     // Pre-fill when student changes
     useEffect(() => {
@@ -45,6 +48,7 @@ export function EditStudentModal({
             setName(student.name);
             setEmail(student.email);
             setPassword("");
+            setEmailExists(false);
         }
     }, [student]);
 
@@ -55,7 +59,31 @@ export function EditStudentModal({
     }
 
     const isAdminEmail = adminEmail !== "" && email.trim().toLowerCase() === adminEmail;
-    const canSubmit = name.trim() && email.trim() && !isAdminEmail;
+
+    const checkEmailExists = useCallback(async () => {
+        const trimmed = email.trim().toLowerCase();
+        if (!trimmed || isAdminEmail || !student) {
+            setEmailExists(false);
+            return;
+        }
+        // Don't check if email hasn't changed
+        if (trimmed === student.email.toLowerCase()) {
+            setEmailExists(false);
+            return;
+        }
+        setCheckingEmail(true);
+        try {
+            const res = await studentsService.checkEmail(trimmed, student.id);
+            setEmailExists(res.exists);
+        } catch {
+            setEmailExists(false);
+        } finally {
+            setCheckingEmail(false);
+        }
+    }, [email, isAdminEmail, student]);
+
+    const hasEmailError = isAdminEmail || emailExists;
+    const canSubmit = name.trim() && email.trim() && !hasEmailError;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -82,23 +110,41 @@ export function EditStudentModal({
                         />
                     </div>
 
+                    {/* Email */}
                     <div className="space-y-2">
                         <Label htmlFor="edit-email" className="text-sm font-medium">
                             Email
                         </Label>
-                        <Input
-                            id="edit-email"
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="aluno@email.com"
-                            required
-                            className={isAdminEmail ? "border-destructive focus-visible:ring-destructive" : ""}
-                        />
+                        <div className="relative">
+                            <Input
+                                id="edit-email"
+                                type="email"
+                                value={email}
+                                onChange={(e) => {
+                                    setEmail(e.target.value);
+                                    setEmailExists(false);
+                                }}
+                                onBlur={checkEmailExists}
+                                placeholder="aluno@email.com"
+                                required
+                                className={hasEmailError ? "border-destructive focus-visible:ring-destructive" : ""}
+                            />
+                            {checkingEmail && (
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                    <i className="ri-loader-4-line animate-spin text-muted-foreground" />
+                                </div>
+                            )}
+                        </div>
                         {isAdminEmail && (
                             <div className="flex items-center gap-1.5 text-destructive text-xs">
                                 <i className="ri-error-warning-line text-sm" />
                                 Este é o email do administrador. Use um email diferente.
+                            </div>
+                        )}
+                        {emailExists && !isAdminEmail && (
+                            <div className="flex items-center gap-1.5 text-destructive text-xs">
+                                <i className="ri-error-warning-line text-sm" />
+                                Já existe um aluno cadastrado com este email.
                             </div>
                         )}
                     </div>

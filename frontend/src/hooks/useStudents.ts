@@ -8,6 +8,8 @@ import {
 } from "@/services/students";
 import { dashboardService } from "@/services/dashboard";
 
+const PER_PAGE = 10;
+
 /* ---- Convert API format → frontend Student type ---- */
 function mapStudent(s: StudentFromAPI): Student {
     return {
@@ -23,6 +25,7 @@ function mapStudent(s: StudentFromAPI): Student {
 
 /**
  * Hook that encapsulates all student data fetching and mutations.
+ * Supports server-side pagination + full-text search bypass.
  */
 export function useStudents() {
     const [students, setStudents] = useState<Student[]>([]);
@@ -32,16 +35,40 @@ export function useStudents() {
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
 
-    /* ---- Fetch ---- */
-    const fetchStudents = useCallback(async () => {
+    // Pagination
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalStudents, setTotalStudents] = useState(0);
+
+    // Current filters (kept in sync with the page)
+    const [currentSearch, setCurrentSearch] = useState("");
+    const [currentCourseFilter, setCurrentCourseFilter] = useState<number | undefined>(undefined);
+
+    /* ---- Fetch students (paginated or search) ---- */
+    const fetchStudents = useCallback(async (
+        fetchPage = 1,
+        search = "",
+        courseId?: number,
+    ) => {
         try {
-            const [studentsData, coursesData, statsData, userInfo] = await Promise.all([
-                studentsService.getAll(),
+            const hasFilters = Boolean(search.trim()) || Boolean(courseId);
+
+            const [data, coursesData, statsData, userInfo] = await Promise.all([
+                studentsService.getAll({
+                    page: hasFilters ? undefined : fetchPage,
+                    perPage: hasFilters ? undefined : PER_PAGE,
+                    search: search.trim() || undefined,
+                    courseId: courseId || undefined,
+                }),
                 studentsService.getCourses(),
                 studentsService.getStats(),
                 dashboardService.getUserInfo(),
             ]);
-            setStudents(studentsData.map(mapStudent));
+
+            setStudents(data.students.map(mapStudent));
+            setTotalPages(data.pages);
+            setTotalStudents(data.total);
+            setPage(data.page);
             setCourses(coursesData);
             setStats(statsData);
             setAdminEmail(userInfo.email.toLowerCase());
@@ -52,16 +79,34 @@ export function useStudents() {
         }
     }, []);
 
+    /* ---- Initial load ---- */
     useEffect(() => {
-        fetchStudents();
+        fetchStudents(1);
     }, [fetchStudents]);
+
+    /* ---- Public page/filter controls ---- */
+    function goToPage(newPage: number) {
+        setPage(newPage);
+        fetchStudents(newPage, currentSearch, currentCourseFilter);
+    }
+
+    function applyFilters(search: string, courseId?: number) {
+        setCurrentSearch(search);
+        setCurrentCourseFilter(courseId);
+        setPage(1);
+        fetchStudents(1, search, courseId);
+    }
+
+    function refreshCurrentPage() {
+        fetchStudents(page, currentSearch, currentCourseFilter);
+    }
 
     /* ---- Mutations ---- */
     async function createStudent(data: { name: string; email: string; password: string; courseIds: number[] }) {
         setActionLoading(true);
         try {
             await studentsService.create(data);
-            await fetchStudents();
+            await refreshCurrentPage();
             return true;
         } catch (err) {
             console.error("Erro ao criar aluno:", err);
@@ -79,7 +124,7 @@ export function useStudents() {
                 email: data.email,
                 password: data.password,
             });
-            await fetchStudents();
+            await refreshCurrentPage();
             return true;
         } catch (err) {
             console.error("Erro ao atualizar aluno:", err);
@@ -93,7 +138,7 @@ export function useStudents() {
         setActionLoading(true);
         try {
             await studentsService.delete(studentId);
-            await fetchStudents();
+            await refreshCurrentPage();
             return true;
         } catch (err) {
             console.error("Erro ao excluir aluno:", err);
@@ -107,7 +152,7 @@ export function useStudents() {
         setActionLoading(true);
         try {
             const res = await studentsService.addCourse(studentId, courseId);
-            await fetchStudents();
+            await refreshCurrentPage();
             return res.courses ?? null;
         } catch (err) {
             console.error("Erro ao adicionar curso:", err);
@@ -121,7 +166,7 @@ export function useStudents() {
         setActionLoading(true);
         try {
             const res = await studentsService.removeCourse(studentId, courseId);
-            await fetchStudents();
+            await refreshCurrentPage();
             return res.courses ?? null;
         } catch (err) {
             console.error("Erro ao remover curso:", err);
@@ -151,6 +196,13 @@ export function useStudents() {
         adminEmail,
         loading,
         actionLoading,
+        // Pagination
+        page,
+        totalPages,
+        totalStudents,
+        goToPage,
+        applyFilters,
+        // Mutations
         createStudent,
         updateStudent,
         deleteStudent,
