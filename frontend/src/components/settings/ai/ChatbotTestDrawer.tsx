@@ -227,8 +227,8 @@ function MessageBubble({ message, botName }: { message: ChatMessage; botName: st
             {/* Avatar */}
             <div
                 className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${isUser
-                        ? "bg-blue-100 dark:bg-blue-900/30"
-                        : "bg-primary/10"
+                    ? "bg-blue-100 dark:bg-blue-900/30"
+                    : "bg-primary/10"
                     }`}
             >
                 <i
@@ -240,8 +240,8 @@ function MessageBubble({ message, botName }: { message: ChatMessage; botName: st
             {/* Bubble */}
             <div
                 className={`rounded-2xl px-3 py-2 max-w-[80%] ${isUser
-                        ? "bg-primary text-primary-foreground rounded-br-md"
-                        : "bg-muted rounded-bl-md"
+                    ? "bg-primary text-primary-foreground rounded-br-md"
+                    : "bg-muted rounded-bl-md"
                     }`}
             >
                 {!isUser && (
@@ -249,7 +249,14 @@ function MessageBubble({ message, botName }: { message: ChatMessage; botName: st
                         {botName || "Chatbot"}
                     </p>
                 )}
-                <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                {isUser ? (
+                    <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                ) : (
+                    <div
+                        className="text-sm whitespace-pre-wrap leading-relaxed chatbot-message-content"
+                        dangerouslySetInnerHTML={{ __html: message.content }}
+                    />
+                )}
                 <p
                     className={`text-[9px] mt-1 ${isUser ? "text-primary-foreground/50" : "text-muted-foreground"
                         }`}

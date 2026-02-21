@@ -325,3 +325,25 @@
   border: none !important;
   border-radius: 0 0 var(--radius) var(--radius) !important;
 }
+
+/* ---- Chatbot Message Content ---- */
+.chatbot-message-content a {
+  color: oklch(0.53 0.22 25);
+  text-decoration: underline;
+  font-weight: 500;
+  transition: opacity 0.15s;
+}
+
+.chatbot-message-content a:hover {
+  opacity: 0.8;
+}
+
+.chatbot-message-content strong,
+.chatbot-message-content b {
+  font-weight: 600;
+}
+
+.chatbot-message-content em,
+.chatbot-message-content i:not([class]) {
+  font-style: italic;
+}
