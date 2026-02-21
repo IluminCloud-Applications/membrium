@@ -23,7 +23,7 @@ from routes.promote import promote_bp
 from routes.faq import faq_bp
 from routes.chatbot import chatbot_bp
 from routes.transcripts import transcripts_bp
-from webhook import webhook
+from webhook import webhook_bp
 
 
 def create_app():
@@ -55,7 +55,7 @@ def create_app():
     app.register_blueprint(faq_bp)
     app.register_blueprint(chatbot_bp)
     app.register_blueprint(transcripts_bp)
-    app.register_blueprint(webhook)
+    app.register_blueprint(webhook_bp)
 
     # Ensure upload directory exists
     with app.app_context():

@@ -177,7 +177,7 @@ export function CoursesPage() {
                 title="Excluir Curso" description={`Tem certeza que deseja excluir "${deleteTarget?.name}"? Todos os alunos e aulas serão removidos permanentemente.`} confirmLabel="Excluir Curso" />
             <DeleteConfirmModal open={!!deleteGroupTarget} onOpenChange={() => setDeleteGroupTarget(null)} onConfirm={handleConfirmDeleteGroup}
                 title="Excluir Grupo" description={`Tem certeza que deseja excluir o grupo "${deleteGroupTarget?.name}"? Os cursos não serão removidos, apenas o agrupamento.`} confirmLabel="Excluir Grupo" />
-            <WebhookModal open={!!webhookTarget} onOpenChange={() => setWebhookTarget(null)} courseName={webhookTarget?.name ?? ""} />
+            <WebhookModal open={!!webhookTarget} onOpenChange={() => setWebhookTarget(null)} course={webhookTarget} />
             <GroupModal open={groupModalOpen} onOpenChange={setGroupModalOpen} editGroup={editingGroup} courses={courses} onSubmit={handleGroupSubmit} />
         </div>
     );

@@ -97,6 +97,7 @@ class Student(db.Model):
     password = db.Column(db.String(255), nullable=False)
     name = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(20), nullable=True)
+    extra_data = db.Column(db.JSON, default=dict)  # Dados extras da plataforma de pagamento
     uuid = db.Column(db.String(36), unique=True, nullable=False, default=lambda: str(uuid4()))
     courses = db.relationship('Course', secondary=student_courses, backref=db.backref('students', lazy='dynamic'))
     completed_lessons = db.relationship('Lesson', secondary=student_lessons, backref=db.backref('completed_by', lazy='dynamic'))
