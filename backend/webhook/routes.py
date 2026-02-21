@@ -51,8 +51,17 @@ SUPPORTED_PLATFORMS = [
 
 @webhook_bp.route('/api/webhook/platforms', methods=['GET'])
 def list_platforms():
-    """Retorna a lista de plataformas suportadas para o frontend."""
-    return jsonify(SUPPORTED_PLATFORMS), 200
+    """Retorna a lista de plataformas suportadas e a base URL para webhook."""
+    # Detecta base URL (funciona em dev e produção com reverse proxy)
+    if request.headers.get('X-Forwarded-Proto') and request.headers.get('X-Forwarded-Host'):
+        base_url = f"{request.headers.get('X-Forwarded-Proto')}://{request.headers.get('X-Forwarded-Host')}"
+    else:
+        base_url = request.url_root.rstrip('/')
+
+    return jsonify({
+        'platforms': SUPPORTED_PLATFORMS,
+        'base_url': base_url,
+    }), 200
 
 
 @webhook_bp.route('/webhook/<platform>/<uuid>', methods=['POST'])

@@ -8,12 +8,18 @@ import {
 } from "@/components/ui/dialog";
 import { WebhookPlatformList } from "./WebhookPlatformList";
 import { WebhookLinkView } from "./WebhookLinkView";
+import { apiClient } from "@/services/apiClient";
 import type { Course } from "@/types/course";
 
 export interface WebhookPlatform {
     id: string;
     name: string;
     logo: string;
+}
+
+interface PlatformsResponse {
+    platforms: WebhookPlatform[];
+    base_url: string;
 }
 
 interface WebhookModalProps {
@@ -25,12 +31,15 @@ interface WebhookModalProps {
 export function WebhookModal({ open, onOpenChange, course }: WebhookModalProps) {
     const [platforms, setPlatforms] = useState<WebhookPlatform[]>([]);
     const [selectedPlatform, setSelectedPlatform] = useState<WebhookPlatform | null>(null);
+    const [baseUrl, setBaseUrl] = useState("");
 
     useEffect(() => {
         if (open) {
-            fetch("/api/webhook/platforms")
-                .then((res) => res.json())
-                .then((data) => setPlatforms(data))
+            apiClient.get<PlatformsResponse>("/webhook/platforms")
+                .then((data) => {
+                    setPlatforms(data.platforms);
+                    setBaseUrl(data.base_url);
+                })
                 .catch((err) => console.error("Erro ao carregar plataformas:", err));
         } else {
             setSelectedPlatform(null);
@@ -38,7 +47,7 @@ export function WebhookModal({ open, onOpenChange, course }: WebhookModalProps) 
     }, [open]);
 
     const webhookUrl = selectedPlatform && course
-        ? `${window.location.origin}/webhook/${selectedPlatform.id}/${course.uuid}`
+        ? `${baseUrl}/webhook/${selectedPlatform.id}/${course.uuid}`
         : "";
 
     return (
