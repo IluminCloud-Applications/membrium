@@ -133,14 +133,21 @@ class Settings(db.Model):
     brevo_api_key = db.Column(db.String(255), nullable=True)
     brevo_email_subject = db.Column(db.String(255), nullable=True)
     brevo_email_template = db.Column(db.Text, nullable=True)
+    brevo_template_mode = db.Column(db.String(10), default='simple')  # 'simple' or 'html'
     
     # Evolution API Integration
     evolution_enabled = db.Column(db.Boolean, default=False)
     evolution_url = db.Column(db.String(255), nullable=True)
     evolution_api_key = db.Column(db.String(255), nullable=True)
     evolution_message_template = db.Column(db.Text, nullable=True)
+    evolution_template_mode = db.Column(db.String(10), default='simple')  # 'simple' or 'html'
     evolution_version = db.Column(db.String(10), nullable=True)
     evolution_instance = db.Column(db.String(255), nullable=True)
+    
+    # YouTube Integration
+    youtube_enabled = db.Column(db.Boolean, default=False)
+    youtube_client_id = db.Column(db.String(255), nullable=True)
+    youtube_client_secret = db.Column(db.String(255), nullable=True)
     
     # GROQ AI Integration
     groq_api_enabled = db.Column(db.Boolean, default=False)

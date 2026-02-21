@@ -1,28 +1,61 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { IntegrationToggle } from "../IntegrationToggle";
-import { TemplateTagsBlock } from "./TemplateTagsBlock";
-import { TemplatePreview } from "./TemplatePreview";
+import { TemplateEditor } from "./TemplateEditor";
+import { integrationsService, type BrevoSettings } from "@/services/integrations";
+
+const DEFAULT_BODY = `Olá [[name]],\n\nParabéns! Você agora tem acesso ao nosso curso.\n\nAqui estão suas credenciais de acesso:\n\nEmail: [[email]]\nSenha: [[password]]\nLink de acesso comum: [[link]]\nLink de acesso rápido: [[fast_link]]\n\nQualquer dúvida, entre em contato conosco.\n\nAtenciosamente,\nEquipe de Suporte`;
 
 export function BrevoTab() {
-    const [enabled, setEnabled] = useState(false);
-    const [senderName, setSenderName] = useState("");
-    const [senderEmail, setSenderEmail] = useState("");
-    const [apiKey, setApiKey] = useState("");
+    const [data, setData] = useState<BrevoSettings>({
+        enabled: false,
+        api_key: "",
+        sender_name: "",
+        sender_email: "",
+        email_subject: "Bem-vindo ao seu curso [[first_name]]!",
+        email_template: DEFAULT_BODY,
+        template_mode: "simple",
+    });
     const [showApiKey, setShowApiKey] = useState(false);
-    const [subject, setSubject] = useState("Bem-vindo ao seu curso [[first_name]]!");
-    const [body, setBody] = useState(
-        `Olá [[name]],\n\nParabéns! Você agora tem acesso ao nosso curso.\n\nAqui estão suas credenciais de acesso:\n\nEmail: [[email]]\nSenha: [[password]]\nLink de acesso comum: [[link]]\nLink de acesso rápido: [[fast_link]]\n\nQualquer dúvida, entre em contato conosco.\n\nAtenciosamente,\nEquipe de Suporte`
-    );
     const [saving, setSaving] = useState(false);
+    const [feedback, setFeedback] = useState<string | null>(null);
+
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    async function loadData() {
+        try {
+            const res = await integrationsService.getAll();
+            if (res.brevo) {
+                setData((prev) => ({
+                    ...prev,
+                    ...res.brevo,
+                    email_template: res.brevo.email_template || prev.email_template,
+                    email_subject: res.brevo.email_subject || prev.email_subject,
+                }));
+            }
+        } catch { /* keep defaults */ }
+    }
+
+    function update(patch: Partial<BrevoSettings>) {
+        setData((prev) => ({ ...prev, ...patch }));
+    }
 
     async function handleSave() {
         setSaving(true);
-        // TODO: API call
-        setTimeout(() => setSaving(false), 800);
+        setFeedback(null);
+        try {
+            const res = await integrationsService.updateBrevo(data);
+            setFeedback(res.message);
+        } catch {
+            setFeedback("Erro ao salvar");
+        } finally {
+            setSaving(false);
+            setTimeout(() => setFeedback(null), 3000);
+        }
     }
 
     return (
@@ -31,8 +64,8 @@ export function BrevoTab() {
             icon="ri-mail-send-line"
             title="Brevo Email Marketing"
             description="Envie emails automáticos para seus alunos"
-            enabled={enabled}
-            onToggle={setEnabled}
+            enabled={data.enabled}
+            onToggle={(v) => update({ enabled: v })}
         >
             {/* Sender info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -40,26 +73,20 @@ export function BrevoTab() {
                     <Label htmlFor="brevoSenderName">Nome do Remetente</Label>
                     <Input
                         id="brevoSenderName"
-                        value={senderName}
-                        onChange={(e) => setSenderName(e.target.value)}
+                        value={data.sender_name}
+                        onChange={(e) => update({ sender_name: e.target.value })}
                         placeholder="Nome que aparecerá como remetente"
                     />
-                    <p className="text-xs text-muted-foreground">
-                        Nome que será exibido como remetente do email
-                    </p>
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="brevoSenderEmail">Email do Remetente</Label>
                     <Input
                         id="brevoSenderEmail"
                         type="email"
-                        value={senderEmail}
-                        onChange={(e) => setSenderEmail(e.target.value)}
+                        value={data.sender_email}
+                        onChange={(e) => update({ sender_email: e.target.value })}
                         placeholder="email@seudominio.com"
                     />
-                    <p className="text-xs text-muted-foreground">
-                        Email que será usado como remetente
-                    </p>
                 </div>
             </div>
 
@@ -70,8 +97,8 @@ export function BrevoTab() {
                     <Input
                         id="brevoApiKey"
                         type={showApiKey ? "text" : "password"}
-                        value={apiKey}
-                        onChange={(e) => setApiKey(e.target.value)}
+                        value={data.api_key}
+                        onChange={(e) => update({ api_key: e.target.value })}
                         placeholder="xkeysib-xxxxxxxxxxxxxxxxxxxxxxxx"
                         className="pr-10"
                     />
@@ -95,38 +122,21 @@ export function BrevoTab() {
                 </p>
             </div>
 
-            {/* Email template */}
-            <div className="rounded-lg border p-4 space-y-4 bg-muted/30">
-                <h4 className="text-sm font-medium flex items-center gap-2">
-                    <i className="ri-mail-open-line text-primary" />
-                    Template de Email
-                </h4>
+            {/* Template editor with 70/30 preview */}
+            <TemplateEditor
+                format="email"
+                subject={data.email_subject}
+                onSubjectChange={(v) => update({ email_subject: v })}
+                body={data.email_template}
+                onBodyChange={(v) => update({ email_template: v })}
+                templateMode={data.template_mode}
+                onTemplateModeChange={(v) => update({ template_mode: v })}
+            />
 
-                <TemplateTagsBlock targetTextareaId="brevoEmailTemplate" />
-
-                <div className="space-y-2">
-                    <Label htmlFor="brevoEmailSubject">Assunto do Email</Label>
-                    <Input
-                        id="brevoEmailSubject"
-                        value={subject}
-                        onChange={(e) => setSubject(e.target.value)}
-                    />
-                </div>
-
-                <div className="space-y-2">
-                    <Label htmlFor="brevoEmailTemplate">Corpo do Email</Label>
-                    <Textarea
-                        id="brevoEmailTemplate"
-                        value={body}
-                        onChange={(e) => setBody(e.target.value)}
-                        className="min-h-[200px] font-mono text-sm"
-                    />
-                </div>
-            </div>
-
-            <TemplatePreview text={`Assunto: ${subject}\n\n${body}`} />
-
-            <div className="flex justify-end">
+            <div className="flex items-center justify-end gap-3">
+                {feedback && (
+                    <span className="text-sm text-green-600">{feedback}</span>
+                )}
                 <Button
                     onClick={handleSave}
                     disabled={saving}
