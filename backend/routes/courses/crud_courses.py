@@ -5,7 +5,8 @@ from db.database import db
 from db.utils import ensure_upload_directory
 from models import (
     Admin, Course, Module, Lesson, Document,
-    Showcase, FAQ, LessonTranscript
+    Showcase, ShowcaseAnalytics, FAQ, LessonTranscript,
+    showcase_courses, student_courses
 )
 import os
 
@@ -115,14 +116,23 @@ def delete_course(course_id):
     try:
         course = Course.query.get_or_404(course_id)
 
-        # 1. Delete showcases
-        showcases = Showcase.query.filter_by(course_id=course_id).all()
+        # 1. Handle showcases (many-to-many via showcase_courses)
+        showcases = Showcase.query.filter(
+            Showcase.courses.any(Course.id == course_id)
+        ).all()
         for showcase in showcases:
-            if showcase.image:
-                image_path = os.path.join('static/uploads', showcase.image)
-                if os.path.exists(image_path):
-                    os.remove(image_path)
-            db.session.delete(showcase)
+            # Remove association with this course
+            showcase.courses = [c for c in showcase.courses if c.id != course_id]
+            # If showcase has no more courses, delete it entirely
+            if len(showcase.courses) == 0:
+                # Delete analytics
+                ShowcaseAnalytics.query.filter_by(showcase_id=showcase.id).delete()
+                # Delete image
+                if showcase.image:
+                    image_path = os.path.join('static/uploads', showcase.image)
+                    if os.path.exists(image_path):
+                        os.remove(image_path)
+                db.session.delete(showcase)
 
         # 2. Delete modules with all nested data
         modules = Module.query.filter_by(course_id=course_id).all()
@@ -164,11 +174,16 @@ def delete_course(course_id):
             if os.path.exists(image_path):
                 os.remove(image_path)
 
-        # 4. Remove from groups
+        # 4. Remove from groups and student associations
         from models import course_group_courses
         db.session.execute(
             course_group_courses.delete().where(
                 course_group_courses.c.course_id == course_id
+            )
+        )
+        db.session.execute(
+            student_courses.delete().where(
+                student_courses.c.course_id == course_id
             )
         )
 
