@@ -14,6 +14,11 @@ student_lessons = db.Table('student_lessons',
     db.Column('lesson_id', db.Integer, db.ForeignKey('lesson.id'), primary_key=True)
 )
 
+course_group_courses = db.Table('course_group_courses',
+    db.Column('group_id', db.Integer, db.ForeignKey('course_group.id'), primary_key=True),
+    db.Column('course_id', db.Integer, db.ForeignKey('course.id'), primary_key=True)
+)
+
 class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=True)
@@ -34,8 +39,11 @@ class Course(db.Model):
     name = db.Column(db.String(120), nullable=False)
     description = db.Column(db.Text)
     image = db.Column(db.String(255))
+    category = db.Column(db.String(20), default='principal')  # 'principal', 'order_bump', 'upsell', 'bonus'
+    is_published = db.Column(db.Boolean, default=True)
     module_format = db.Column(db.String(20), default='standard')  # 'standard' or 'netflix'
     theme = db.Column(db.String(20), default='light')  # 'light' or 'dark'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     modules = db.relationship('Module', backref='course', lazy=True, cascade="all, delete-orphan")
     showcases = db.relationship('Showcase', backref='course', lazy=True)
 
@@ -90,6 +98,17 @@ class Student(db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password, password)
+
+class CourseGroup(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    principal_course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    principal_course = db.relationship('Course', foreign_keys=[principal_course_id])
+    courses = db.relationship('Course', secondary=course_group_courses, backref=db.backref('groups', lazy='dynamic'))
 
 class Settings(db.Model):
     id = db.Column(db.Integer, primary_key=True)

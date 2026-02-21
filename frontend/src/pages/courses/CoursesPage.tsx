@@ -3,7 +3,6 @@ import {
     CourseFilters,
     CourseCard,
     CourseListItem,
-    CourseGroupCard,
     CourseEmptyState,
 } from "@/components/courses";
 import { CourseModal } from "@/components/modals/courses/CreateCourseModal";
@@ -12,11 +11,12 @@ import { WebhookModal } from "@/components/modals/courses/WebhookModal";
 import { GroupModal } from "@/components/modals/courses/GroupModal";
 import type { ViewMode, SortOption } from "@/components/courses";
 import type { Course, CourseCategory, CourseGroup } from "@/types/course";
-import { mockCourses, mockGroups } from "./mock-data";
+import { coursesService } from "@/services/courses";
+import { useCourses } from "./useCourses";
+import { GroupsView } from "./GroupsView";
 
 export function CoursesPage() {
-    const [courses] = useState<Course[]>(mockCourses);
-    const [groups] = useState<CourseGroup[]>(mockGroups);
+    const { courses, groups, loading, refetch } = useCourses();
     const [search, setSearch] = useState("");
     const [activeCategory, setActiveCategory] = useState<CourseCategory | "all">("all");
     const [sortBy, setSortBy] = useState<SortOption>("newest");
@@ -41,30 +41,25 @@ export function CoursesPage() {
 
     const filteredCourses = useMemo(() => {
         let result = [...courses];
-
         if (search.trim()) {
             const q = search.toLowerCase();
             result = result.filter(
                 (c) => c.name.toLowerCase().includes(q) || c.description.toLowerCase().includes(q)
             );
         }
-
         if (activeCategory !== "all") {
             result = result.filter((c) => c.category === activeCategory);
         }
-
         if (activeGroupId !== null) {
             const group = groups.find((g) => g.id === activeGroupId);
             if (group) result = result.filter((c) => group.courseIds.includes(c.id));
         }
-
         switch (sortBy) {
             case "newest": result.sort((a, b) => b.createdAt.localeCompare(a.createdAt)); break;
             case "oldest": result.sort((a, b) => a.createdAt.localeCompare(b.createdAt)); break;
             case "name": result.sort((a, b) => a.name.localeCompare(b.name)); break;
             case "students": result.sort((a, b) => b.studentsCount - a.studentsCount); break;
         }
-
         return result;
     }, [courses, groups, search, activeCategory, sortBy, activeGroupId]);
 
@@ -80,15 +75,61 @@ export function CoursesPage() {
     function handleEdit(course: Course) { setEditingCourse(course); setCourseModalOpen(true); }
     function handleDelete(course: Course) { setDeleteTarget(course); }
     function handleWebhook(course: Course) { setWebhookTarget(course); }
-    function handleConfirmDelete() { setDeleteTarget(null); }
     function handleCreateGroup() { setEditingGroup(null); setGroupModalOpen(true); }
     function handleEditGroup(group: CourseGroup) { setEditingGroup(group); setGroupModalOpen(true); }
     function handleDeleteGroup(group: CourseGroup) { setDeleteGroupTarget(group); }
-    function handleConfirmDeleteGroup() { setDeleteGroupTarget(null); }
+
+    async function handleConfirmDelete() {
+        if (!deleteTarget) return;
+        try { await coursesService.delete(deleteTarget.id); await refetch(); }
+        catch (err) { console.error("Erro ao deletar curso:", err); }
+        setDeleteTarget(null);
+    }
+
+    async function handleConfirmDeleteGroup() {
+        if (!deleteGroupTarget) return;
+        try { await coursesService.deleteGroup(deleteGroupTarget.id); await refetch(); }
+        catch (err) { console.error("Erro ao deletar grupo:", err); }
+        setDeleteGroupTarget(null);
+    }
+
+    async function handleCourseSubmit(data: import("@/components/modals/courses/CreateCourseModal").CourseFormData) {
+        const formData = new FormData();
+        formData.append("name", data.name);
+        formData.append("description", data.description);
+        formData.append("category", data.category);
+        if (data.image) formData.append("image", data.image);
+        if (data.imageRemoved) formData.append("image_removed", "true");
+        try {
+            if (editingCourse) await coursesService.update(editingCourse.id, formData);
+            else await coursesService.create(formData);
+            await refetch();
+        } catch (err) { console.error("Erro ao salvar curso:", err); }
+        setCourseModalOpen(false);
+        setEditingCourse(null);
+    }
+
+    async function handleGroupSubmit(data: import("@/components/modals/courses/GroupModal").GroupFormData) {
+        const payload = { name: data.name, principal_course_id: data.principalCourseId, course_ids: data.courseIds };
+        try {
+            if (editingGroup) await coursesService.updateGroup(editingGroup.id, payload);
+            else await coursesService.createGroup(payload);
+            await refetch();
+        } catch (err) { console.error("Erro ao salvar grupo:", err); }
+        setGroupModalOpen(false);
+        setEditingGroup(null);
+    }
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-20">
+                <i className="ri-loader-4-line animate-spin text-2xl text-primary" />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6 animate-fade-in">
-            {/* Page header */}
             <div>
                 <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
                     <i className="ri-book-open-line text-primary" />
@@ -99,32 +140,20 @@ export function CoursesPage() {
                 </p>
             </div>
 
-            {/* Filters */}
             <CourseFilters
-                search={search}
-                onSearchChange={setSearch}
-                activeCategory={activeCategory}
-                onCategoryChange={setActiveCategory}
-                sortBy={sortBy}
-                onSortChange={setSortBy}
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
-                onCreateCourse={handleCreateOpen}
-                onCreateGroup={handleCreateGroup}
-                groups={groups}
-                activeGroupId={activeGroupId}
-                onGroupChange={setActiveGroupId}
+                search={search} onSearchChange={setSearch}
+                activeCategory={activeCategory} onCategoryChange={setActiveCategory}
+                sortBy={sortBy} onSortChange={setSortBy}
+                viewMode={viewMode} onViewModeChange={setViewMode}
+                onCreateCourse={handleCreateOpen} onCreateGroup={handleCreateGroup}
+                groups={groups} activeGroupId={activeGroupId} onGroupChange={setActiveGroupId}
             />
 
-            {/* Content */}
             {viewMode === "groups" ? (
                 <GroupsView
-                    groups={filteredGroups}
-                    courses={courses}
-                    onEditGroup={handleEditGroup}
-                    onDeleteGroup={handleDeleteGroup}
-                    onEditCourse={handleEdit}
-                    onWebhook={handleWebhook}
+                    groups={filteredGroups} courses={courses}
+                    onEditGroup={handleEditGroup} onDeleteGroup={handleDeleteGroup}
+                    onEditCourse={handleEdit} onWebhook={handleWebhook}
                     onCreateGroup={handleCreateGroup}
                 />
             ) : filteredCourses.length === 0 ? (
@@ -143,89 +172,13 @@ export function CoursesPage() {
                 </div>
             )}
 
-            {/* Modals */}
-            <CourseModal
-                open={courseModalOpen}
-                onOpenChange={setCourseModalOpen}
-                editCourse={editingCourse}
-                onSubmit={(data) => { console.log(editingCourse ? "Update:" : "Create:", data); setCourseModalOpen(false); setEditingCourse(null); }}
-            />
-
-            <DeleteConfirmModal
-                open={!!deleteTarget}
-                onOpenChange={() => setDeleteTarget(null)}
-                onConfirm={handleConfirmDelete}
-                title="Excluir Curso"
-                description={`Tem certeza que deseja excluir "${deleteTarget?.name}"? Todos os alunos e aulas serão removidos permanentemente.`}
-                confirmLabel="Excluir Curso"
-            />
-
-            <DeleteConfirmModal
-                open={!!deleteGroupTarget}
-                onOpenChange={() => setDeleteGroupTarget(null)}
-                onConfirm={handleConfirmDeleteGroup}
-                title="Excluir Grupo"
-                description={`Tem certeza que deseja excluir o grupo "${deleteGroupTarget?.name}"? Os cursos não serão removidos, apenas o agrupamento.`}
-                confirmLabel="Excluir Grupo"
-            />
-
-            <WebhookModal
-                open={!!webhookTarget}
-                onOpenChange={() => setWebhookTarget(null)}
-                courseName={webhookTarget?.name ?? ""}
-            />
-
-            <GroupModal
-                open={groupModalOpen}
-                onOpenChange={setGroupModalOpen}
-                editGroup={editingGroup}
-                courses={courses}
-                onSubmit={(data) => { console.log(editingGroup ? "Update group:" : "Create group:", data); setGroupModalOpen(false); setEditingGroup(null); }}
-            />
-        </div>
-    );
-}
-
-/* ---- Groups view subcomponent ---- */
-
-interface GroupsViewProps {
-    groups: CourseGroup[];
-    courses: Course[];
-    onEditGroup: (g: CourseGroup) => void;
-    onDeleteGroup: (g: CourseGroup) => void;
-    onEditCourse: (c: Course) => void;
-    onWebhook: (c: Course) => void;
-    onCreateGroup: () => void;
-}
-
-function GroupsView({ groups, courses, onEditGroup, onDeleteGroup, onEditCourse, onWebhook, onCreateGroup }: GroupsViewProps) {
-    if (groups.length === 0) {
-        return (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                <i className="ri-stack-line text-5xl mb-3" />
-                <h3 className="font-semibold text-foreground mb-1">Nenhum grupo criado</h3>
-                <p className="text-sm mb-4">Agrupe seus cursos para organizar suas ofertas.</p>
-                <button onClick={onCreateGroup} className="btn-brand inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white">
-                    <i className="ri-add-line" />
-                    Criar Primeiro Grupo
-                </button>
-            </div>
-        );
-    }
-
-    return (
-        <div className="space-y-4">
-            {groups.map((group) => (
-                <CourseGroupCard
-                    key={group.id}
-                    group={group}
-                    courses={courses}
-                    onEditGroup={onEditGroup}
-                    onDeleteGroup={onDeleteGroup}
-                    onEditCourse={onEditCourse}
-                    onWebhook={onWebhook}
-                />
-            ))}
+            <CourseModal open={courseModalOpen} onOpenChange={setCourseModalOpen} editCourse={editingCourse} onSubmit={handleCourseSubmit} />
+            <DeleteConfirmModal open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)} onConfirm={handleConfirmDelete}
+                title="Excluir Curso" description={`Tem certeza que deseja excluir "${deleteTarget?.name}"? Todos os alunos e aulas serão removidos permanentemente.`} confirmLabel="Excluir Curso" />
+            <DeleteConfirmModal open={!!deleteGroupTarget} onOpenChange={() => setDeleteGroupTarget(null)} onConfirm={handleConfirmDeleteGroup}
+                title="Excluir Grupo" description={`Tem certeza que deseja excluir o grupo "${deleteGroupTarget?.name}"? Os cursos não serão removidos, apenas o agrupamento.`} confirmLabel="Excluir Grupo" />
+            <WebhookModal open={!!webhookTarget} onOpenChange={() => setWebhookTarget(null)} courseName={webhookTarget?.name ?? ""} />
+            <GroupModal open={groupModalOpen} onOpenChange={setGroupModalOpen} editGroup={editingGroup} courses={courses} onSubmit={handleGroupSubmit} />
         </div>
     );
 }

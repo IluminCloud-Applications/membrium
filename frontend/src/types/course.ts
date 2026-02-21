@@ -6,22 +6,22 @@ export type CourseCategory = "principal" | "order_bump" | "upsell" | "bonus";
 
 export interface Course {
     id: number;
+    uuid?: string;
     name: string;
     description: string;
-    image: string;
+    image: string | null;
     category: CourseCategory;
     studentsCount: number;
     lessonsCount: number;
     createdAt: string;
     isPublished: boolean;
-    groupId?: number;
 }
 
 export interface CourseGroup {
     id: number;
     name: string;
     /** ID of the main/principal course in this group */
-    principalCourseId: number;
+    principalCourseId: number | null;
     /** IDs of all courses in this group (including principal) */
     courseIds: number[];
 }
@@ -39,4 +39,3 @@ export const categoryColors: Record<CourseCategory, string> = {
     upsell: "bg-blue-500/10 text-blue-600",
     bonus: "bg-emerald-500/10 text-emerald-600",
 };
-

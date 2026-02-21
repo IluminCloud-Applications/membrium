@@ -13,6 +13,7 @@ services:
       - SECRET_KEY=dev-secret-key-change-in-production
     volumes:
       - .:/app
+      - uploads_data:/app/static/uploads
     depends_on:
       - postgres
     restart: unless-stopped
@@ -31,3 +32,4 @@ services:
 
 volumes:
   membrium_data:
+  uploads_data:
