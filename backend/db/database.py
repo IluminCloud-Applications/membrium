@@ -18,6 +18,19 @@ def init_db(app):
 
 
 def create_all_tables(app):
-    """Create all database tables"""
+    """Create all database tables.
+    
+    Wrapped in try/except to handle race conditions when multiple
+    Gunicorn workers try to create tables concurrently.
+    """
     with app.app_context():
-        db.create_all()
+        try:
+            db.create_all()
+        except Exception as e:
+            # Multiple workers may race to create tables simultaneously.
+            # If a table was already created by another worker, just ignore.
+            import logging
+            logging.getLogger('app').warning(
+                f"create_all_tables warning (likely race condition): {e}"
+            )
+

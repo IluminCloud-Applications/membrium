@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AdminLayout } from "@/components/layout";
 import { DashboardPage } from "@/pages/dashboard";
@@ -10,6 +11,7 @@ import { TranscriptsPage } from "@/pages/transcripts";
 import { FAQPage } from "@/pages/faq";
 import { SettingsGeneralPage, IntegrationsPage, AIPage } from "@/pages/settings";
 import { CourseModificationPage } from "@/pages/course_modification";
+import { dashboardService, type UserInfo } from "@/services/dashboard";
 
 interface AdminRoutesProps {
     platformName: string;
@@ -17,13 +19,26 @@ interface AdminRoutesProps {
 
 /**
  * Admin routes wrapped with the sidebar layout.
- * Each route renders inside the AdminLayout <Outlet>.
- *
- * TODO: Replace mock user with real session data
+ * Fetches real user info from the API for sidebar and dashboard.
  */
 export function AdminRoutes({ platformName }: AdminRoutesProps) {
-    // TODO: Get from auth context/session
-    const user = { name: "Admin", email: "admin@email.com" };
+    const [user, setUser] = useState({ name: "Admin", email: "" });
+
+    useEffect(() => {
+        loadUserInfo();
+    }, []);
+
+    async function loadUserInfo() {
+        try {
+            const data: UserInfo = await dashboardService.getUserInfo();
+            setUser({
+                name: data.full_name,
+                email: data.email,
+            });
+        } catch {
+            // Fallback to defaults
+        }
+    }
 
     return (
         <Routes>
@@ -55,20 +70,5 @@ export function AdminRoutes({ platformName }: AdminRoutesProps) {
 
             <Route path="*" element={<Navigate to="/admin" replace />} />
         </Routes>
-    );
-}
-
-/** Temporary placeholder for pages not yet implemented */
-function PlaceholderPage({ title }: { title: string }) {
-    return (
-        <div className="flex flex-1 items-center justify-center rounded-xl bg-muted/30 min-h-[60vh]">
-            <div className="text-center space-y-2">
-                <i className="ri-tools-line text-4xl text-muted-foreground" />
-                <h2 className="text-xl font-semibold">{title}</h2>
-                <p className="text-sm text-muted-foreground">
-                    Esta página será implementada em breve.
-                </p>
-            </div>
-        </div>
     );
 }

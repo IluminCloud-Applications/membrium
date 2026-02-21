@@ -16,6 +16,7 @@ export interface LoginResponse {
         type: "admin" | "student";
         email: string;
         name?: string;
+        first_name?: string;
     };
 }
 
@@ -23,6 +24,8 @@ export interface SetupRequest {
     platform_name: string;
     email: string;
     password: string;
+    first_name?: string;
+    last_name?: string;
 }
 
 export interface SetupResponse {

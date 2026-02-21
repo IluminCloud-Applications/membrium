@@ -1,16 +1,9 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-
-interface Student {
-    id: number;
-    name: string;
-    email: string;
-    joinedAt: string; // e.g. "Hoje, 14:32"
-    courseName?: string;
-}
+import type { RecentStudent } from "@/services/dashboard";
 
 interface RecentStudentsProps {
-    students: Student[];
+    students: RecentStudent[];
 }
 
 export function RecentStudents({ students }: RecentStudentsProps) {
@@ -26,7 +19,7 @@ export function RecentStudents({ students }: RecentStudentsProps) {
                 <CardContent>
                     <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
                         <i className="ri-user-smile-line text-3xl mb-2" />
-                        <p className="text-sm">Nenhum aluno recente</p>
+                        <p className="text-sm">Nenhum aluno cadastrado</p>
                     </div>
                 </CardContent>
             </Card>
@@ -68,12 +61,9 @@ export function RecentStudents({ students }: RecentStudentsProps) {
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium truncate">{student.name}</p>
                                 <p className="text-xs text-muted-foreground truncate">
-                                    {student.courseName || student.email}
+                                    {student.course_name || student.email}
                                 </p>
                             </div>
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                {student.joinedAt}
-                            </span>
                         </div>
                     );
                 })}

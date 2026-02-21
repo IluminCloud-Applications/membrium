@@ -15,6 +15,7 @@ from routes.student import student_bp
 from routes.file_manager import file_manager_bp
 from routes.settings import settings_bp
 from routes.misc import misc_bp
+from routes.dashboard import dashboard_bp
 
 # Import existing blueprints
 from promote import promote
@@ -47,6 +48,7 @@ def create_app():
     app.register_blueprint(file_manager_bp)
     app.register_blueprint(settings_bp)
     app.register_blueprint(misc_bp)
+    app.register_blueprint(dashboard_bp)
 
     # Register existing blueprints
     app.register_blueprint(webhook)
