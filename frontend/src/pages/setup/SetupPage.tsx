@@ -8,6 +8,7 @@ import { StepIndicator } from "./StepIndicator";
 
 export type SetupData = {
     platform_name: string;
+    name: string;
     email: string;
     password: string;
 };
@@ -26,6 +27,7 @@ export function SetupPage({ onSetupComplete }: SetupPageProps) {
     const [step, setStep] = useState(0);
     const [data, setData] = useState<SetupData>({
         platform_name: "",
+        name: "",
         email: "",
         password: "",
     });
@@ -70,8 +72,8 @@ export function SetupPage({ onSetupComplete }: SetupPageProps) {
                                 <SetupStepAdmin
                                     data={data}
                                     onBack={() => setStep(0)}
-                                    onComplete={(email: string, password: string) => {
-                                        setData((prev) => ({ ...prev, email, password }));
+                                    onComplete={(name: string, email: string, password: string) => {
+                                        setData((prev) => ({ ...prev, name, email, password }));
                                         setStep(2);
                                     }}
                                 />

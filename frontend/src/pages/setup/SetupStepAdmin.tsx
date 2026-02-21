@@ -10,10 +10,11 @@ import type { SetupData } from "./SetupPage";
 interface SetupStepAdminProps {
     data: SetupData;
     onBack: () => void;
-    onComplete: (email: string, password: string) => void;
+    onComplete: (name: string, email: string, password: string) => void;
 }
 
 export function SetupStepAdmin({ data, onBack, onComplete }: SetupStepAdminProps) {
+    const [name, setName] = useState(data.name);
     const [email, setEmail] = useState(data.email);
     const [password, setPassword] = useState(data.password);
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -23,6 +24,11 @@ export function SetupStepAdmin({ data, onBack, onComplete }: SetupStepAdminProps
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
+
+        if (!name.trim()) {
+            setError("Informe seu nome");
+            return;
+        }
 
         if (!email.trim()) {
             setError("Informe o e-mail do administrador");
@@ -44,6 +50,7 @@ export function SetupStepAdmin({ data, onBack, onComplete }: SetupStepAdminProps
         try {
             const response = await authService.setup({
                 platform_name: data.platform_name,
+                name: name.trim(),
                 email: email.trim(),
                 password,
             });
@@ -52,7 +59,7 @@ export function SetupStepAdmin({ data, onBack, onComplete }: SetupStepAdminProps
                 throw new Error(response.message);
             }
 
-            onComplete(email.trim(), password);
+            onComplete(name.trim(), email.trim(), password);
         } catch (err) {
             const message =
                 err instanceof Error ? err.message : "Ocorreu um erro inesperado";
@@ -74,6 +81,31 @@ export function SetupStepAdmin({ data, onBack, onComplete }: SetupStepAdminProps
             </div>
 
             <div className="form-group">
+                <Label htmlFor="setup-name" className="form-label">
+                    Seu Nome
+                </Label>
+                <div className="input-with-icon">
+                    <i className="ri-user-line input-icon" />
+                    <Input
+                        id="setup-name"
+                        type="text"
+                        value={name}
+                        onChange={(e) => {
+                            setName(e.target.value);
+                            if (error) setError(null);
+                        }}
+                        placeholder="Ex: João Pedro"
+                        className="pl-10"
+                        required
+                        autoFocus
+                    />
+                </div>
+                <p className="form-hint">
+                    Este nome será exibido no painel de administração.
+                </p>
+            </div>
+
+            <div className="form-group">
                 <Label htmlFor="setup-email" className="form-label">
                     E-mail do Administrador
                 </Label>
@@ -91,7 +123,6 @@ export function SetupStepAdmin({ data, onBack, onComplete }: SetupStepAdminProps
                         className="pl-10"
                         required
                         autoComplete="email"
-                        autoFocus
                     />
 
                 </div>

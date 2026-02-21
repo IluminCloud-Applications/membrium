@@ -23,7 +23,6 @@ export function StatsOverview({ stats }: StatsOverviewProps) {
                 value={stats.totalStudents}
                 icon="ri-group-line"
                 description="Alunos cadastrados"
-                trend={{ value: "+12%", positive: true }}
             />
             <StatCard
                 title="Total de Aulas"
@@ -35,8 +34,7 @@ export function StatsOverview({ stats }: StatsOverviewProps) {
                 title="Alunos Ativos"
                 value={stats.activeStudents}
                 icon="ri-user-heart-line"
-                description="Últimas 24h"
-                trend={{ value: "+5%", positive: true }}
+                description="Matriculados em cursos"
             />
         </div>
     );

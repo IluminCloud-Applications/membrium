@@ -24,9 +24,7 @@ def get_user_info():
 
     return jsonify({
         'id': admin.id,
-        'first_name': admin.first_name or 'Admin',
-        'last_name': admin.last_name or '',
-        'full_name': admin.full_name,
+        'name': admin.name or 'Admin',
         'email': admin.email,
         'platform_name': admin.platform_name,
     })

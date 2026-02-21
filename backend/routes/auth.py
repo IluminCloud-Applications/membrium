@@ -47,16 +47,14 @@ def api_install():
     platform_name = data.get('platform_name', '').strip()
     email = data.get('email', '').strip()
     password = data.get('password', '')
-    first_name = data.get('first_name', '').strip()
-    last_name = data.get('last_name', '').strip()
+    name = data.get('name', '').strip()
 
     if not platform_name or not email or not password:
         return jsonify({'success': False, 'message': 'Todos os campos são obrigatórios'}), 400
 
     hashed_password = generate_password_hash(password)
     new_admin = Admin(
-        first_name=first_name or None,
-        last_name=last_name or None,
+        name=name or None,
         email=email,
         password=hashed_password,
         platform_name=platform_name,
@@ -95,8 +93,7 @@ def api_login():
                 'id': admin.id,
                 'type': 'admin',
                 'email': admin.email,
-                'name': admin.full_name,
-                'first_name': admin.first_name or 'Admin',
+                'name': admin.name or 'Admin',
             },
         })
 
@@ -167,8 +164,7 @@ def api_me():
                     'id': admin.id,
                     'type': 'admin',
                     'email': admin.email,
-                    'name': admin.full_name,
-                    'first_name': admin.first_name or 'Admin',
+                    'name': admin.name or 'Admin',
                 },
             })
     elif user_type == 'student':

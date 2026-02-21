@@ -1,41 +1,91 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { SettingsSection } from "../SettingsSection";
+import { settingsService } from "@/services/settings";
 
 export function AdminSection() {
-    const [email, setEmail] = useState("admin@exemplo.com");
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [showCurrent, setShowCurrent] = useState(false);
     const [showNew, setShowNew] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [loaded, setLoaded] = useState(false);
+    const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+    useEffect(() => {
+        loadSettings();
+    }, []);
+
+    async function loadSettings() {
+        try {
+            const data = await settingsService.getAll();
+            setName(data.admin_name || "");
+            setEmail(data.admin_email || "");
+            setLoaded(true);
+        } catch {
+            setLoaded(true);
+        }
+    }
 
     async function handleSave() {
         setSaving(true);
-        // TODO: API call to update admin info
-        setTimeout(() => setSaving(false), 800);
+        setFeedback(null);
+        try {
+            const res = await settingsService.updateAdmin({
+                name,
+                email,
+                current_password: currentPassword || undefined,
+                new_password: newPassword || undefined,
+            });
+            setFeedback({ type: "success", text: res.message });
+            setCurrentPassword("");
+            setNewPassword("");
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : "Erro ao salvar";
+            setFeedback({ type: "error", text: msg });
+        } finally {
+            setSaving(false);
+            setTimeout(() => setFeedback(null), 4000);
+        }
     }
+
+    if (!loaded) return null;
 
     return (
         <SettingsSection
             icon="ri-user-settings-line"
             title="Informações do Administrador"
-            description="Gerencie suas credenciais de acesso à plataforma."
+            description="Gerencie seu nome, credenciais e acesso à plataforma."
         >
             <div className="space-y-4">
-                <div className="space-y-2">
-                    <Label htmlFor="adminEmail">Email</Label>
-                    <Input
-                        id="adminEmail"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Seu email de acesso"
-                    />
+                {/* Name + Email side by side */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="adminName">Nome</Label>
+                        <Input
+                            id="adminName"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="Ex: João Pedro"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="adminEmail">Email</Label>
+                        <Input
+                            id="adminEmail"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="Seu email de acesso"
+                        />
+                    </div>
                 </div>
 
+                {/* Current Password + New Password side by side */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="currentPassword">Senha Atual</Label>
@@ -79,7 +129,16 @@ export function AdminSection() {
                     </div>
                 </div>
 
-                <div className="flex justify-end">
+                <p className="text-xs text-muted-foreground">
+                    Deixe os campos de senha em branco se não deseja alterá-la.
+                </p>
+
+                <div className="flex items-center justify-end gap-3">
+                    {feedback && (
+                        <span className={`text-sm ${feedback.type === "success" ? "text-green-600" : "text-red-500"}`}>
+                            {feedback.text}
+                        </span>
+                    )}
                     <Button
                         onClick={handleSave}
                         disabled={saving}

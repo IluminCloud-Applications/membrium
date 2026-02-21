@@ -32,7 +32,7 @@ export function AdminRoutes({ platformName }: AdminRoutesProps) {
         try {
             const data: UserInfo = await dashboardService.getUserInfo();
             setUser({
-                name: data.full_name,
+                name: data.name,
                 email: data.email,
             });
         } catch {

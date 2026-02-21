@@ -36,9 +36,7 @@ export interface RecentStudentsResponse {
 
 export interface UserInfo {
     id: number;
-    first_name: string;
-    last_name: string;
-    full_name: string;
+    name: string;
     email: string;
     platform_name: string;
 }

@@ -16,18 +16,11 @@ student_lessons = db.Table('student_lessons',
 
 class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    first_name = db.Column(db.String(80), nullable=True)
-    last_name = db.Column(db.String(80), nullable=True)
+    name = db.Column(db.String(120), nullable=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     platform_name = db.Column(db.String(120), nullable=False)
     is_installed = db.Column(db.Boolean, default=False)
-
-    @property
-    def full_name(self):
-        parts = [self.first_name or '', self.last_name or '']
-        name = ' '.join(p for p in parts if p).strip()
-        return name or 'Admin'
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -102,6 +95,7 @@ class Settings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     # Support
     support_email = db.Column(db.String(120), nullable=True)
+    support_whatsapp = db.Column(db.String(20), nullable=True)
     sender_name = db.Column(db.String(255))
     sender_email = db.Column(db.String(255))
     
