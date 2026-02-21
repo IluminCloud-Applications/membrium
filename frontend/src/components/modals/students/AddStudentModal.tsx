@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
     Dialog,
     DialogContent,
@@ -8,6 +8,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
     Select,
     SelectContent,
@@ -21,6 +22,7 @@ interface AddStudentModalProps {
     onOpenChange: (open: boolean) => void;
     onSubmit: (data: AddStudentFormData) => void;
     availableCourses: { id: number; name: string }[];
+    adminEmail?: string;
     isLoading?: boolean;
 }
 
@@ -28,7 +30,7 @@ export interface AddStudentFormData {
     name: string;
     email: string;
     password: string;
-    courseId: number | null;
+    courseIds: number[];
 }
 
 export function AddStudentModal({
@@ -36,12 +38,14 @@ export function AddStudentModal({
     onOpenChange,
     onSubmit,
     availableCourses,
+    adminEmail = "",
     isLoading,
 }: AddStudentModalProps) {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [courseId, setCourseId] = useState<string>("");
+    const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([]);
+    const [courseToAdd, setCourseToAdd] = useState<string>("");
 
     useEffect(() => {
         if (!open) resetForm();
@@ -51,18 +55,43 @@ export function AddStudentModal({
         setName("");
         setEmail("");
         setPassword("");
-        setCourseId("");
+        setSelectedCourseIds([]);
+        setCourseToAdd("");
+    }
+
+    /* ---- Email admin check ---- */
+    const isAdminEmail = adminEmail !== "" && email.trim().toLowerCase() === adminEmail;
+
+    /* ---- Course management ---- */
+    const unselectedCourses = useMemo(
+        () => availableCourses.filter((c) => !selectedCourseIds.includes(c.id)),
+        [availableCourses, selectedCourseIds]
+    );
+
+    const selectedCourses = useMemo(
+        () => availableCourses.filter((c) => selectedCourseIds.includes(c.id)),
+        [availableCourses, selectedCourseIds]
+    );
+
+    function handleAddCourse() {
+        if (!courseToAdd) return;
+        const id = Number(courseToAdd);
+        if (!selectedCourseIds.includes(id)) {
+            setSelectedCourseIds((prev) => [...prev, id]);
+        }
+        setCourseToAdd("");
+    }
+
+    function handleRemoveCourse(courseId: number) {
+        setSelectedCourseIds((prev) => prev.filter((id) => id !== courseId));
     }
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        onSubmit({
-            name,
-            email,
-            password,
-            courseId: courseId ? Number(courseId) : null,
-        });
+        onSubmit({ name, email, password, courseIds: selectedCourseIds });
     }
+
+    const canSubmit = name.trim() && email.trim() && password.trim() && !isAdminEmail;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -101,7 +130,14 @@ export function AddStudentModal({
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="aluno@email.com"
                             required
+                            className={isAdminEmail ? "border-destructive focus-visible:ring-destructive" : ""}
                         />
+                        {isAdminEmail && (
+                            <div className="flex items-center gap-1.5 text-destructive text-xs">
+                                <i className="ri-error-warning-line text-sm" />
+                                Este é o email do administrador. Use um email diferente.
+                            </div>
+                        )}
                     </div>
 
                     {/* Password */}
@@ -119,27 +155,69 @@ export function AddStudentModal({
                         />
                     </div>
 
-                    {/* Course */}
+                    {/* Courses — multi-select */}
                     <div className="space-y-2">
                         <Label className="text-sm font-medium">
-                            Curso (opcional)
+                            Cursos (opcional)
                         </Label>
-                        <Select value={courseId} onValueChange={setCourseId}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecione um curso" />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-xl">
-                                {availableCourses.map((course) => (
-                                    <SelectItem
+
+                        {/* Selected courses chips */}
+                        {selectedCourses.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                                {selectedCourses.map((course) => (
+                                    <Badge
                                         key={course.id}
-                                        value={course.id.toString()}
-                                        className="rounded-lg"
+                                        variant="secondary"
+                                        className="text-xs bg-primary/8 text-primary/80 pr-1 gap-1"
                                     >
                                         {course.name}
-                                    </SelectItem>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveCourse(course.id)}
+                                            className="ml-0.5 h-4 w-4 rounded-full flex items-center justify-center hover:bg-destructive/20 hover:text-destructive transition-colors"
+                                        >
+                                            <i className="ri-close-line text-[10px]" />
+                                        </button>
+                                    </Badge>
                                 ))}
-                            </SelectContent>
-                        </Select>
+                            </div>
+                        )}
+
+                        {/* Add course selector */}
+                        {unselectedCourses.length > 0 && (
+                            <div className="flex gap-2">
+                                <Select value={courseToAdd} onValueChange={setCourseToAdd}>
+                                    <SelectTrigger className="flex-1">
+                                        <SelectValue placeholder="Selecione um curso" />
+                                    </SelectTrigger>
+                                    <SelectContent className="rounded-xl">
+                                        {unselectedCourses.map((course) => (
+                                            <SelectItem
+                                                key={course.id}
+                                                value={course.id.toString()}
+                                                className="rounded-lg"
+                                            >
+                                                {course.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <Button
+                                    type="button"
+                                    onClick={handleAddCourse}
+                                    className="btn-brand shrink-0"
+                                    disabled={!courseToAdd}
+                                >
+                                    <i className="ri-add-line" />
+                                </Button>
+                            </div>
+                        )}
+
+                        {unselectedCourses.length === 0 && selectedCourses.length > 0 && (
+                            <p className="text-xs text-muted-foreground italic">
+                                Todos os cursos foram adicionados.
+                            </p>
+                        )}
                     </div>
 
                     {/* Buttons */}
@@ -155,7 +233,7 @@ export function AddStudentModal({
                         <Button
                             type="submit"
                             className="btn-brand flex-1"
-                            disabled={isLoading || !name.trim() || !email.trim()}
+                            disabled={isLoading || !canSubmit}
                         >
                             {isLoading ? (
                                 <span className="flex items-center gap-2">

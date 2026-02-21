@@ -18,7 +18,7 @@ import { useStudents } from "@/hooks/useStudents";
 export function StudentsPage() {
     const navigate = useNavigate();
     const {
-        students, courses, stats, loading, actionLoading,
+        students, courses, stats, adminEmail, loading, actionLoading,
         createStudent, updateStudent, deleteStudent,
         addCourse, removeCourse, resendAccess,
     } = useStudents();
@@ -62,7 +62,7 @@ export function StudentsPage() {
 
     /* ---- Handlers ---- */
 
-    async function handleCreate(data: { name: string; email: string; password: string; courseId: number | null }) {
+    async function handleCreate(data: { name: string; email: string; password: string; courseIds: number[] }) {
         const ok = await createStudent(data);
         if (ok) setAddModalOpen(false);
     }
@@ -160,6 +160,7 @@ export function StudentsPage() {
                 open={addModalOpen}
                 onOpenChange={setAddModalOpen}
                 availableCourses={courses}
+                adminEmail={adminEmail}
                 isLoading={actionLoading}
                 onSubmit={handleCreate}
             />
@@ -168,6 +169,7 @@ export function StudentsPage() {
                 open={!!editTarget}
                 onOpenChange={() => setEditTarget(null)}
                 student={editTarget}
+                adminEmail={adminEmail}
                 isLoading={actionLoading}
                 onSubmit={handleUpdate}
             />

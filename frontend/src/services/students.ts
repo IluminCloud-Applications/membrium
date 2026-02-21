@@ -25,7 +25,7 @@ export interface CreateStudentPayload {
     name: string;
     email: string;
     password: string;
-    courseId: number | null;
+    courseIds: number[];
 }
 
 export interface UpdateStudentPayload {

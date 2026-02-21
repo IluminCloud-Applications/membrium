@@ -15,6 +15,7 @@ interface EditStudentModalProps {
     onOpenChange: (open: boolean) => void;
     onSubmit: (data: EditStudentFormData) => void;
     student: Student | null;
+    adminEmail?: string;
     isLoading?: boolean;
 }
 
@@ -31,6 +32,7 @@ export function EditStudentModal({
     onOpenChange,
     onSubmit,
     student,
+    adminEmail = "",
     isLoading,
 }: EditStudentModalProps) {
     const [name, setName] = useState("");
@@ -51,6 +53,9 @@ export function EditStudentModal({
         if (!student) return;
         onSubmit({ id: student.id, name, email, password });
     }
+
+    const isAdminEmail = adminEmail !== "" && email.trim().toLowerCase() === adminEmail;
+    const canSubmit = name.trim() && email.trim() && !isAdminEmail;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -77,7 +82,6 @@ export function EditStudentModal({
                         />
                     </div>
 
-                    {/* Email */}
                     <div className="space-y-2">
                         <Label htmlFor="edit-email" className="text-sm font-medium">
                             Email
@@ -89,7 +93,14 @@ export function EditStudentModal({
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="aluno@email.com"
                             required
+                            className={isAdminEmail ? "border-destructive focus-visible:ring-destructive" : ""}
                         />
+                        {isAdminEmail && (
+                            <div className="flex items-center gap-1.5 text-destructive text-xs">
+                                <i className="ri-error-warning-line text-sm" />
+                                Este é o email do administrador. Use um email diferente.
+                            </div>
+                        )}
                     </div>
 
                     {/* Password */}
@@ -122,7 +133,7 @@ export function EditStudentModal({
                         <Button
                             type="submit"
                             className="btn-brand flex-1"
-                            disabled={isLoading || !name.trim() || !email.trim()}
+                            disabled={isLoading || !canSubmit}
                         >
                             {isLoading ? (
                                 <span className="flex items-center gap-2">

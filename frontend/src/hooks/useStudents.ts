@@ -6,6 +6,7 @@ import {
     type CourseOption,
     type StudentStats,
 } from "@/services/students";
+import { dashboardService } from "@/services/dashboard";
 
 /* ---- Convert API format → frontend Student type ---- */
 function mapStudent(s: StudentFromAPI): Student {
@@ -27,20 +28,23 @@ export function useStudents() {
     const [students, setStudents] = useState<Student[]>([]);
     const [courses, setCourses] = useState<CourseOption[]>([]);
     const [stats, setStats] = useState<StudentStats>({ total: 0, active: 0, inactive: 0 });
+    const [adminEmail, setAdminEmail] = useState("");
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
 
     /* ---- Fetch ---- */
     const fetchStudents = useCallback(async () => {
         try {
-            const [studentsData, coursesData, statsData] = await Promise.all([
+            const [studentsData, coursesData, statsData, userInfo] = await Promise.all([
                 studentsService.getAll(),
                 studentsService.getCourses(),
                 studentsService.getStats(),
+                dashboardService.getUserInfo(),
             ]);
             setStudents(studentsData.map(mapStudent));
             setCourses(coursesData);
             setStats(statsData);
+            setAdminEmail(userInfo.email.toLowerCase());
         } catch (err) {
             console.error("Erro ao carregar alunos:", err);
         } finally {
@@ -53,7 +57,7 @@ export function useStudents() {
     }, [fetchStudents]);
 
     /* ---- Mutations ---- */
-    async function createStudent(data: { name: string; email: string; password: string; courseId: number | null }) {
+    async function createStudent(data: { name: string; email: string; password: string; courseIds: number[] }) {
         setActionLoading(true);
         try {
             await studentsService.create(data);
@@ -144,6 +148,7 @@ export function useStudents() {
         students,
         courses,
         stats,
+        adminEmail,
         loading,
         actionLoading,
         createStudent,

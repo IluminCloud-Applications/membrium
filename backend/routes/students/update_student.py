@@ -29,8 +29,15 @@ def update_student(student_id):
         return jsonify({'success': False, 'message': 'Dados inválidos'}), 400
 
     try:
+        new_email = data.get('email', student.email).strip().lower()
+
+        # Block student email from being the same as admin email
+        admin = Admin.query.get(session['user_id'])
+        if admin and admin.email.lower() == new_email:
+            return jsonify({'success': False, 'message': 'O email do aluno não pode ser igual ao do administrador'}), 400
+
         student.name = data.get('name', student.name).strip()
-        student.email = data.get('email', student.email).strip()
+        student.email = new_email
 
         new_password = data.get('password', '').strip()
         if new_password:

@@ -22,18 +22,23 @@ def admin_required(f):
 @create_student_bp.route('/', methods=['POST'])
 @admin_required
 def create_student():
-    """Create a new student and optionally enroll in a course."""
+    """Create a new student and optionally enroll in multiple courses."""
     data = request.get_json()
     if not data:
         return jsonify({'success': False, 'message': 'Dados inválidos'}), 400
 
     name = data.get('name', '').strip()
-    email = data.get('email', '').strip()
+    email = data.get('email', '').strip().lower()
     password = data.get('password', '').strip()
-    course_id = data.get('courseId')
+    course_ids = data.get('courseIds', [])
 
     if not name or not email or not password:
         return jsonify({'success': False, 'message': 'Nome, email e senha são obrigatórios'}), 400
+
+    # Block student email from being the same as admin email
+    admin = Admin.query.get(session['user_id'])
+    if admin and admin.email.lower() == email:
+        return jsonify({'success': False, 'message': 'O email do aluno não pode ser igual ao do administrador'}), 400
 
     hashed_password = generate_password_hash(password)
 
@@ -42,8 +47,9 @@ def create_student():
         db.session.add(new_student)
         db.session.flush()
 
-        if course_id:
-            course = Course.query.get(course_id)
+        # Enroll in multiple courses
+        for cid in course_ids:
+            course = Course.query.get(cid)
             if course:
                 new_student.courses.append(course)
 
