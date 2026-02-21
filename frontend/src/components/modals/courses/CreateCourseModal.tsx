@@ -65,7 +65,7 @@ export function CourseModal({
     useEffect(() => {
         if (editCourse) {
             setName(editCourse.name);
-            setDescription(editCourse.description);
+            setDescription(editCourse.description || "");
             setCategory(editCourse.category);
             setPreview(editCourse.image || null);
             setImageFile(null);
@@ -190,9 +190,8 @@ export function CourseModal({
                             id="course-desc"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            placeholder="Descreva o conteúdo do curso..."
+                            placeholder="Descreva o conteúdo do curso... (opcional)"
                             rows={3}
-                            required
                         />
                     </div>
 

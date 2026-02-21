@@ -84,7 +84,9 @@ export function CourseGroupCard({
                                     Principal
                                 </Badge>
                             </div>
-                            <p className="text-xs text-muted-foreground truncate">{principal.description}</p>
+                            {principal.description && (
+                                <p className="text-xs text-muted-foreground truncate">{principal.description}</p>
+                            )}
                         </div>
                         <div className="flex gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                             <ActionButton icon="ri-settings-3-line" label="Personalizar" onClick={() => goToCourse(principal.id)} />

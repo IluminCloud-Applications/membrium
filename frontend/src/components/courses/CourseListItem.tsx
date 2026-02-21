@@ -54,9 +54,11 @@ export function CourseListItem({ course, onEdit, onDelete, onWebhook }: CourseLi
                         </Badge>
                     )}
                 </div>
-                <p className="text-xs text-muted-foreground truncate max-w-md">
-                    {course.description}
-                </p>
+                {course.description && (
+                    <p className="text-xs text-muted-foreground truncate max-w-md">
+                        {course.description}
+                    </p>
+                )}
             </div>
 
             {/* Stats */}

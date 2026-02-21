@@ -120,6 +120,8 @@ class CourseGroup(db.Model):
 
 class Settings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    # Platform preferences
+    default_theme = db.Column(db.String(10), default='light')  # 'light' or 'dark' — default theme for students
     # Support
     support_email = db.Column(db.String(120), nullable=True)
     support_whatsapp = db.Column(db.String(20), nullable=True)

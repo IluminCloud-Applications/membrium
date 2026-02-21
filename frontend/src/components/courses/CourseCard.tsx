@@ -52,9 +52,11 @@ export function CourseCard({ course, onEdit, onDelete, onWebhook }: CourseCardPr
             {/* Info — clickable */}
             <div className="p-4 space-y-2 cursor-pointer" onClick={handleNavigate}>
                 <h3 className="font-semibold text-sm truncate">{course.name}</h3>
-                <p className="text-xs text-muted-foreground line-clamp-2">
-                    {course.description}
-                </p>
+                {course.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                        {course.description}
+                    </p>
+                )}
 
                 <div className="flex items-center gap-4 text-xs text-muted-foreground pt-1">
                     <span className="flex items-center gap-1">

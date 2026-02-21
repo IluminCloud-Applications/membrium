@@ -44,7 +44,7 @@ export function CoursesPage() {
         if (search.trim()) {
             const q = search.toLowerCase();
             result = result.filter(
-                (c) => c.name.toLowerCase().includes(q) || c.description.toLowerCase().includes(q)
+                (c) => c.name.toLowerCase().includes(q) || (c.description && c.description.toLowerCase().includes(q))
             );
         }
         if (activeCategory !== "all") {
@@ -96,7 +96,7 @@ export function CoursesPage() {
     async function handleCourseSubmit(data: import("@/components/modals/courses/CreateCourseModal").CourseFormData) {
         const formData = new FormData();
         formData.append("name", data.name);
-        formData.append("description", data.description);
+        if (data.description) formData.append("description", data.description);
         formData.append("category", data.category);
         if (data.image) formData.append("image", data.image);
         if (data.imageRemoved) formData.append("image_removed", "true");

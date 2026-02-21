@@ -28,7 +28,7 @@ def admin_required(f):
 def create_course():
     """Create a new course."""
     name = request.form.get('name', '').strip()
-    description = request.form.get('description', '').strip()
+    description = request.form.get('description', '').strip() or None
     category = request.form.get('category', 'principal')
     image = request.files.get('image')
 
@@ -67,7 +67,8 @@ def update_course(course_id):
     try:
         course = Course.query.get_or_404(course_id)
         course.name = request.form.get('name', course.name)
-        course.description = request.form.get('description', course.description)
+        if 'description' in request.form:
+            course.description = request.form.get('description', '').strip() or None
         course.category = request.form.get('category', course.category)
 
         # Handle is_published
