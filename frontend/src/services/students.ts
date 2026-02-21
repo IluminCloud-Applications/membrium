@@ -54,6 +54,28 @@ interface MutationResponse {
     courses?: { id: number; name: string }[];
 }
 
+export interface ImportStudentsPayload {
+    students: { name: string; email: string }[];
+    courseIds: number[];
+    sendEmail?: boolean;
+    defaultPassword?: string;
+}
+
+export interface ImportProgress {
+    current: number;
+    total: number;
+    imported: number;
+    skipped: number;
+}
+
+export interface ImportResult {
+    done: true;
+    imported: number;
+    skipped: number;
+    total: number;
+    errors: string[];
+}
+
 interface EmailCheckResponse {
     exists: boolean;
 }
@@ -120,4 +142,49 @@ export const studentsService = {
             `/students/${studentId}/resend-access`,
             {}
         ),
+
+    /**
+     * Import students with streaming progress (NDJSON).
+     * Calls onProgress for each line, onDone when finished.
+     */
+    importStudents: async (
+        payload: ImportStudentsPayload,
+        onProgress: (p: ImportProgress) => void,
+        onDone: (result: ImportResult) => void,
+    ) => {
+        const res = await fetch("/api/students/import", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(payload),
+        });
+
+        const reader = res.body?.getReader();
+        if (!reader) return;
+
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+            const { done, value } = await reader.read();
+            buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+
+            for (const line of lines) {
+                if (!line.trim()) continue;
+                try {
+                    const data = JSON.parse(line);
+                    if (data.done) {
+                        onDone(data as ImportResult);
+                    } else if (data.progress) {
+                        onProgress(data.progress as ImportProgress);
+                    }
+                } catch { /* ignore parse errors */ }
+            }
+
+            if (done) break;
+        }
+    },
 };

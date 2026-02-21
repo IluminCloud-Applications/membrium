@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     StudentFilters,
@@ -7,14 +7,17 @@ import {
     StudentStats,
     StudentPagination,
 } from "@/components/students";
+import { ImportProgressFloat } from "@/components/students/ImportProgressFloat";
 import { AddStudentModal } from "@/components/modals/students/AddStudentModal";
 import { EditStudentModal } from "@/components/modals/students/EditStudentModal";
+import { ImportStudentModal, type ImportData } from "@/components/modals/students/ImportStudentModal";
 import { ManageCoursesModal } from "@/components/modals/students/ManageCoursesModal";
 import { ResendAccessModal } from "@/components/modals/students/ResendAccessModal";
 import { QuickAccessModal } from "@/components/modals/students/QuickAccessModal";
 import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModal";
 import type { Student } from "@/types/student";
 import { useStudents } from "@/hooks/useStudents";
+import { studentsService, type ImportProgress, type ImportResult } from "@/services/students";
 
 const DEBOUNCE_MS = 400;
 
@@ -33,7 +36,6 @@ export function StudentsPage() {
     const [courseFilter, setCourseFilter] = useState("all");
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // Debounce search + course filter → server
     useEffect(() => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(() => {
@@ -47,14 +49,42 @@ export function StudentsPage() {
 
     // Modal states
     const [addModalOpen, setAddModalOpen] = useState(false);
+    const [importModalOpen, setImportModalOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<Student | null>(null);
     const [manageCoursesTarget, setManageCoursesTarget] = useState<Student | null>(null);
     const [resendTarget, setResendTarget] = useState<Student | null>(null);
     const [quickAccessTarget, setQuickAccessTarget] = useState<Student | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
 
-    /* ---- Handlers ---- */
+    // Import progress
+    const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
+    const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
+    /* ---- Import handler ---- */
+    const handleStartImport = useCallback((data: ImportData) => {
+        setImportModalOpen(false);
+        setImportProgress(null);
+        setImportResult(null);
+
+        studentsService.importStudents(
+            data,
+            (p) => setImportProgress({ ...p }),
+            (result) => {
+                setImportResult(result);
+                setImportProgress(null);
+                // Refresh student list
+                const courseId = courseFilter !== "all" ? Number(courseFilter) : undefined;
+                applyFilters(search, courseId);
+            },
+        );
+    }, [courseFilter, search, applyFilters]);
+
+    const handleDismissImport = useCallback(() => {
+        setImportProgress(null);
+        setImportResult(null);
+    }, []);
+
+    /* ---- CRUD Handlers ---- */
     async function handleCreate(data: { name: string; email: string; password: string; courseIds: number[] }) {
         const ok = await createStudent(data);
         if (ok) setAddModalOpen(false);
@@ -109,7 +139,6 @@ export function StudentsPage() {
 
     return (
         <div className="space-y-6 animate-fade-in">
-            {/* Page header */}
             <div>
                 <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
                     <i className="ri-group-line text-primary" />
@@ -129,14 +158,11 @@ export function StudentsPage() {
                 onCourseFilterChange={setCourseFilter}
                 availableCourses={courses}
                 onAddStudent={() => setAddModalOpen(true)}
-                onImport={() => navigate("/admin/alunos/importar")}
+                onImport={() => setImportModalOpen(true)}
             />
 
             {students.length === 0 ? (
-                <StudentEmptyState
-                    hasFilters={hasActiveFilters}
-                    onAddStudent={() => setAddModalOpen(true)}
-                />
+                <StudentEmptyState hasFilters={hasActiveFilters} onAddStudent={() => setAddModalOpen(true)} />
             ) : (
                 <>
                     <StudentTable
@@ -147,7 +173,6 @@ export function StudentsPage() {
                         onQuickAccess={setQuickAccessTarget}
                         onDelete={setDeleteTarget}
                     />
-
                     {!hasActiveFilters && (
                         <StudentPagination
                             page={page}
@@ -167,6 +192,13 @@ export function StudentsPage() {
                 adminEmail={adminEmail}
                 isLoading={actionLoading}
                 onSubmit={handleCreate}
+            />
+
+            <ImportStudentModal
+                open={importModalOpen}
+                onOpenChange={setImportModalOpen}
+                availableCourses={courses}
+                onStartImport={handleStartImport}
             />
 
             <EditStudentModal
@@ -211,6 +243,15 @@ export function StudentsPage() {
                 description={`Tem certeza que deseja excluir "${deleteTarget?.name}"? O aluno será removido de todos os cursos permanentemente.`}
                 confirmLabel="Excluir Aluno"
             />
+
+            {/* Import progress float */}
+            {(importProgress || importResult) && (
+                <ImportProgressFloat
+                    progress={importProgress}
+                    result={importResult}
+                    onDismiss={handleDismissImport}
+                />
+            )}
         </div>
     );
 }
