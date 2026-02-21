@@ -91,15 +91,27 @@ export function FileInput({
                 />
             </div>
 
-            <div className="flex items-center gap-2">
-                <Checkbox
-                    id="has-header"
-                    checked={hasHeader}
-                    onCheckedChange={(c) => onHeaderToggle(c === true)}
-                />
-                <Label htmlFor="has-header" className="text-sm cursor-pointer">
-                    A primeira linha é cabeçalho
-                </Label>
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <Checkbox
+                        id="has-header"
+                        checked={hasHeader}
+                        onCheckedChange={(c) => onHeaderToggle(c === true)}
+                    />
+                    <Label htmlFor="has-header" className="text-sm cursor-pointer">
+                        A primeira linha é cabeçalho
+                    </Label>
+                </div>
+
+                <a
+                    href="https://docs.google.com/spreadsheets/d/1E1o4IjxbFULkem0IClbiyJikJYHPTHUEQ44g-qkeccc/edit?usp=sharing"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary hover:underline flex items-center gap-1"
+                >
+                    <i className="ri-file-download-line text-sm" />
+                    Ver CSV de exemplo
+                </a>
             </div>
         </div>
     );
