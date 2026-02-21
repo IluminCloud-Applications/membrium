@@ -70,7 +70,12 @@ export function FAQDetailsModal({
                 {/* Date */}
                 <div className="flex items-center justify-end text-xs text-muted-foreground pt-3 border-t">
                     <span>
-                        Atualizado em: <strong>{item.updatedAt}</strong>
+                        Atualizado em:{" "}
+                        <strong>
+                            {item.updatedAt
+                                ? new Date(item.updatedAt).toLocaleDateString("pt-BR")
+                                : "—"}
+                        </strong>
                     </span>
                 </div>
 

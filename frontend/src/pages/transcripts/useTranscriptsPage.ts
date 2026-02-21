@@ -1,16 +1,23 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { transcriptsService } from "@/services/transcripts";
 import type {
     Transcript,
     TranscriptDrillLevel,
     TranscriptCourseSummary,
     TranscriptModuleSummary,
+    TranscriptStats,
 } from "@/types/transcript";
 
-interface UseTranscriptsPageProps {
-    transcripts: Transcript[];
-}
+export function useTranscriptsPage() {
+    // Data from API
+    const [transcripts, setTranscripts] = useState<Transcript[]>([]);
+    const [stats, setStats] = useState<TranscriptStats>({
+        totalTranscripts: 0,
+        coursesWithTranscripts: 0,
+        totalKeywords: 0,
+    });
+    const [loading, setLoading] = useState(true);
 
-export function useTranscriptsPage({ transcripts }: UseTranscriptsPageProps) {
     // Drill-down
     const [level, setLevel] = useState<TranscriptDrillLevel>("courses");
     const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
@@ -26,18 +33,30 @@ export function useTranscriptsPage({ transcripts }: UseTranscriptsPageProps) {
     const [deleteTarget, setDeleteTarget] = useState<Transcript | null>(null);
     const [youtubeOpen, setYoutubeOpen] = useState(false);
 
-    // Stats
-    const stats = useMemo(() => {
-        const uniqueCourses = new Set(transcripts.map((t) => t.courseName));
-        const totalKeywords = transcripts.reduce((sum, t) => sum + t.keywords.length, 0);
-        return {
-            totalTranscripts: transcripts.length,
-            coursesWithTranscripts: uniqueCourses.size,
-            totalKeywords,
-        };
-    }, [transcripts]);
+    /* ---- Data fetching ---- */
 
-    // Drill-down data: Course summaries
+    const fetchData = useCallback(async () => {
+        try {
+            setLoading(true);
+            const [groupsData, statsData] = await Promise.all([
+                transcriptsService.getGroups(),
+                transcriptsService.getStats(),
+            ]);
+            setTranscripts(groupsData);
+            setStats(statsData);
+        } catch (error) {
+            console.error("Erro ao carregar transcrições:", error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    /* ---- Drill-down computed data ---- */
+
     const courseSummaries = useMemo<TranscriptCourseSummary[]>(() => {
         const map = new Map<number, TranscriptCourseSummary>();
         for (const t of transcripts) {
@@ -63,7 +82,6 @@ export function useTranscriptsPage({ transcripts }: UseTranscriptsPageProps) {
         return Array.from(map.values());
     }, [transcripts]);
 
-    // Drill-down data: Module summaries
     const moduleSummaries = useMemo<TranscriptModuleSummary[]>(() => {
         if (selectedCourseId === null) return [];
         const courseTranscripts = transcripts.filter((t) => t.courseId === selectedCourseId);
@@ -86,13 +104,13 @@ export function useTranscriptsPage({ transcripts }: UseTranscriptsPageProps) {
         return Array.from(map.values());
     }, [transcripts, selectedCourseId]);
 
-    // Drill-down data: Lessons
     const lessonTranscripts = useMemo(() => {
         if (selectedModuleId === null) return [];
         return transcripts.filter((t) => t.moduleId === selectedModuleId);
     }, [transcripts, selectedModuleId]);
 
-    // Filtered data
+    /* ---- Filtered data ---- */
+
     const filteredCourseSummaries = useMemo(() => {
         if (!search.trim()) return courseSummaries;
         const q = search.toLowerCase();
@@ -124,7 +142,8 @@ export function useTranscriptsPage({ transcripts }: UseTranscriptsPageProps) {
         ? moduleSummaries.find((m) => m.moduleId === selectedModuleId)?.moduleName
         : undefined;
 
-    // Navigation
+    /* ---- Navigation ---- */
+
     function handleSelectCourse(courseId: number) {
         setSelectedCourseId(courseId);
         setLevel("modules");
@@ -150,24 +169,76 @@ export function useTranscriptsPage({ transcripts }: UseTranscriptsPageProps) {
         setSearch("");
     }
 
-    // CRUD
-    function handleCreateOpen() { setEditingItem(null); setModalOpen(true); }
-    function handleEdit(item: Transcript) { setEditingItem(item); setModalOpen(true); }
-    function handleView(item: Transcript) { setDetailsItem(item); }
-    function handleConfirmDelete() { console.log("Delete:", deleteTarget?.id); setDeleteTarget(null); }
+    /* ---- CRUD handlers ---- */
+
+    function handleCreateOpen() {
+        setEditingItem(null);
+        setModalOpen(true);
+    }
+
+    function handleEdit(item: Transcript) {
+        setEditingItem(item);
+        setModalOpen(true);
+    }
+
+    function handleView(item: Transcript) {
+        setDetailsItem(item);
+    }
+
+    async function handleSubmit(data: {
+        lessonId: string;
+        text: string;
+        vector: string;
+        keywords: string[];
+    }) {
+        try {
+            if (editingItem) {
+                await transcriptsService.update(editingItem.id, {
+                    text: data.text,
+                    vector: data.vector,
+                    keywords: data.keywords,
+                });
+            } else {
+                await transcriptsService.create({
+                    lessonId: Number(data.lessonId),
+                    text: data.text,
+                    vector: data.vector,
+                    keywords: data.keywords,
+                });
+            }
+            setModalOpen(false);
+            setEditingItem(null);
+            await fetchData();
+        } catch (error) {
+            console.error("Erro ao salvar transcrição:", error);
+        }
+    }
+
+    async function handleConfirmDelete() {
+        if (!deleteTarget) return;
+        try {
+            await transcriptsService.delete(deleteTarget.id);
+            setDeleteTarget(null);
+            await fetchData();
+        } catch (error) {
+            console.error("Erro ao excluir transcrição:", error);
+        }
+    }
+
     function handleYoutubeImport(url: string, provider: string) {
         console.log("YouTube import:", url, provider);
         setYoutubeOpen(false);
     }
 
     return {
-        level, search, setSearch, stats,
+        loading, stats,
+        level, search, setSearch,
         filteredCourseSummaries, filteredModuleSummaries, filteredLessonTranscripts,
         hasActiveFilters, selectedCourseName, selectedModuleName,
         handleSelectCourse, handleSelectModule, handleNavigateCourses, handleNavigateModules,
         modalOpen, setModalOpen, editingItem, setEditingItem,
         detailsItem, setDetailsItem, deleteTarget, setDeleteTarget,
         youtubeOpen, setYoutubeOpen,
-        handleCreateOpen, handleEdit, handleView, handleConfirmDelete, handleYoutubeImport,
+        handleCreateOpen, handleEdit, handleView, handleSubmit, handleConfirmDelete, handleYoutubeImport,
     };
 }

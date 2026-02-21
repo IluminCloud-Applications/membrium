@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
     TranscriptStats,
     TranscriptFilters,
@@ -12,13 +11,19 @@ import { TranscriptModal } from "@/components/modals/transcripts/TranscriptModal
 import { TranscriptDetailsModal } from "@/components/modals/transcripts/TranscriptDetailsModal";
 import { YouTubeImportModal } from "@/components/modals/transcripts/YouTubeImportModal";
 import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModal";
-import type { Transcript } from "@/types/transcript";
-import { mockTranscripts, mockCourses, mockModules, mockLessons } from "./mock-data";
 import { useTranscriptsPage } from "./useTranscriptsPage";
 
 export function TranscriptsPage() {
-    const [transcripts] = useState<Transcript[]>(mockTranscripts);
-    const tp = useTranscriptsPage({ transcripts });
+    const tp = useTranscriptsPage();
+
+    if (tp.loading) {
+        return (
+            <div className="flex items-center justify-center py-24 text-muted-foreground">
+                <i className="ri-loader-4-line animate-spin text-2xl mr-2" />
+                Carregando transcrições...
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -57,14 +62,7 @@ export function TranscriptsPage() {
                 open={tp.modalOpen}
                 onOpenChange={tp.setModalOpen}
                 editItem={tp.editingItem}
-                courses={mockCourses}
-                modules={mockModules}
-                lessons={mockLessons}
-                onSubmit={(data) => {
-                    console.log(tp.editingItem ? "Update:" : "Create:", data);
-                    tp.setModalOpen(false);
-                    tp.setEditingItem(null);
-                }}
+                onSubmit={tp.handleSubmit}
                 onYoutubeImport={() => tp.setYoutubeOpen(true)}
             />
 

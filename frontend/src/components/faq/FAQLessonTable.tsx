@@ -81,7 +81,7 @@ interface FAQLessonRowProps {
 
 function FAQLessonRow({ item, onView, onEdit, onDelete }: FAQLessonRowProps) {
     return (
-        <TableRow className="group">
+        <TableRow className="group cursor-pointer" onClick={() => onView(item)}>
             <TableCell className="font-medium pl-6 px-4">
                 <div className="flex items-center gap-2">
                     <div className="h-8 w-8 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0">
@@ -103,10 +103,12 @@ function FAQLessonRow({ item, onView, onEdit, onDelete }: FAQLessonRowProps) {
             </TableCell>
 
             <TableCell className="text-center text-sm text-muted-foreground px-4">
-                {item.updatedAt}
+                {item.updatedAt
+                    ? new Date(item.updatedAt).toLocaleDateString("pt-BR")
+                    : "—"}
             </TableCell>
 
-            <TableCell className="text-right pr-6 px-4">
+            <TableCell className="text-right pr-6 px-4" onClick={(e) => e.stopPropagation()}>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button

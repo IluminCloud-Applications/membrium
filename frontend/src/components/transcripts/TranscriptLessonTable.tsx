@@ -88,7 +88,7 @@ function TranscriptLessonRow({ item, onView, onEdit, onDelete }: TranscriptLesso
     const extraCount = item.keywords.length - maxKeywords;
 
     return (
-        <TableRow className="group">
+        <TableRow className="group cursor-pointer" onClick={() => onView(item)}>
             <TableCell className="font-medium pl-6 px-4">
                 <div className="flex items-center gap-2">
                     <div className="h-8 w-8 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0">
@@ -138,10 +138,10 @@ function TranscriptLessonRow({ item, onView, onEdit, onDelete }: TranscriptLesso
             </TableCell>
 
             <TableCell className="text-center text-sm text-muted-foreground px-4">
-                {item.updatedAt}
+                {item.updatedAt ?? "—"}
             </TableCell>
 
-            <TableCell className="text-right pr-6 px-4">
+            <TableCell className="text-right pr-6 px-4" onClick={(e) => e.stopPropagation()}>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button

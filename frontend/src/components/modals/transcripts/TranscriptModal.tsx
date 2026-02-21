@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
     Dialog,
     DialogContent,
@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { TranscriptFormLesson } from "./TranscriptFormLesson";
 import { TranscriptFormContent } from "./TranscriptFormContent";
+import { transcriptsService } from "@/services/transcripts";
 import type {
     Transcript,
     TranscriptCourse,
@@ -28,9 +29,6 @@ interface TranscriptModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     editItem: Transcript | null;
-    courses: TranscriptCourse[];
-    modules: TranscriptModule[];
-    lessons: TranscriptLesson[];
     onSubmit: (data: TranscriptFormData) => void;
     onYoutubeImport: () => void;
 }
@@ -46,18 +44,48 @@ export function TranscriptModal({
     open,
     onOpenChange,
     editItem,
-    courses,
-    modules,
-    lessons,
     onSubmit,
     onYoutubeImport,
 }: TranscriptModalProps) {
     const [form, setForm] = useState<TranscriptFormData>(emptyForm);
     const [courseId, setCourseId] = useState("");
     const [moduleId, setModuleId] = useState("");
+    const [saving, setSaving] = useState(false);
+
+    // Dynamic data from API
+    const [courses, setCourses] = useState<TranscriptCourse[]>([]);
+    const [modules, setModules] = useState<TranscriptModule[]>([]);
+    const [lessons, setLessons] = useState<TranscriptLesson[]>([]);
+
     const isEditing = !!editItem;
     const lessonSelected = !!form.lessonId;
 
+    // Load courses when modal opens
+    useEffect(() => {
+        if (open) {
+            transcriptsService.getCourses().then(setCourses).catch(console.error);
+        }
+    }, [open]);
+
+    // Load modules when course changes
+    const loadModules = useCallback(async (cId: string) => {
+        if (!cId) { setModules([]); return; }
+        try {
+            const data = await transcriptsService.getModules(Number(cId));
+            setModules(data);
+        } catch { setModules([]); }
+    }, []);
+
+    // Load lessons when module changes
+    const loadLessons = useCallback(async (mId: string) => {
+        if (!mId) { setLessons([]); return; }
+        try {
+            const data = await transcriptsService.getLessons(Number(mId));
+            setLessons(data);
+        } catch { setLessons([]); }
+    }, []);
+
+    // Initialize form when editing
     useEffect(() => {
         if (editItem) {
             setForm({
@@ -66,39 +94,47 @@ export function TranscriptModal({
                 vector: editItem.vector,
                 keywords: [...editItem.keywords],
             });
-            const lesson = lessons.find((l) => l.id === editItem.lessonId);
-            if (lesson) {
-                setModuleId(lesson.moduleId.toString());
-                const mod = modules.find((m) => m.id === lesson.moduleId);
-                if (mod) setCourseId(mod.courseId.toString());
-            }
+            setCourseId(editItem.courseId.toString());
+            setModuleId(editItem.moduleId.toString());
+            // Load modules for the course
+            loadModules(editItem.courseId.toString());
         } else {
             setForm(emptyForm);
             setCourseId("");
             setModuleId("");
+            setModules([]);
+            setLessons([]);
         }
-    }, [editItem, open, lessons, modules]);
+    }, [editItem, open, loadModules]);
 
     function handleCourseChange(value: string) {
         setCourseId(value);
         setModuleId("");
         setForm((prev) => ({ ...prev, lessonId: "" }));
+        setLessons([]);
+        loadModules(value);
     }
 
     function handleModuleChange(value: string) {
         setModuleId(value);
         setForm((prev) => ({ ...prev, lessonId: "" }));
+        loadLessons(value);
     }
 
-    function handleSubmit(e: React.FormEvent) {
+    async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        onSubmit(form);
+        setSaving(true);
+        try {
+            await onSubmit(form);
+        } finally {
+            setSaving(false);
+        }
     }
 
     // Resolve selected lesson name for the header
-    const selectedLesson = lessons.find(
-        (l) => l.id === Number(form.lessonId)
-    );
+    const selectedLessonName = isEditing
+        ? editItem.lessonName
+        : lessons.find((l) => l.id === Number(form.lessonId))?.name;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -123,24 +159,42 @@ export function TranscriptModal({
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
-                    {/* Step 1: Lesson selector (always visible) */}
-                    <TranscriptFormLesson
-                        courseId={courseId}
-                        moduleId={moduleId}
-                        lessonId={form.lessonId}
-                        courses={courses}
-                        modules={modules}
-                        lessons={lessons}
-                        onCourseChange={handleCourseChange}
-                        onModuleChange={handleModuleChange}
-                        onLessonChange={(v) =>
-                            setForm((prev) => ({ ...prev, lessonId: v }))
-                        }
-                        selectedLessonName={selectedLesson?.name}
-                    />
+                    {/* Step 1: Lesson selector */}
+                    {!isEditing && (
+                        <TranscriptFormLesson
+                            courseId={courseId}
+                            moduleId={moduleId}
+                            lessonId={form.lessonId}
+                            courses={courses}
+                            modules={modules}
+                            lessons={lessons}
+                            onCourseChange={handleCourseChange}
+                            onModuleChange={handleModuleChange}
+                            onLessonChange={(v) =>
+                                setForm((prev) => ({ ...prev, lessonId: v }))
+                            }
+                            selectedLessonName={selectedLessonName}
+                        />
+                    )}
 
-                    {/* Step 2: Content fields (only after lesson is selected) */}
-                    {lessonSelected && (
+                    {/* Show lesson info badge when editing */}
+                    {isEditing && (
+                        <div className="rounded-lg border p-4 bg-emerald-500/5 border-emerald-500/20">
+                            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                                <i className="ri-checkbox-circle-fill text-emerald-500" />
+                                <span>
+                                    Aula:{" "}
+                                    <span className="text-emerald-600">{editItem.lessonName}</span>
+                                </span>
+                            </h3>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                {editItem.courseName} › {editItem.moduleName}
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Step 2: Content fields */}
+                    {(lessonSelected || isEditing) && (
                         <div className="animate-fade-in">
                             <TranscriptFormContent
                                 transcriptText={form.text}
@@ -168,20 +222,26 @@ export function TranscriptModal({
                             type="button"
                             variant="outline"
                             onClick={() => onOpenChange(false)}
+                            disabled={saving}
                         >
                             Cancelar
                         </Button>
                         <Button
                             type="submit"
                             className="btn-brand"
-                            disabled={!lessonSelected}
+                            disabled={(!lessonSelected && !isEditing) || saving}
                         >
-                            <i
-                                className={`${isEditing ? "ri-save-line" : "ri-add-line"} mr-1`}
-                            />
-                            {isEditing
-                                ? "Salvar Alterações"
-                                : "Criar Transcrição"}
+                            {saving ? (
+                                <span className="flex items-center gap-2">
+                                    <i className="ri-loader-4-line animate-spin" />
+                                    Salvando...
+                                </span>
+                            ) : (
+                                <>
+                                    <i className={`${isEditing ? "ri-save-line" : "ri-add-line"} mr-1`} />
+                                    {isEditing ? "Salvar Alterações" : "Criar Transcrição"}
+                                </>
+                            )}
                         </Button>
                     </DialogFooter>
                 </form>

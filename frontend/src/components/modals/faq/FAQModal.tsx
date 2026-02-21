@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { FAQFormLesson } from "./FAQFormLesson";
 import { FAQFormQuestions } from "./FAQFormQuestions";
+import { faqService } from "@/services/faq";
 import type {
     FAQItem,
     FAQLessonGroup,
@@ -27,9 +28,6 @@ interface FAQModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     editItem: FAQLessonGroup | null;
-    courses: FAQCourse[];
-    modules: FAQModule[];
-    lessons: FAQLesson[];
     onSubmit: (data: FAQFormData) => void;
     onGenerateAI: () => void;
 }
@@ -45,9 +43,6 @@ export function FAQModal({
     open,
     onOpenChange,
     editItem,
-    courses,
-    modules,
-    lessons,
     onSubmit,
     onGenerateAI,
 }: FAQModalProps) {
@@ -57,24 +52,56 @@ export function FAQModal({
     const isEditing = !!editItem;
     const lessonSelected = !!form.lessonId;
 
+    // Dynamic selector data
+    const [courses, setCourses] = useState<FAQCourse[]>([]);
+    const [modules, setModules] = useState<FAQModule[]>([]);
+    const [lessons, setLessons] = useState<FAQLesson[]>([]);
+
+    // Load courses on mount
+    useEffect(() => {
+        if (!open) return;
+        faqService.getCourses().then(setCourses).catch(console.error);
+    }, [open]);
+
+    // Load modules when course changes
+    useEffect(() => {
+        if (!courseId) {
+            setModules([]);
+            return;
+        }
+        faqService
+            .getModules(Number(courseId))
+            .then(setModules)
+            .catch(console.error);
+    }, [courseId]);
+
+    // Load lessons when module changes
+    useEffect(() => {
+        if (!moduleId) {
+            setLessons([]);
+            return;
+        }
+        faqService
+            .getLessons(Number(moduleId))
+            .then(setLessons)
+            .catch(console.error);
+    }, [moduleId]);
+
+    // Reset form when opening
     useEffect(() => {
         if (editItem) {
             setForm({
                 lessonId: editItem.lessonId.toString(),
                 faqs: [...editItem.faqs],
             });
-            // Resolve course/module from lesson data
-            const module = modules.find((m) => m.id === editItem.moduleId);
-            if (module) {
-                setCourseId(module.courseId.toString());
-                setModuleId(module.id.toString());
-            }
+            setCourseId(editItem.courseId.toString());
+            setModuleId(editItem.moduleId.toString());
         } else {
             setForm(emptyForm);
             setCourseId("");
             setModuleId("");
         }
-    }, [editItem, open, modules]);
+    }, [editItem, open]);
 
     function handleCourseChange(value: string) {
         setCourseId(value);
@@ -95,6 +122,10 @@ export function FAQModal({
     const selectedLesson = lessons.find(
         (l) => l.id === Number(form.lessonId)
     );
+    // When editing, show the lesson name from editItem
+    const lessonName = isEditing
+        ? editItem?.lessonName
+        : selectedLesson?.name;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -133,7 +164,7 @@ export function FAQModal({
                         onLessonChange={(v) =>
                             setForm((prev) => ({ ...prev, lessonId: v }))
                         }
-                        selectedLessonName={selectedLesson?.name}
+                        selectedLessonName={lessonName}
                     />
 
                     {/* Step 2: FAQ questions (only after lesson selected) */}

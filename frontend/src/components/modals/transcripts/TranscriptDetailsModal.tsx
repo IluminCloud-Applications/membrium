@@ -85,10 +85,10 @@ export function TranscriptDetailsModal({
                     {/* Dates */}
                     <div className="flex items-center justify-between text-xs text-muted-foreground pt-3 border-t">
                         <span>
-                            Criado em: <strong>{item.createdAt}</strong>
+                            Criado em: <strong>{item.createdAt ?? "—"}</strong>
                         </span>
                         <span>
-                            Atualizado em: <strong>{item.updatedAt}</strong>
+                            Atualizado em: <strong>{item.updatedAt ?? "—"}</strong>
                         </span>
                     </div>
                 </div>

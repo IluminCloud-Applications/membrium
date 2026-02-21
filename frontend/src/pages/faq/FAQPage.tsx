@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
     FAQStats,
     FAQFilters,
@@ -12,13 +11,21 @@ import { FAQModal } from "@/components/modals/faq/FAQModal";
 import { FAQDetailsModal } from "@/components/modals/faq/FAQDetailsModal";
 import { FAQAIModal } from "@/components/modals/faq/FAQAIModal";
 import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModal";
-import type { FAQLessonGroup } from "@/types/faq";
-import { mockFAQGroups, mockCourses, mockModules, mockLessons } from "./mock-data";
 import { useFAQPage } from "./useFAQPage";
 
 export function FAQPage() {
-    const [faqGroups] = useState<FAQLessonGroup[]>(mockFAQGroups);
-    const faq = useFAQPage({ faqGroups });
+    const faq = useFAQPage();
+
+    if (faq.loading) {
+        return (
+            <div className="flex items-center justify-center py-24">
+                <div className="flex flex-col items-center gap-3">
+                    <i className="ri-loader-4-line text-3xl text-primary animate-spin" />
+                    <p className="text-sm text-muted-foreground">Carregando FAQs...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -57,14 +64,7 @@ export function FAQPage() {
                 open={faq.modalOpen}
                 onOpenChange={faq.setModalOpen}
                 editItem={faq.editingItem}
-                courses={mockCourses}
-                modules={mockModules}
-                lessons={mockLessons}
-                onSubmit={(data) => {
-                    console.log(faq.editingItem ? "Update:" : "Create:", data);
-                    faq.setModalOpen(false);
-                    faq.setEditingItem(null);
-                }}
+                onSubmit={faq.handleSubmit}
                 onGenerateAI={faq.handleAIGenerate}
             />
 

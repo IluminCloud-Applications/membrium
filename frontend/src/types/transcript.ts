@@ -14,8 +14,8 @@ export interface Transcript {
     vector: string;
     keywords: string[];
     wordCount: number;
-    createdAt: string;
-    updatedAt: string;
+    createdAt: string | null;
+    updatedAt: string | null;
 }
 
 export interface TranscriptStats {

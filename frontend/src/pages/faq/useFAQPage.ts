@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { faqService } from "@/services/faq";
 import type {
     FAQLessonGroup,
     FAQDrillLevel,
@@ -6,12 +7,18 @@ import type {
     FAQModuleSummary,
     FAQItem,
 } from "@/types/faq";
+import type { FAQStatsResponse } from "@/services/faq";
 
-interface UseFAQPageProps {
-    faqGroups: FAQLessonGroup[];
-}
+export function useFAQPage() {
+    // Data state
+    const [faqGroups, setFaqGroups] = useState<FAQLessonGroup[]>([]);
+    const [stats, setStats] = useState<FAQStatsResponse>({
+        totalFaqs: 0,
+        lessonsWithFaq: 0,
+        averageFaqPerLesson: 0,
+    });
+    const [loading, setLoading] = useState(true);
 
-export function useFAQPage({ faqGroups }: UseFAQPageProps) {
     // Drill-down
     const [level, setLevel] = useState<FAQDrillLevel>("courses");
     const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
@@ -27,15 +34,28 @@ export function useFAQPage({ faqGroups }: UseFAQPageProps) {
     const [deleteTarget, setDeleteTarget] = useState<FAQLessonGroup | null>(null);
     const [aiModalOpen, setAiModalOpen] = useState(false);
 
-    // Stats
-    const stats = useMemo(() => {
-        const totalFaqs = faqGroups.reduce((sum, g) => sum + g.faqs.length, 0);
-        const lessonsWithFaq = faqGroups.length;
-        const avg = lessonsWithFaq > 0 ? Math.round(totalFaqs / lessonsWithFaq) : 0;
-        return { totalFaqs, lessonsWithFaq, averageFaqPerLesson: avg };
-    }, [faqGroups]);
+    // Fetch data
+    const fetchData = useCallback(async () => {
+        try {
+            setLoading(true);
+            const [groupsData, statsData] = await Promise.all([
+                faqService.getGroups(),
+                faqService.getStats(),
+            ]);
+            setFaqGroups(groupsData);
+            setStats(statsData);
+        } catch (error) {
+            console.error("Erro ao carregar FAQs:", error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
-    // Drill-down data
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    // Drill-down summaries
     const courseSummaries = useMemo<FAQCourseSummary[]>(() => {
         const map = new Map<number, FAQCourseSummary>();
         for (const g of faqGroups) {
@@ -107,7 +127,11 @@ export function useFAQPage({ faqGroups }: UseFAQPageProps) {
         return lessonGroups.filter(
             (l) =>
                 l.lessonName.toLowerCase().includes(q) ||
-                l.faqs.some((f) => f.question.toLowerCase().includes(q) || f.answer.toLowerCase().includes(q))
+                l.faqs.some(
+                    (f) =>
+                        f.question.toLowerCase().includes(q) ||
+                        f.answer.toLowerCase().includes(q)
+                )
         );
     }, [lessonGroups, search]);
 
@@ -146,15 +170,64 @@ export function useFAQPage({ faqGroups }: UseFAQPageProps) {
         setSearch("");
     }
 
-    // CRUD
-    function handleCreateOpen() { setEditingItem(null); setModalOpen(true); }
-    function handleEdit(item: FAQLessonGroup) { setEditingItem(item); setModalOpen(true); }
-    function handleView(item: FAQLessonGroup) { setDetailsItem(item); }
-    function handleConfirmDelete() { console.log("Delete FAQ:", deleteTarget?.lessonId); setDeleteTarget(null); }
-    function handleAIGenerate() { setAiModalOpen(true); }
-    function handleApplyAIFaqs(faqs: FAQItem[]) { console.log("Apply AI FAQs:", faqs); setAiModalOpen(false); }
+    // CRUD operations
+    function handleCreateOpen() {
+        setEditingItem(null);
+        setModalOpen(true);
+    }
+
+    function handleEdit(item: FAQLessonGroup) {
+        setEditingItem(item);
+        setModalOpen(true);
+    }
+
+    function handleView(item: FAQLessonGroup) {
+        setDetailsItem(item);
+    }
+
+    async function handleSubmit(data: { lessonId: string; faqs: FAQItem[] }) {
+        try {
+            const lessonId = Number(data.lessonId);
+            const faqsPayload = data.faqs
+                .filter((f) => f.question.trim() && f.answer.trim())
+                .map((f) => ({ question: f.question, answer: f.answer }));
+
+            if (editingItem) {
+                await faqService.update(lessonId, { faqs: faqsPayload });
+            } else {
+                await faqService.create({ lesson_id: lessonId, faqs: faqsPayload });
+            }
+
+            setModalOpen(false);
+            setEditingItem(null);
+            await fetchData();
+        } catch (error) {
+            console.error("Erro ao salvar FAQ:", error);
+        }
+    }
+
+    async function handleConfirmDelete() {
+        if (!deleteTarget) return;
+        try {
+            await faqService.delete(deleteTarget.lessonId);
+            setDeleteTarget(null);
+            await fetchData();
+        } catch (error) {
+            console.error("Erro ao excluir FAQ:", error);
+        }
+    }
+
+    function handleAIGenerate() {
+        setAiModalOpen(true);
+    }
+
+    function handleApplyAIFaqs(faqs: FAQItem[]) {
+        console.log("Apply AI FAQs:", faqs);
+        setAiModalOpen(false);
+    }
 
     return {
+        loading,
         level, search, setSearch, stats,
         filteredCourseSummaries, filteredModuleSummaries, filteredLessonGroups,
         hasActiveFilters, selectedCourseName, selectedModuleName,
@@ -162,7 +235,7 @@ export function useFAQPage({ faqGroups }: UseFAQPageProps) {
         modalOpen, setModalOpen, editingItem, setEditingItem,
         detailsItem, setDetailsItem, deleteTarget, setDeleteTarget,
         aiModalOpen, setAiModalOpen,
-        handleCreateOpen, handleEdit, handleView, handleConfirmDelete,
+        handleCreateOpen, handleEdit, handleView, handleSubmit, handleConfirmDelete,
         handleAIGenerate, handleApplyAIFaqs,
     };
 }
