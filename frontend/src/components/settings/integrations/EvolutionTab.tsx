@@ -47,7 +47,7 @@ export function EvolutionTab() {
                 }));
                 // If instance is already saved, add it to the list so it shows in select
                 if (res.evolution.instance) {
-                    setInstances([{ name: res.evolution.instance, status: 'saved' }]);
+                    setInstances([{ name: res.evolution.instance, status: 'saved', phone: '' }]);
                 }
             }
         } catch { /* keep defaults */ }
@@ -205,11 +205,18 @@ export function EvolutionTab() {
                                     instances.map((inst) => (
                                         <SelectItem key={inst.name} value={inst.name} className="rounded-lg">
                                             <span className="flex items-center gap-2">
-                                                {inst.name}
-                                                <span className={`w-2 h-2 rounded-full ${inst.status === "open" || inst.status === "CONNECTED"
+                                                <span className={`w-2 h-2 rounded-full shrink-0 ${inst.status === "open"
                                                         ? "bg-green-500"
-                                                        : "bg-muted-foreground/40"
+                                                        : inst.status === "close"
+                                                            ? "bg-red-400"
+                                                            : "bg-muted-foreground/40"
                                                     }`} />
+                                                {inst.name}
+                                                {inst.phone && (
+                                                    <span className="text-muted-foreground text-xs">
+                                                        ({inst.phone})
+                                                    </span>
+                                                )}
                                             </span>
                                         </SelectItem>
                                     ))

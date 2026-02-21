@@ -203,12 +203,25 @@ def fetch_evolution_instances():
 
         if isinstance(body, list):
             for item in body:
-                if isinstance(item, dict) and 'instance' in item:
-                    inst = item['instance']
-                    name = inst.get('instanceName', '')
-                    status = inst.get('status', 'unknown')
-                    if name:
-                        instances.append({'name': name, 'status': status})
+                if not isinstance(item, dict):
+                    continue
+
+                # v2 format: name, connectionStatus, ownerJid at root level
+                name = item.get('name', '')
+                status = item.get('connectionStatus', 'unknown')
+                owner_jid = item.get('ownerJid', '')
+
+                # Extract phone number from JID (remove @s.whatsapp.net)
+                phone = ''
+                if owner_jid and '@' in owner_jid:
+                    phone = owner_jid.split('@')[0]
+
+                if name:
+                    instances.append({
+                        'name': name,
+                        'status': status,
+                        'phone': phone,
+                    })
 
         return jsonify({'success': True, 'instances': instances})
 

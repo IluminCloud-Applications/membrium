@@ -50,6 +50,7 @@ interface DetectVersionResponse {
 export interface EvolutionInstance {
     name: string;
     status: string;
+    phone: string;
 }
 
 interface FetchInstancesResponse {

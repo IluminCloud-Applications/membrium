@@ -75,7 +75,7 @@ export function TemplatePreview({ text, format = "email" }: TemplatePreviewProps
     const lines = text.split("\n");
 
     return (
-        <div className="text-sm leading-relaxed" style={{ whiteSpace: "pre-wrap" }}>
+        <div className="text-sm leading-snug" style={{ whiteSpace: "pre-wrap" }}>
             {lines.map((line, i) => (
                 <span key={i}>
                     <TemplateLine line={line} format={format} />
