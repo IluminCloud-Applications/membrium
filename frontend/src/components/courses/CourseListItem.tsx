@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { ActionButton } from "./ActionButton";
 import type { Course } from "@/types/course";
@@ -11,8 +12,17 @@ interface CourseListItemProps {
 }
 
 export function CourseListItem({ course, onEdit, onDelete, onWebhook }: CourseListItemProps) {
+    const navigate = useNavigate();
+
+    function handleNavigate() {
+        navigate(`/admin/course/${course.id}/modification`);
+    }
+
     return (
-        <div className="group flex items-center gap-4 rounded-xl border bg-card p-3 shadow-sm hover:shadow-md transition-all duration-200">
+        <div
+            className="group flex items-center gap-4 rounded-xl border bg-card p-3 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+            onClick={handleNavigate}
+        >
             {/* Thumbnail */}
             <div className="h-16 w-28 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
                 {course.image ? (
@@ -62,7 +72,8 @@ export function CourseListItem({ course, onEdit, onDelete, onWebhook }: CourseLi
             </div>
 
             {/* Actions */}
-            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                <ActionButton icon="ri-settings-3-line" label="Personalizar" onClick={handleNavigate} />
                 <ActionButton icon="ri-webhook-line" label="Webhook" onClick={() => onWebhook(course)} />
                 <ActionButton icon="ri-pencil-line" label="Editar" onClick={() => onEdit(course)} />
                 <ActionButton icon="ri-delete-bin-line" label="Excluir" onClick={() => onDelete(course)} variant="danger" />

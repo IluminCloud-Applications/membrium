@@ -43,8 +43,11 @@ class Course(db.Model):
     is_published = db.Column(db.Boolean, default=True)
     module_format = db.Column(db.String(20), default='standard')  # 'standard' or 'netflix'
     theme = db.Column(db.String(20), default='light')  # 'light' or 'dark'
+    cover_desktop = db.Column(db.String(255))  # filename for desktop cover
+    cover_mobile = db.Column(db.String(255))   # filename for mobile cover
+    menu_items = db.Column(db.JSON, default=list)  # [{name, url, icon, order}]
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    modules = db.relationship('Module', backref='course', lazy=True, cascade="all, delete-orphan")
+    modules = db.relationship('Module', backref='course', lazy=True, cascade="all, delete-orphan", order_by='Module.order')
     showcases = db.relationship('Showcase', backref='course', lazy=True)
 
 class Module(db.Model):
@@ -52,8 +55,9 @@ class Module(db.Model):
     name = db.Column(db.String(120), nullable=False)
     image = db.Column(db.String(255))
     order = db.Column(db.Integer)
+    unlock_after_days = db.Column(db.Integer, default=0)  # 0 = immediate, 1+ = days after enrollment
     course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=False)
-    lessons = db.relationship('Lesson', backref='module', lazy=True, cascade="all, delete-orphan")
+    lessons = db.relationship('Lesson', backref='module', lazy=True, cascade="all, delete-orphan", order_by='Lesson.order')
 
 class Lesson(db.Model):
     id = db.Column(db.Integer, primary_key=True)

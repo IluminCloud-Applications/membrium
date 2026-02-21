@@ -6,30 +6,25 @@ import { LessonModal } from "@/components/modals/course_modification/LessonModal
 import { MenuItemModal } from "@/components/modals/course_modification/MenuItemModal";
 import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModal";
 import type {
-    CourseModule,
-    CourseMenuItem,
-    Lesson,
-    ModuleFormData,
-    LessonFormData,
-    MenuItemFormData,
+    CourseModule, CourseMenuItem, Lesson,
+    ModuleFormData, LessonFormData, MenuItemFormData,
 } from "@/types/course-modification";
-import { mockCourseData } from "./mock-data";
+import { courseModificationService } from "@/services/courseModification";
+import { useCourseModification } from "./useCourseModification";
 
 export function CourseModificationPage() {
-    const { id: _courseId } = useParams<{ id: string }>();
-    const [course] = useState(mockCourseData);
+    const { id } = useParams<{ id: string }>();
+    const courseId = id ? Number(id) : undefined;
+    const { course, loading, error, refetch } = useCourseModification(courseId);
 
     // Modal states
     const [moduleModalOpen, setModuleModalOpen] = useState(false);
     const [editingModule, setEditingModule] = useState<CourseModule | null>(null);
-
     const [lessonModalOpen, setLessonModalOpen] = useState(false);
     const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
     const [activeModuleId, setActiveModuleId] = useState<number | null>(null);
-
     const [menuModalOpen, setMenuModalOpen] = useState(false);
     const [editingMenuItem, setEditingMenuItem] = useState<CourseMenuItem | null>(null);
-
     const [deleteTarget, setDeleteTarget] = useState<{
         type: "module" | "lesson" | "menuItem";
         label: string;
@@ -38,186 +33,162 @@ export function CourseModificationPage() {
         menuItemId?: number;
     } | null>(null);
 
-    // Computed stats
     const totalLessons = useMemo(
-        () => course.modules.reduce((sum, m) => sum + m.lessons.length, 0),
-        [course.modules]
+        () => course?.modules.reduce((sum, m) => sum + m.lessons.length, 0) ?? 0,
+        [course?.modules]
     );
 
-    // ---- Module handlers ----
-    function handleAddModule() {
-        setEditingModule(null);
-        setModuleModalOpen(true);
-    }
-
-    function handleEditModule(mod: CourseModule) {
-        setEditingModule(mod);
-        setModuleModalOpen(true);
-    }
-
+    /* ---- Module handlers ---- */
+    function handleAddModule() { setEditingModule(null); setModuleModalOpen(true); }
+    function handleEditModule(mod: CourseModule) { setEditingModule(mod); setModuleModalOpen(true); }
     function handleDeleteModule(mod: CourseModule) {
-        setDeleteTarget({
-            type: "module",
-            label: mod.name,
-            moduleId: mod.id,
-        });
+        setDeleteTarget({ type: "module", label: mod.name, moduleId: mod.id });
     }
 
-    function handleModuleSubmit(data: ModuleFormData) {
-        console.log(editingModule ? "Update module:" : "Create module:", data);
+    async function handleModuleSubmit(data: ModuleFormData) {
+        const formData = new FormData();
+        formData.append("name", data.name);
+        formData.append("unlock_after_days", String(data.unlockAfterDays || 0));
+        if (data.imageFile) formData.append("image", data.imageFile);
+        if (!data.imagePreview && editingModule?.image) formData.append("image_removed", "true");
+
+        try {
+            if (editingModule) await courseModificationService.updateModule(editingModule.id, formData);
+            else if (courseId) await courseModificationService.createModule(courseId, formData);
+            await refetch();
+        } catch (err) { console.error("Erro ao salvar módulo:", err); }
         setModuleModalOpen(false);
         setEditingModule(null);
     }
 
-    // ---- Lesson handlers ----
+    /* ---- Lesson handlers ---- */
     function handleAddLesson(moduleId: number) {
-        setActiveModuleId(moduleId);
-        setEditingLesson(null);
-        setLessonModalOpen(true);
+        setActiveModuleId(moduleId); setEditingLesson(null); setLessonModalOpen(true);
     }
-
     function handleEditLesson(moduleId: number, lessonId: number) {
         setActiveModuleId(moduleId);
-        const mod = course.modules.find((m) => m.id === moduleId);
-        const lesson = mod?.lessons.find((l) => l.id === lessonId) ?? null;
+        const lesson = course?.modules.find(m => m.id === moduleId)?.lessons.find(l => l.id === lessonId) ?? null;
         setEditingLesson(lesson);
         setLessonModalOpen(true);
     }
-
     function handleDeleteLesson(moduleId: number, lessonId: number) {
-        const mod = course.modules.find((m) => m.id === moduleId);
-        const lesson = mod?.lessons.find((l) => l.id === lessonId);
-        setDeleteTarget({
-            type: "lesson",
-            label: lesson?.title ?? "Aula",
-            moduleId,
-            lessonId,
-        });
+        const lesson = course?.modules.find(m => m.id === moduleId)?.lessons.find(l => l.id === lessonId);
+        setDeleteTarget({ type: "lesson", label: lesson?.title ?? "Aula", moduleId, lessonId });
     }
 
-    function handleLessonSubmit(data: LessonFormData) {
-        console.log(editingLesson ? "Update lesson:" : "Create lesson:", data, "in module:", activeModuleId);
+    async function handleLessonSubmit(data: LessonFormData) {
+        const formData = new FormData();
+        formData.append("title", data.title);
+        formData.append("description", data.description);
+        formData.append("video_platform", data.videoPlatform);
+        formData.append("video_url", data.videoPlatform === "custom" ? data.customVideoCode : data.videoUrl);
+        formData.append("has_cta", String(data.hasCta));
+        if (data.hasCta) {
+            formData.append("cta_text", data.ctaText);
+            formData.append("cta_url", data.ctaUrl);
+            formData.append("cta_delay", String(data.ctaDelay));
+        }
+        for (const file of data.attachments) formData.append("documents", file);
+
+        try {
+            if (editingLesson) await courseModificationService.updateLesson(editingLesson.id, formData);
+            else if (activeModuleId) await courseModificationService.createLesson(activeModuleId, formData);
+            await refetch();
+        } catch (err) { console.error("Erro ao salvar aula:", err); }
         setLessonModalOpen(false);
         setEditingLesson(null);
         setActiveModuleId(null);
     }
 
-    // ---- Cover handlers ----
-    function handleCoverChange(type: "desktop" | "mobile", file: File | null) {
-        console.log("Cover change:", type, file?.name);
+    /* ---- Cover handlers ---- */
+    async function handleCoverChange(type: "desktop" | "mobile", file: File | null) {
+        if (!courseId || !file) return;
+        const formData = new FormData();
+        formData.append(type, file);
+        try { await courseModificationService.updateCover(courseId, formData); await refetch(); }
+        catch (err) { console.error("Erro ao salvar capa:", err); }
+    }
+    async function handleCoverDelete(type: "desktop" | "mobile") {
+        if (!courseId) return;
+        const formData = new FormData();
+        formData.append(`${type}_removed`, "true");
+        try { await courseModificationService.updateCover(courseId, formData); await refetch(); }
+        catch (err) { console.error("Erro ao remover capa:", err); }
     }
 
-    function handleCoverDelete(type: "desktop" | "mobile") {
-        console.log("Cover delete:", type);
-    }
-
-    // ---- Menu item handlers ----
-    function handleAddMenuItem() {
-        setEditingMenuItem(null);
-        setMenuModalOpen(true);
-    }
-
-    function handleEditMenuItem(item: CourseMenuItem) {
-        setEditingMenuItem(item);
-        setMenuModalOpen(true);
-    }
-
+    /* ---- Menu handlers ---- */
+    function handleAddMenuItem() { setEditingMenuItem(null); setMenuModalOpen(true); }
+    function handleEditMenuItem(item: CourseMenuItem) { setEditingMenuItem(item); setMenuModalOpen(true); }
     function handleDeleteMenuItem(item: CourseMenuItem) {
-        setDeleteTarget({
-            type: "menuItem",
-            label: item.name,
-            menuItemId: item.id,
-        });
+        setDeleteTarget({ type: "menuItem", label: item.name, menuItemId: item.id });
     }
 
-    function handleMenuItemSubmit(data: MenuItemFormData) {
-        console.log(editingMenuItem ? "Update menu item:" : "Create menu item:", data);
+    async function handleMenuItemSubmit(data: MenuItemFormData) {
+        if (!course || !courseId) return;
+        let items = [...(course.menuItems || [])];
+
+        if (editingMenuItem) {
+            items = items.map(i =>
+                i.id === editingMenuItem.id ? { ...i, name: data.name, url: data.url, icon: data.icon } : i
+            );
+        } else {
+            items.push({ id: Date.now(), name: data.name, url: data.url, icon: data.icon, order: items.length + 1 });
+        }
+
+        try {
+            await courseModificationService.updateMenu(courseId, items.map((i, idx) => ({
+                name: i.name, url: i.url, icon: i.icon, order: idx + 1,
+            })));
+            await refetch();
+        } catch (err) { console.error("Erro ao salvar menu:", err); }
         setMenuModalOpen(false);
         setEditingMenuItem(null);
     }
 
-    // ---- Delete confirm ----
-    function handleConfirmDelete() {
-        if (!deleteTarget) return;
-        console.log("Delete:", deleteTarget);
+    /* ---- Delete confirm ---- */
+    async function handleConfirmDelete() {
+        if (!deleteTarget || !courseId) return;
+        try {
+            if (deleteTarget.type === "module" && deleteTarget.moduleId) {
+                await courseModificationService.deleteModule(deleteTarget.moduleId);
+            } else if (deleteTarget.type === "lesson" && deleteTarget.lessonId) {
+                await courseModificationService.deleteLesson(deleteTarget.lessonId);
+            } else if (deleteTarget.type === "menuItem" && course) {
+                const items = course.menuItems.filter(i => i.id !== deleteTarget.menuItemId);
+                await courseModificationService.updateMenu(courseId, items.map((i, idx) => ({
+                    name: i.name, url: i.url, icon: i.icon, order: idx + 1,
+                })));
+            }
+            await refetch();
+        } catch (err) { console.error("Erro ao deletar:", err); }
         setDeleteTarget(null);
     }
 
     const deleteMessages: Record<string, { title: string; description: string; label: string }> = {
-        module: {
-            title: "Excluir Módulo",
-            description: `Tem certeza que deseja excluir "${deleteTarget?.label}"? Todas as aulas dentro deste módulo serão removidas permanentemente.`,
-            label: "Excluir Módulo",
-        },
-        lesson: {
-            title: "Excluir Aula",
-            description: `Tem certeza que deseja excluir "${deleteTarget?.label}"? Esta aula será removida permanentemente.`,
-            label: "Excluir Aula",
-        },
-        menuItem: {
-            title: "Excluir Link",
-            description: `Tem certeza que deseja excluir o link "${deleteTarget?.label}"? Ele será removido do menu do curso.`,
-            label: "Excluir Link",
-        },
+        module: { title: "Excluir Módulo", description: `Tem certeza que deseja excluir "${deleteTarget?.label}"?`, label: "Excluir Módulo" },
+        lesson: { title: "Excluir Aula", description: `Tem certeza que deseja excluir "${deleteTarget?.label}"?`, label: "Excluir Aula" },
+        menuItem: { title: "Excluir Link", description: `Tem certeza que deseja excluir "${deleteTarget?.label}"?`, label: "Excluir Link" },
     };
-
     const currentDelete = deleteTarget ? deleteMessages[deleteTarget.type] : null;
+
+    if (loading) return <div className="flex items-center justify-center py-20"><i className="ri-loader-4-line animate-spin text-2xl text-primary" /></div>;
+    if (error || !course) return <div className="flex items-center justify-center py-20 text-destructive">{error || "Curso não encontrado"}</div>;
 
     return (
         <div className="space-y-6 animate-fade-in">
-            <CourseHeader
-                courseName={course.name}
-                modulesCount={course.modules.length}
-                lessonsCount={totalLessons}
-            />
-
+            <CourseHeader courseName={course.name} modulesCount={course.modules.length} lessonsCount={totalLessons} />
             <CourseTabs
-                modules={course.modules}
-                cover={course.cover}
-                menuItems={course.menuItems}
-                onAddModule={handleAddModule}
-                onEditModule={handleEditModule}
-                onDeleteModule={handleDeleteModule}
-                onAddLesson={handleAddLesson}
-                onEditLesson={handleEditLesson}
-                onDeleteLesson={handleDeleteLesson}
-                onCoverChange={handleCoverChange}
-                onCoverDelete={handleCoverDelete}
-                onAddMenuItem={handleAddMenuItem}
-                onEditMenuItem={handleEditMenuItem}
-                onDeleteMenuItem={handleDeleteMenuItem}
+                modules={course.modules} cover={course.cover} menuItems={course.menuItems}
+                onAddModule={handleAddModule} onEditModule={handleEditModule} onDeleteModule={handleDeleteModule}
+                onAddLesson={handleAddLesson} onEditLesson={handleEditLesson} onDeleteLesson={handleDeleteLesson}
+                onCoverChange={handleCoverChange} onCoverDelete={handleCoverDelete}
+                onAddMenuItem={handleAddMenuItem} onEditMenuItem={handleEditMenuItem} onDeleteMenuItem={handleDeleteMenuItem}
             />
-
-            {/* Modals */}
-            <ModuleModal
-                open={moduleModalOpen}
-                onOpenChange={setModuleModalOpen}
-                editModule={editingModule}
-                onSubmit={handleModuleSubmit}
-            />
-
-            <LessonModal
-                open={lessonModalOpen}
-                onOpenChange={setLessonModalOpen}
-                editLesson={editingLesson}
-                onSubmit={handleLessonSubmit}
-            />
-
-            <MenuItemModal
-                open={menuModalOpen}
-                onOpenChange={setMenuModalOpen}
-                editItem={editingMenuItem}
-                onSubmit={handleMenuItemSubmit}
-            />
-
-            <DeleteConfirmModal
-                open={!!deleteTarget}
-                onOpenChange={() => setDeleteTarget(null)}
-                onConfirm={handleConfirmDelete}
-                title={currentDelete?.title}
-                description={currentDelete?.description}
-                confirmLabel={currentDelete?.label}
-            />
+            <ModuleModal open={moduleModalOpen} onOpenChange={setModuleModalOpen} editModule={editingModule} onSubmit={handleModuleSubmit} />
+            <LessonModal open={lessonModalOpen} onOpenChange={setLessonModalOpen} editLesson={editingLesson} onSubmit={handleLessonSubmit} />
+            <MenuItemModal open={menuModalOpen} onOpenChange={setMenuModalOpen} editItem={editingMenuItem} onSubmit={handleMenuItemSubmit} />
+            <DeleteConfirmModal open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)} onConfirm={handleConfirmDelete}
+                title={currentDelete?.title} description={currentDelete?.description} confirmLabel={currentDelete?.label} />
         </div>
     );
 }
