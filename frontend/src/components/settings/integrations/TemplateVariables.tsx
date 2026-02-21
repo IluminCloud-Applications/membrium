@@ -87,7 +87,7 @@ export function TemplatePreview({ text, format = "email" }: TemplatePreviewProps
 }
 
 function TemplateLine({ line, format }: { line: string; format: "email" | "whatsapp" }) {
-    if (!line.trim()) return <br />;
+    if (!line.trim()) return null;
 
     let processed = line;
 
