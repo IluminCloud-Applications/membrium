@@ -74,4 +74,12 @@ export const aiService = {
     /** Fetch available OpenAI models */
     fetchOpenAIModels: (apiKey: string) =>
         apiClient.post<FetchModelsResponse>("/settings/ai/openai-models", { api_key: apiKey }),
+
+    /** Test chatbot — send a message as admin */
+    testChatbot: (message: string) =>
+        apiClient.post<{ response: string }>("/chatbot/test", { message }),
+
+    /** Clear test chatbot history */
+    clearTestHistory: () =>
+        apiClient.post<{ success: boolean }>("/chatbot/test/clear", {}),
 };

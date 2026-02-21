@@ -2,8 +2,10 @@
 Chatbot Chat Routes — Endpoint de interação do chatbot.
 
 Endpoints:
-- POST /api/chatbot/chat      → Enviar mensagem e receber resposta
-- POST /api/chatbot/clear      → Limpar histórico
+- POST /api/chatbot/chat       → Enviar mensagem e receber resposta (aluno)
+- POST /api/chatbot/clear      → Limpar histórico (aluno)
+- POST /api/chatbot/test       → Testar chatbot como admin
+- POST /api/chatbot/test/clear → Limpar histórico de teste (admin)
 """
 
 import logging
@@ -11,7 +13,7 @@ from flask import Blueprint, request, jsonify, session
 from functools import wraps
 from sqlalchemy import text
 
-from models import Settings, LessonTranscript
+from models import Admin, Settings, LessonTranscript
 from db.database import db
 from ai.models.chatbot import ChatbotAI
 
@@ -78,6 +80,72 @@ def clear_chat_history():
     student_id = session.get('user_id')
     ChatbotAI.clear_history(student_id)
     return jsonify({"success": True, "message": "Histórico limpo."})
+
+
+# ─── Admin Test Endpoints ─────────────────────────────────────────
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session or session.get('user_type') != 'admin':
+            return jsonify({"error": "Acesso não autorizado."}), 403
+        if not Admin.query.get(session['user_id']):
+            return jsonify({"error": "Acesso não autorizado."}), 403
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+@chat_bp.route('/test', methods=['POST'])
+@admin_required
+def test_chatbot():
+    """Endpoint para o admin testar o chatbot como se fosse aluno."""
+    data = request.json
+    query = data.get('message')
+    admin_id = session.get('user_id')
+
+    if not query:
+        return jsonify({"error": "Mensagem não fornecida"}), 400
+
+    settings = Settings.query.first()
+    if not settings:
+        return jsonify({"error": "Configurações não encontradas"}), 400
+
+    # Verificar provider e API key
+    provider = settings.chatbot_provider
+    api_key = _get_api_key(settings, provider)
+    if not api_key:
+        return jsonify({"error": f"{provider} não está configurada"}), 400
+
+    # Usar ID negativo para separar histórico de teste do de alunos reais
+    test_student_id = -(admin_id)
+
+    # Buscar transcrições relevantes
+    relevant_transcripts = None
+    if not ChatbotAI.is_casual_message(query) or not settings.chatbot_use_internal_knowledge:
+        relevant_transcripts = _search_relevant_lessons(query)
+
+    base_url = request.url_root.rstrip('/')
+    response = ChatbotAI.generate_response(
+        question=query,
+        student_id=test_student_id,
+        provider=provider,
+        api_key=api_key,
+        model=settings.chatbot_model,
+        use_internal_knowledge=settings.chatbot_use_internal_knowledge,
+        relevant_transcripts=relevant_transcripts,
+        base_url=base_url,
+    )
+
+    return jsonify({"response": response})
+
+
+@chat_bp.route('/test/clear', methods=['POST'])
+@admin_required
+def clear_test_history():
+    """Limpa o histórico de teste do admin."""
+    admin_id = session.get('user_id')
+    ChatbotAI.clear_history(-(admin_id))
+    return jsonify({"success": True, "message": "Histórico de teste limpo."})
 
 
 def _get_api_key(settings: Settings, provider: str) -> str | None:

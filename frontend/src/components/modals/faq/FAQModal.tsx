@@ -29,7 +29,7 @@ interface FAQModalProps {
     onOpenChange: (open: boolean) => void;
     editItem: FAQLessonGroup | null;
     onSubmit: (data: FAQFormData) => void;
-    onGenerateAI: () => void;
+    onGenerateAI: (lessonId: number, lessonName: string) => void;
 }
 
 const emptyFaq: FAQItem = { id: 1, question: "", answer: "" };
@@ -175,7 +175,12 @@ export function FAQModal({
                                 onFaqsChange={(faqs) =>
                                     setForm((prev) => ({ ...prev, faqs }))
                                 }
-                                onGenerateAI={onGenerateAI}
+                                onGenerateAI={() =>
+                                    onGenerateAI(
+                                        Number(form.lessonId),
+                                        lessonName || ""
+                                    )
+                                }
                             />
                         </div>
                     )}

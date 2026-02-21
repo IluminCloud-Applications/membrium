@@ -1,12 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { ModelCombobox } from "@/components/settings/ai/ModelCombobox";
 import type { FAQItem } from "@/types/faq";
 import type { AIModel } from "@/services/ai";
 
@@ -90,18 +84,12 @@ export function FAQAIConfigState({
 
             <div className="space-y-2">
                 <Label className="text-sm">Modelo de IA</Label>
-                <Select value={model} onValueChange={onModelChange}>
-                    <SelectTrigger className="h-9">
-                        <SelectValue placeholder={models.length ? "Selecione um modelo" : "Carregando modelos..."} />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl max-h-[200px]">
-                        {models.map((m) => (
-                            <SelectItem key={m.id} value={m.id} className="rounded-lg">
-                                {m.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                <ModelCombobox
+                    models={models}
+                    value={model}
+                    onValueChange={onModelChange}
+                    loading={!models.length}
+                />
                 <p className="text-xs text-muted-foreground">Modelos mais avançados geram respostas de maior qualidade.</p>
             </div>
         </div>

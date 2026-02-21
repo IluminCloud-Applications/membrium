@@ -12,6 +12,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { IntegrationToggle } from "../IntegrationToggle";
+import { ModelCombobox } from "./ModelCombobox";
 import {
     aiService,
     type ChatbotSettings,
@@ -20,6 +21,7 @@ import {
     type AIModel,
 } from "@/services/ai";
 import { toast } from "sonner";
+import { ChatbotTestDrawer } from "./ChatbotTestDrawer";
 
 interface ChatbotTabProps {
     chatbot: ChatbotSettings;
@@ -36,6 +38,7 @@ export function ChatbotTab({ chatbot, gemini, openai, onUpdate }: ChatbotTabProp
     const [welcomeMessage, setWelcomeMessage] = useState(chatbot.welcome_message);
     const [useInternalKnowledge, setUseInternalKnowledge] = useState(chatbot.use_internal_knowledge);
     const [saving, setSaving] = useState(false);
+    const [testDrawerOpen, setTestDrawerOpen] = useState(false);
 
     const [models, setModels] = useState<AIModel[]>([]);
     const [loadingModels, setLoadingModels] = useState(false);
@@ -108,118 +111,126 @@ export function ChatbotTab({ chatbot, gemini, openai, onUpdate }: ChatbotTabProp
     }
 
     return (
-        <IntegrationToggle
-            id="chatbotToggle"
-            icon="ri-robot-2-line"
-            title="Chatbot de Suporte"
-            description="Assistente virtual que responde dúvidas com base nas transcrições das aulas"
-            enabled={enabled}
-            onToggle={setEnabled}
-        >
-            {/* Name + Provider + Model — side by side */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="chatbotName">Nome do Chatbot</Label>
-                    <Input
-                        id="chatbotName"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Ex: Assistente Virtual"
-                    />
-                </div>
-                <div className="space-y-2">
-                    <Label>Provedor de IA</Label>
-                    <Select value={provider} onValueChange={handleProviderChange}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl">
-                            {availableProviders.length === 0 ? (
-                                <SelectItem value="_none" disabled className="rounded-lg text-muted-foreground">
-                                    Nenhuma API configurada
-                                </SelectItem>
-                            ) : (
-                                availableProviders.map((p) => (
-                                    <SelectItem key={p.value} value={p.value} className="rounded-lg">
-                                        {p.label}
+        <>
+            <IntegrationToggle
+                id="chatbotToggle"
+                icon="ri-robot-2-line"
+                title="Chatbot de Suporte"
+                description="Assistente virtual que responde dúvidas com base nas transcrições das aulas"
+                enabled={enabled}
+                onToggle={setEnabled}
+            >
+                {/* Name + Provider + Model — side by side */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="chatbotName">Nome do Chatbot</Label>
+                        <Input
+                            id="chatbotName"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="Ex: Assistente Virtual"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Provedor de IA</Label>
+                        <Select value={provider} onValueChange={handleProviderChange}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl">
+                                {availableProviders.length === 0 ? (
+                                    <SelectItem value="_none" disabled className="rounded-lg text-muted-foreground">
+                                        Nenhuma API configurada
                                     </SelectItem>
-                                ))
-                            )}
-                        </SelectContent>
-                    </Select>
+                                ) : (
+                                    availableProviders.map((p) => (
+                                        <SelectItem key={p.value} value={p.value} className="rounded-lg">
+                                            {p.label}
+                                        </SelectItem>
+                                    ))
+                                )}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Modelo de IA</Label>
+                        <ModelCombobox
+                            models={models}
+                            value={model}
+                            onValueChange={setModel}
+                            disabled={!provider}
+                            loading={loadingModels}
+                        />
+                    </div>
                 </div>
+
+                {/* Welcome message */}
                 <div className="space-y-2">
-                    <Label>Modelo de IA</Label>
-                    <Select
-                        value={model}
-                        onValueChange={setModel}
-                        disabled={!provider || loadingModels}
-                    >
-                        <SelectTrigger>
-                            <SelectValue
-                                placeholder={loadingModels ? "Carregando modelos..." : "Selecione"}
-                            />
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl max-h-60">
-                            {models.map((m) => (
-                                <SelectItem key={m.id} value={m.id} className="rounded-lg">
-                                    {m.name || m.id}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
-
-            {/* Welcome message */}
-            <div className="space-y-2">
-                <Label htmlFor="chatbotWelcomeMessage">Mensagem de Boas-vindas</Label>
-                <Textarea
-                    id="chatbotWelcomeMessage"
-                    value={welcomeMessage}
-                    onChange={(e) => setWelcomeMessage(e.target.value)}
-                    placeholder="Ex: Olá! Sou o assistente virtual. Como posso ajudar nos seus estudos hoje?"
-                    className="min-h-[80px] max-h-[120px] resize-none"
-                />
-                <p className="text-xs text-muted-foreground">
-                    Mensagem exibida quando o aluno abre o chat
-                </p>
-            </div>
-
-            {/* Internal knowledge */}
-            <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/30">
-                <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">
-                        Usar conhecimento interno da IA
-                    </Label>
+                    <Label htmlFor="chatbotWelcomeMessage">Mensagem de Boas-vindas</Label>
+                    <Textarea
+                        id="chatbotWelcomeMessage"
+                        value={welcomeMessage}
+                        onChange={(e) => setWelcomeMessage(e.target.value)}
+                        placeholder="Ex: Olá! Sou o assistente virtual. Como posso ajudar nos seus estudos hoje?"
+                        className="min-h-[80px] max-h-[120px] resize-none"
+                    />
                     <p className="text-xs text-muted-foreground">
-                        Quando ativado, o chatbot responderá perguntas gerais e permitirá conversas casuais
+                        Mensagem exibida quando o aluno abre o chat
                     </p>
                 </div>
-                <Switch
-                    checked={useInternalKnowledge}
-                    onCheckedChange={setUseInternalKnowledge}
-                />
-            </div>
 
-            {/* Preview */}
-            {(name || welcomeMessage) && (
-                <ChatbotPreview name={name} welcomeMessage={welcomeMessage} />
-            )}
+                {/* Internal knowledge */}
+                <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/30">
+                    <div className="space-y-0.5">
+                        <Label className="text-sm font-medium">
+                            Usar conhecimento interno da IA
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                            Quando ativado, o chatbot responderá perguntas gerais e permitirá conversas casuais
+                        </p>
+                    </div>
+                    <Switch
+                        checked={useInternalKnowledge}
+                        onCheckedChange={setUseInternalKnowledge}
+                    />
+                </div>
 
-            <div className="flex justify-end">
-                <Button onClick={handleSave} disabled={saving} className="btn-brand">
-                    {saving ? (
-                        <>
-                            <i className="ri-loader-4-line animate-spin mr-2" />
-                            Salvando...
-                        </>
-                    ) : (
-                        "Salvar Configurações"
-                    )}
-                </Button>
-            </div>
-        </IntegrationToggle>
+                {/* Preview */}
+                {(name || welcomeMessage) && (
+                    <ChatbotPreview name={name} welcomeMessage={welcomeMessage} />
+                )}
+
+                <div className="flex justify-between">
+                    <Button
+                        variant="outline"
+                        onClick={() => setTestDrawerOpen(true)}
+                        disabled={!enabled || !provider || !model}
+                        className="gap-1.5"
+                    >
+                        <i className="ri-chat-check-line" />
+                        Testar Chatbot
+                    </Button>
+
+                    <Button onClick={handleSave} disabled={saving} className="btn-brand">
+                        {saving ? (
+                            <>
+                                <i className="ri-loader-4-line animate-spin mr-2" />
+                                Salvando...
+                            </>
+                        ) : (
+                            "Salvar Configurações"
+                        )}
+                    </Button>
+                </div>
+            </IntegrationToggle>
+
+            <ChatbotTestDrawer
+                open={testDrawerOpen}
+                onOpenChange={setTestDrawerOpen}
+                chatbotName={name}
+                welcomeMessage={welcomeMessage}
+            />
+        </>
     );
 }
 

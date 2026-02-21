@@ -33,6 +33,8 @@ export function useFAQPage() {
     const [detailsItem, setDetailsItem] = useState<FAQLessonGroup | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<FAQLessonGroup | null>(null);
     const [aiModalOpen, setAiModalOpen] = useState(false);
+    const [aiLessonId, setAiLessonId] = useState<number>(0);
+    const [aiLessonName, setAiLessonName] = useState("");
 
     // Fetch data
     const fetchData = useCallback(async () => {
@@ -217,12 +219,14 @@ export function useFAQPage() {
         }
     }
 
-    function handleAIGenerate() {
+    function handleAIGenerate(lessonId: number, lessonName: string) {
+        setAiLessonId(lessonId);
+        setAiLessonName(lessonName);
         setAiModalOpen(true);
     }
 
     async function handleApplyAIFaqs(faqs: FAQItem[]) {
-        if (!editingItem) {
+        if (!aiLessonId) {
             setAiModalOpen(false);
             return;
         }
@@ -231,11 +235,12 @@ export function useFAQPage() {
                 .filter((f) => f.question.trim() && f.answer.trim())
                 .map((f) => ({ question: f.question, answer: f.answer }));
 
-            // Check if lesson already has FAQs (editingItem has faqs array)
-            if (editingItem.faqs && editingItem.faqs.length > 0) {
-                await faqService.update(editingItem.lessonId, { faqs: faqsPayload });
+            // Check if lesson already has FAQs
+            const existingGroup = faqGroups.find((g) => g.lessonId === aiLessonId);
+            if (existingGroup && existingGroup.faqs.length > 0) {
+                await faqService.update(aiLessonId, { faqs: faqsPayload });
             } else {
-                await faqService.create({ lesson_id: editingItem.lessonId, faqs: faqsPayload });
+                await faqService.create({ lesson_id: aiLessonId, faqs: faqsPayload });
             }
 
             setAiModalOpen(false);
@@ -256,6 +261,7 @@ export function useFAQPage() {
         modalOpen, setModalOpen, editingItem, setEditingItem,
         detailsItem, setDetailsItem, deleteTarget, setDeleteTarget,
         aiModalOpen, setAiModalOpen,
+        aiLessonId, aiLessonName,
         handleCreateOpen, handleEdit, handleView, handleSubmit, handleConfirmDelete,
         handleAIGenerate, handleApplyAIFaqs,
     };
