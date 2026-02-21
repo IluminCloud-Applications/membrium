@@ -6,6 +6,7 @@ import type { PromoteFormData } from "./PromoteModal";
 interface PromoteFormRightProps {
     form: PromoteFormData;
     onChange: (field: keyof PromoteFormData, value: string | number | boolean | File | null) => void;
+    isCtaDisabled?: boolean;
 }
 
 /** Convert ISO yyyy-mm-dd → dd/mm/yyyy for display */
@@ -33,7 +34,7 @@ function formatDateInput(raw: string): string {
     return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
 }
 
-export function PromoteFormRight({ form, onChange }: PromoteFormRightProps) {
+export function PromoteFormRight({ form, onChange, isCtaDisabled }: PromoteFormRightProps) {
     function handleDateChange(field: "startDate" | "endDate", rawValue: string) {
         const formatted = formatDateInput(rawValue);
         // Store as ISO when we have a complete date (dd/mm/yyyy = 10 chars)
@@ -113,6 +114,7 @@ export function PromoteFormRight({ form, onChange }: PromoteFormRightProps) {
                 ctaText={form.ctaText}
                 ctaUrl={form.ctaUrl}
                 ctaDelay={form.ctaDelay}
+                isDisabled={isCtaDisabled}
                 onToggleCta={(val: boolean) => onChange("hasCta", val)}
                 onCtaTextChange={(val: string) => onChange("ctaText", val)}
                 onCtaUrlChange={(val: string) => onChange("ctaUrl", val)}

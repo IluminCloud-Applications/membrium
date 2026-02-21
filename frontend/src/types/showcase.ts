@@ -23,6 +23,33 @@ export interface ShowcaseItem {
     createdAt: string;
 }
 
+/** Maps API response to frontend ShowcaseItem shape */
+export function mapShowcaseItem(raw: {
+    id: number;
+    name: string;
+    description: string;
+    image: string | null;
+    url: string;
+    status: string;
+    priority: number;
+    courses: { id: number; name: string }[];
+    created_at: string | null;
+}): ShowcaseItem {
+    return {
+        id: raw.id,
+        title: raw.name,
+        description: raw.description || "",
+        url: raw.url,
+        imageUrl: raw.image ? `/static/uploads/${raw.image}` : "",
+        courses: raw.courses,
+        priority: raw.priority,
+        status: raw.status as ShowcaseStatus,
+        views: 0,
+        clicks: 0,
+        createdAt: raw.created_at || new Date().toISOString(),
+    };
+}
+
 export const statusLabels: Record<ShowcaseStatus, string> = {
     active: "Ativo",
     inactive: "Inativo",

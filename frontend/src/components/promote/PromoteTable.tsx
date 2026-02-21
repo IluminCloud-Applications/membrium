@@ -91,13 +91,16 @@ function PromoteRow({ item, onEdit, onDelete, onToggleActive }: PromoteRowProps)
                     <div className="h-10 w-14 rounded-lg bg-muted overflow-hidden flex-shrink-0">
                         {item.mediaType === "image" && item.mediaUrl ? (
                             <img
-                                src={item.mediaUrl}
+                                src={`/static/uploads/${item.mediaUrl}`}
                                 alt={item.title}
                                 className="h-full w-full object-cover"
                             />
                         ) : item.mediaType === "video" ? (
                             <div className="h-full w-full flex items-center justify-center bg-primary/5">
-                                <i className="ri-play-circle-line text-primary" />
+                                <i className={`${item.videoSource === "youtube" ? "ri-youtube-line" :
+                                        item.videoSource === "vimeo" ? "ri-vimeo-line" :
+                                            "ri-code-s-slash-line"
+                                    } text-primary`} />
                             </div>
                         ) : (
                             <div className="h-full w-full flex items-center justify-center">
@@ -169,8 +172,8 @@ function PromoteRow({ item, onEdit, onDelete, onToggleActive }: PromoteRowProps)
                 <Badge
                     variant="secondary"
                     className={`text-[11px] font-medium cursor-pointer transition-colors ${item.isActive
-                            ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20"
-                            : "bg-red-500/10 text-red-500 hover:bg-red-500/20"
+                        ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20"
+                        : "bg-red-500/10 text-red-500 hover:bg-red-500/20"
                         }`}
                     onClick={() => onToggleActive(item)}
                 >

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
     ShowcaseStats,
     ShowcaseFilters,
@@ -8,11 +8,16 @@ import {
 import type { ShowcaseSortOption } from "@/components/showcase";
 import { ShowcaseModal } from "@/components/modals/showcase/ShowcaseModal";
 import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModal";
-import type { ShowcaseItem } from "@/types/showcase";
-import { mockShowcaseItems, mockAvailableCourses, mockCourseGroups } from "./mock-data";
+import type { ShowcaseItem, ShowcaseCourse } from "@/types/showcase";
+import { mapShowcaseItem } from "@/types/showcase";
+import { showcaseService } from "@/services/showcase";
+import { coursesService } from "@/services/courses";
+import { toast } from "sonner";
 
 export function ShowcasePage() {
-    const [items] = useState<ShowcaseItem[]>(mockShowcaseItems);
+    const [items, setItems] = useState<ShowcaseItem[]>([]);
+    const [availableCourses, setAvailableCourses] = useState<ShowcaseCourse[]>([]);
+    const [loading, setLoading] = useState(true);
 
     // Filters
     const [search, setSearch] = useState("");
@@ -23,6 +28,32 @@ export function ShowcasePage() {
     const [modalOpen, setModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<ShowcaseItem | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<ShowcaseItem | null>(null);
+
+    // Load data
+    const loadData = useCallback(async () => {
+        try {
+            setLoading(true);
+            const [showcaseData, coursesData] = await Promise.all([
+                showcaseService.getAll(),
+                coursesService.listSimple(),
+            ]);
+            setItems(showcaseData.map(mapShowcaseItem));
+            setAvailableCourses(
+                coursesData.map((c: { id: number; name: string }) => ({
+                    id: c.id,
+                    name: c.name,
+                }))
+            );
+        } catch {
+            toast.error("Erro ao carregar dados da vitrine");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
 
     // Filtered & sorted items
     const filteredItems = useMemo(() => {
@@ -63,7 +94,6 @@ export function ShowcasePage() {
     const totalViews = items.reduce((sum, item) => sum + item.views, 0);
     const totalClicks = items.reduce((sum, item) => sum + item.clicks, 0);
     const activeCount = items.filter((item) => item.status === "active").length;
-
     const hasActiveFilters = search.trim() !== "" || statusFilter !== "all";
 
     // Handlers
@@ -81,13 +111,79 @@ export function ShowcasePage() {
         setDeleteTarget(item);
     }
 
-    function handleToggleStatus(item: ShowcaseItem) {
-        console.log("Toggle status:", item.id, item.status === "active" ? "inactive" : "active");
+    async function handleToggleStatus(item: ShowcaseItem) {
+        const newStatus = item.status === "active" ? "inactive" : "active";
+        try {
+            await showcaseService.toggleStatus(item.id, newStatus);
+            toast.success(
+                newStatus === "active" ? "Item ativado" : "Item desativado"
+            );
+            loadData();
+        } catch {
+            toast.error("Erro ao alterar status");
+        }
     }
 
-    function handleConfirmDelete() {
-        console.log("Delete item:", deleteTarget?.id);
-        setDeleteTarget(null);
+    async function handleConfirmDelete() {
+        if (!deleteTarget) return;
+        try {
+            await showcaseService.delete(deleteTarget.id);
+            toast.success("Item excluído com sucesso");
+            setDeleteTarget(null);
+            loadData();
+        } catch {
+            toast.error("Erro ao excluir item");
+        }
+    }
+
+    async function handleSubmit(data: {
+        title: string;
+        description: string;
+        url: string;
+        image: File | null;
+        courseIds: number[];
+        priority: number;
+    }) {
+        try {
+            if (editingItem) {
+                const response = await showcaseService.update(editingItem.id, {
+                    name: data.title,
+                    description: data.description,
+                    url: data.url,
+                    priority: data.priority,
+                    course_ids: data.courseIds,
+                });
+                if (data.image && response.item) {
+                    await showcaseService.uploadImage(response.item.id, data.image);
+                }
+                toast.success("Item atualizado com sucesso");
+            } else {
+                const response = await showcaseService.create({
+                    name: data.title,
+                    description: data.description,
+                    url: data.url,
+                    priority: data.priority,
+                    course_ids: data.courseIds,
+                });
+                if (data.image && response.item) {
+                    await showcaseService.uploadImage(response.item.id, data.image);
+                }
+                toast.success("Item criado com sucesso");
+            }
+            setModalOpen(false);
+            setEditingItem(null);
+            loadData();
+        } catch {
+            toast.error("Erro ao salvar item");
+        }
+    }
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-20">
+                <i className="ri-loader-4-line text-2xl animate-spin text-primary" />
+            </div>
+        );
     }
 
     return (
@@ -142,13 +238,8 @@ export function ShowcasePage() {
                 open={modalOpen}
                 onOpenChange={setModalOpen}
                 editItem={editingItem}
-                availableCourses={mockAvailableCourses}
-                courseGroups={mockCourseGroups}
-                onSubmit={(data) => {
-                    console.log(editingItem ? "Update:" : "Create:", data);
-                    setModalOpen(false);
-                    setEditingItem(null);
-                }}
+                availableCourses={availableCourses}
+                onSubmit={handleSubmit}
             />
 
             <DeleteConfirmModal

@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PromoteMediaSection } from "./PromoteMediaSection";
 import type { PromoteFormData } from "./PromoteModal";
-import type { PromoteMediaType } from "@/types/promote";
+import type { PromoteMediaType, PromoteVideoSource } from "@/types/promote";
 
 interface PromoteFormLeftProps {
     form: PromoteFormData;
@@ -52,9 +52,11 @@ export function PromoteFormLeft({ form, onChange }: PromoteFormLeftProps) {
             <PromoteMediaSection
                 mediaType={form.mediaType}
                 mediaUrl={form.mediaUrl}
+                videoSource={form.videoSource}
                 onMediaTypeChange={(type: PromoteMediaType) => onChange("mediaType", type)}
                 onMediaUrlChange={(url: string) => onChange("mediaUrl", url)}
                 onMediaFileChange={(file: File | null) => onChange("mediaFile", file)}
+                onVideoSourceChange={(source: PromoteVideoSource) => onChange("videoSource", source)}
             />
         </div>
     );

@@ -4,6 +4,7 @@
 
 export type PromoteStatus = "active" | "inactive" | "upcoming" | "expired";
 export type PromoteMediaType = "image" | "video";
+export type PromoteVideoSource = "youtube" | "vimeo" | "custom";
 
 export interface PromoteItem {
     id: number;
@@ -11,12 +12,14 @@ export interface PromoteItem {
     description: string;
     mediaType: PromoteMediaType;
     mediaUrl: string;
+    videoSource: PromoteVideoSource;
     startDate: string;
     endDate: string;
     hasCta: boolean;
     ctaText: string;
     ctaUrl: string;
     ctaDelay: number;
+    hideVideoControls: boolean;
     status: PromoteStatus;
     isActive: boolean;
     views: number;
@@ -43,4 +46,10 @@ export const statusIcons: Record<PromoteStatus, string> = {
     inactive: "text-red-400",
     upcoming: "text-blue-500",
     expired: "text-gray-400",
+};
+
+export const videoSourceLabels: Record<PromoteVideoSource, string> = {
+    youtube: "YouTube",
+    vimeo: "Vimeo",
+    custom: "Externo (VTurb, Panda, etc.)",
 };

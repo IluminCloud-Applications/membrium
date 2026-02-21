@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PromoteFormLeft } from "./PromoteFormLeft";
 import { PromoteFormRight } from "./PromoteFormRight";
-import type { PromoteItem, PromoteMediaType } from "@/types/promote";
+import type { PromoteItem, PromoteMediaType, PromoteVideoSource } from "@/types/promote";
 
 export interface PromoteFormData {
     title: string;
@@ -17,12 +17,14 @@ export interface PromoteFormData {
     mediaType: PromoteMediaType;
     mediaUrl: string;
     mediaFile: File | null;
+    videoSource: PromoteVideoSource;
     startDate: string;
     endDate: string;
     hasCta: boolean;
     ctaText: string;
     ctaUrl: string;
     ctaDelay: number;
+    hideVideoControls: boolean;
     isActive: boolean;
 }
 
@@ -40,12 +42,14 @@ const emptyForm: PromoteFormData = {
     mediaType: "image",
     mediaUrl: "",
     mediaFile: null,
+    videoSource: "youtube",
     startDate: "",
     endDate: "",
     hasCta: false,
     ctaText: "",
     ctaUrl: "",
     ctaDelay: 0,
+    hideVideoControls: true,
     isActive: true,
 };
 
@@ -67,12 +71,14 @@ export function PromoteModal({
                 mediaType: editItem.mediaType,
                 mediaUrl: editItem.mediaUrl,
                 mediaFile: null,
+                videoSource: editItem.videoSource || "youtube",
                 startDate: editItem.startDate,
                 endDate: editItem.endDate,
                 hasCta: editItem.hasCta,
                 ctaText: editItem.ctaText,
                 ctaUrl: editItem.ctaUrl,
                 ctaDelay: editItem.ctaDelay,
+                hideVideoControls: editItem.hideVideoControls,
                 isActive: editItem.isActive,
             });
         } else {
@@ -84,13 +90,25 @@ export function PromoteModal({
         field: keyof PromoteFormData,
         value: string | number | boolean | File | null
     ) {
-        setForm((prev) => ({ ...prev, [field]: value }));
+        setForm((prev) => {
+            const next = { ...prev, [field]: value };
+
+            // When switching to custom video, disable CTA
+            if (field === "videoSource" && value === "custom") {
+                next.hasCta = false;
+            }
+
+            return next;
+        });
     }
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         onSubmit(form);
     }
+
+    // CTA disabled when using custom video source
+    const isCtaDisabled = form.mediaType === "video" && form.videoSource === "custom";
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -113,8 +131,12 @@ export function PromoteModal({
                         {/* Left column: Title, Description, Media */}
                         <PromoteFormLeft form={form} onChange={handleChange} />
 
-                        {/* Right column: Period, CTA, Active */}
-                        <PromoteFormRight form={form} onChange={handleChange} />
+                        {/* Right column: Period, CTA */}
+                        <PromoteFormRight
+                            form={form}
+                            onChange={handleChange}
+                            isCtaDisabled={isCtaDisabled}
+                        />
                     </div>
 
                     {/* Footer */}

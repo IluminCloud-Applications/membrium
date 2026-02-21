@@ -1,40 +1,26 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import type { ShowcaseCourse } from "@/types/showcase";
-import type { CourseGroup } from "@/types/course";
 
 interface ShowcaseFormConfigProps {
     url: string;
     priority: number;
     courseIds: number[];
-    groupFilter: string;
-    filteredCourses: ShowcaseCourse[];
-    courseGroups: CourseGroup[];
+    availableCourses: ShowcaseCourse[];
     onUrlChange: (value: string) => void;
     onPriorityChange: (value: number) => void;
     onToggleCourse: (courseId: number) => void;
-    onGroupFilterChange: (value: string) => void;
 }
 
 export function ShowcaseFormConfig({
     url,
     priority,
     courseIds,
-    groupFilter,
-    filteredCourses,
-    courseGroups,
+    availableCourses,
     onUrlChange,
     onPriorityChange,
     onToggleCourse,
-    onGroupFilterChange,
 }: ShowcaseFormConfigProps) {
     return (
         <div className="space-y-5">
@@ -45,35 +31,12 @@ export function ShowcaseFormConfig({
 
             {/* Courses Selection */}
             <div className="space-y-2">
-                {/* Label + group filter inline */}
-                <div className="flex items-center justify-between gap-3">
-                    <Label className="shrink-0">
-                        Cursos Relacionados <span className="text-destructive">*</span>
-                    </Label>
-                    <Select value={groupFilter} onValueChange={onGroupFilterChange}>
-                        <SelectTrigger className="h-8 w-[180px] text-xs">
-                            <SelectValue placeholder="Filtrar por grupo" />
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl">
-                            <SelectItem value="all" className="rounded-lg">
-                                Todos os cursos
-                            </SelectItem>
-                            {courseGroups.map((group) => (
-                                <SelectItem
-                                    key={group.id}
-                                    value={group.id.toString()}
-                                    className="rounded-lg"
-                                >
-                                    {group.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+                <Label>
+                    Cursos Relacionados <span className="text-destructive">*</span>
+                </Label>
 
-                {/* Courses list */}
                 <div className="rounded-lg border p-2 space-y-0.5 max-h-[160px] overflow-y-auto">
-                    {filteredCourses.map((course) => (
+                    {availableCourses.map((course) => (
                         <label
                             key={course.id}
                             className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
@@ -86,9 +49,9 @@ export function ShowcaseFormConfig({
                         </label>
                     ))}
 
-                    {filteredCourses.length === 0 && (
+                    {availableCourses.length === 0 && (
                         <p className="text-sm text-muted-foreground text-center py-2">
-                            Nenhum curso neste grupo.
+                            Nenhum curso disponível.
                         </p>
                     )}
                 </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
     Dialog,
     DialogContent,
@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { ShowcaseFormInfo } from "./ShowcaseFormInfo";
 import { ShowcaseFormConfig } from "./ShowcaseFormConfig";
 import type { ShowcaseItem, ShowcaseCourse } from "@/types/showcase";
-import type { CourseGroup } from "@/types/course";
 
 export interface ShowcaseFormData {
     title: string;
@@ -27,7 +26,6 @@ interface ShowcaseModalProps {
     onOpenChange: (open: boolean) => void;
     editItem: ShowcaseItem | null;
     availableCourses: ShowcaseCourse[];
-    courseGroups: CourseGroup[];
     onSubmit: (data: ShowcaseFormData) => void;
 }
 
@@ -45,21 +43,12 @@ export function ShowcaseModal({
     onOpenChange,
     editItem,
     availableCourses,
-    courseGroups,
     onSubmit,
 }: ShowcaseModalProps) {
     const [form, setForm] = useState<ShowcaseFormData>(emptyForm);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [groupFilter, setGroupFilter] = useState<string>("all");
     const fileInputRef = useRef<HTMLInputElement>(null);
     const isEditing = !!editItem;
-
-    const filteredCourses = useMemo(() => {
-        if (groupFilter === "all") return availableCourses;
-        const group = courseGroups.find((g) => g.id === Number(groupFilter));
-        if (!group) return availableCourses;
-        return availableCourses.filter((c) => group.courseIds.includes(c.id));
-    }, [availableCourses, courseGroups, groupFilter]);
 
     useEffect(() => {
         if (editItem) {
@@ -76,7 +65,6 @@ export function ShowcaseModal({
             setForm(emptyForm);
             setImagePreview(null);
         }
-        setGroupFilter("all");
     }, [editItem, open]);
 
     function handleChange(field: keyof ShowcaseFormData, value: string | number) {
@@ -143,13 +131,10 @@ export function ShowcaseModal({
                             url={form.url}
                             priority={form.priority}
                             courseIds={form.courseIds}
-                            groupFilter={groupFilter}
-                            filteredCourses={filteredCourses}
-                            courseGroups={courseGroups}
+                            availableCourses={availableCourses}
                             onUrlChange={(v) => handleChange("url", v)}
                             onPriorityChange={(v) => handleChange("priority", v)}
                             onToggleCourse={toggleCourse}
-                            onGroupFilterChange={setGroupFilter}
                         />
                     </div>
 

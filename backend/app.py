@@ -18,10 +18,10 @@ from routes.misc import misc_bp
 from routes.dashboard import dashboard_bp
 from routes.courses import courses_bp
 from routes.course_modification import course_modification_bp
+from routes.showcase import showcase_bp
 
-# Import existing blueprints
-from promote import promote
-from showcase import showcase
+from routes.promote import promote_bp
+
 from faq import faq
 from faq_ai import faq_ai
 from chatbot import chatbot
@@ -56,8 +56,8 @@ def create_app():
 
     # Register existing blueprints
     app.register_blueprint(webhook)
-    app.register_blueprint(promote)
-    app.register_blueprint(showcase)
+    app.register_blueprint(promote_bp)
+    app.register_blueprint(showcase_bp)
     app.register_blueprint(faq)
     app.register_blueprint(faq_ai)
     app.register_blueprint(chatbot)

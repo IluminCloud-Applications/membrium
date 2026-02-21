@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
     PromoteStats,
     PromoteFilters,
@@ -7,12 +7,16 @@ import {
 } from "@/components/promote";
 import type { PromoteSortOption } from "@/components/promote";
 import { PromoteModal } from "@/components/modals/promote/PromoteModal";
+import type { PromoteFormData } from "@/components/modals/promote/PromoteModal";
 import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModal";
 import type { PromoteItem } from "@/types/promote";
-import { mockPromotions } from "./mock-data";
+import { promoteService } from "@/services/promote";
 
 export function PromotePage() {
-    const [items] = useState<PromoteItem[]>(mockPromotions);
+    const [items, setItems] = useState<PromoteItem[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [totalViews, setTotalViews] = useState(0);
+    const [totalClicks, setTotalClicks] = useState(0);
 
     // Filters
     const [search, setSearch] = useState("");
@@ -23,24 +27,33 @@ export function PromotePage() {
     const [modalOpen, setModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<PromoteItem | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<PromoteItem | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
-    // Filtered & sorted items
-    const filteredItems = useMemo(() => {
-        let result = [...items];
-
-        if (search.trim()) {
-            const q = search.toLowerCase();
-            result = result.filter(
-                (item) =>
-                    item.title.toLowerCase().includes(q) ||
-                    item.description.toLowerCase().includes(q)
-            );
+    // Fetch promotions
+    const fetchPromotions = useCallback(async () => {
+        try {
+            setIsLoading(true);
+            const data = await promoteService.getAll({
+                search: search.trim() || undefined,
+                status: statusFilter !== "all" ? statusFilter : undefined,
+            });
+            setItems(data.promotions);
+            setTotalViews(data.total_views);
+            setTotalClicks(data.total_clicks);
+        } catch (err) {
+            console.error("Failed to fetch promotions:", err);
+        } finally {
+            setIsLoading(false);
         }
+    }, [search, statusFilter]);
 
-        if (statusFilter !== "all") {
-            result = result.filter((item) => item.status === statusFilter);
-        }
+    useEffect(() => {
+        fetchPromotions();
+    }, [fetchPromotions]);
 
+    // Sorted items (filtering done server-side)
+    const sortedItems = useMemo(() => {
+        const result = [...items];
         switch (sortBy) {
             case "newest":
                 result.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -52,15 +65,11 @@ export function PromotePage() {
                 result.sort((a, b) => a.title.localeCompare(b.title));
                 break;
         }
-
         return result;
-    }, [items, search, statusFilter, sortBy]);
+    }, [items, sortBy]);
 
     // Computed stats
     const activeCount = items.filter((item) => item.status === "active").length;
-    const totalViews = items.reduce((sum, item) => sum + item.views, 0);
-    const totalClicks = items.reduce((sum, item) => sum + item.clicks, 0);
-
     const hasActiveFilters = search.trim() !== "" || statusFilter !== "all";
 
     // Handlers
@@ -78,13 +87,58 @@ export function PromotePage() {
         setDeleteTarget(item);
     }
 
-    function handleToggleActive(item: PromoteItem) {
-        console.log("Toggle active:", item.id, !item.isActive);
+    async function handleToggleActive(item: PromoteItem) {
+        try {
+            await promoteService.toggleActive(item.id);
+            fetchPromotions();
+        } catch (err) {
+            console.error("Failed to toggle promotion:", err);
+        }
     }
 
-    function handleConfirmDelete() {
-        console.log("Delete promotion:", deleteTarget?.id);
-        setDeleteTarget(null);
+    async function handleConfirmDelete() {
+        if (!deleteTarget) return;
+        try {
+            await promoteService.delete(deleteTarget.id);
+            setDeleteTarget(null);
+            fetchPromotions();
+        } catch (err) {
+            console.error("Failed to delete promotion:", err);
+        }
+    }
+
+    async function handleSubmit(data: PromoteFormData) {
+        try {
+            setIsSaving(true);
+            const payload = {
+                title: data.title,
+                description: data.description,
+                mediaType: data.mediaType,
+                mediaUrl: data.mediaUrl,
+                videoSource: data.videoSource,
+                startDate: data.startDate,
+                endDate: data.endDate,
+                hasCta: data.hasCta,
+                ctaText: data.ctaText,
+                ctaUrl: data.ctaUrl,
+                ctaDelay: data.ctaDelay,
+                hideVideoControls: data.hideVideoControls,
+            };
+
+            if (editingItem) {
+                await promoteService.update(editingItem.id, payload, data.mediaFile);
+            } else {
+                await promoteService.create(payload, data.mediaFile);
+            }
+
+            setModalOpen(false);
+            setEditingItem(null);
+            fetchPromotions();
+        } catch (err) {
+            console.error("Failed to save promotion:", err);
+        } finally {
+            setIsSaving(false);
+        }
     }
 
     return (
@@ -120,14 +174,18 @@ export function PromotePage() {
             />
 
             {/* Content */}
-            {filteredItems.length === 0 ? (
+            {isLoading ? (
+                <div className="flex items-center justify-center py-16">
+                    <i className="ri-loader-4-line animate-spin text-3xl text-primary" />
+                </div>
+            ) : sortedItems.length === 0 ? (
                 <PromoteEmptyState
                     hasFilters={hasActiveFilters}
                     onCreateItem={handleCreateOpen}
                 />
             ) : (
                 <PromoteTable
-                    items={filteredItems}
+                    items={sortedItems}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     onToggleActive={handleToggleActive}
@@ -139,11 +197,8 @@ export function PromotePage() {
                 open={modalOpen}
                 onOpenChange={setModalOpen}
                 editItem={editingItem}
-                onSubmit={(data) => {
-                    console.log(editingItem ? "Update:" : "Create:", data);
-                    setModalOpen(false);
-                    setEditingItem(null);
-                }}
+                isLoading={isSaving}
+                onSubmit={handleSubmit}
             />
 
             <DeleteConfirmModal

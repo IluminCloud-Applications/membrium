@@ -7,6 +7,7 @@ interface PromoteCtaSectionProps {
     ctaText: string;
     ctaUrl: string;
     ctaDelay: number;
+    isDisabled?: boolean;
     onToggleCta: (value: boolean) => void;
     onCtaTextChange: (value: string) => void;
     onCtaUrlChange: (value: string) => void;
@@ -18,6 +19,7 @@ export function PromoteCtaSection({
     ctaText,
     ctaUrl,
     ctaDelay,
+    isDisabled,
     onToggleCta,
     onCtaTextChange,
     onCtaUrlChange,
@@ -31,18 +33,27 @@ export function PromoteCtaSection({
             </h4>
 
             {/* CTA toggle */}
-            <div className="flex items-center justify-between rounded-lg border p-3">
+            <div
+                className={`flex items-center justify-between rounded-lg border p-3 transition-opacity ${isDisabled ? "opacity-50" : ""
+                    }`}
+            >
                 <div className="space-y-0.5">
                     <Label className="text-sm font-medium">Adicionar CTA</Label>
                     <p className="text-xs text-muted-foreground">
-                        Exibe um botão de ação na promoção.
+                        {isDisabled
+                            ? "Indisponível para vídeos externos."
+                            : "Exibe um botão de ação na promoção."}
                     </p>
                 </div>
-                <Switch checked={hasCta} onCheckedChange={onToggleCta} />
+                <Switch
+                    checked={hasCta}
+                    onCheckedChange={onToggleCta}
+                    disabled={isDisabled}
+                />
             </div>
 
             {/* CTA fields */}
-            {hasCta && (
+            {hasCta && !isDisabled && (
                 <div className="space-y-4 animate-fade-in">
                     <div className="space-y-2">
                         <Label htmlFor="promote-cta-text">Texto do Botão</Label>

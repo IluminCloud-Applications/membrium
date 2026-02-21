@@ -19,6 +19,11 @@ course_group_courses = db.Table('course_group_courses',
     db.Column('course_id', db.Integer, db.ForeignKey('course.id'), primary_key=True)
 )
 
+showcase_courses = db.Table('showcase_courses',
+    db.Column('showcase_id', db.Integer, db.ForeignKey('showcase.id'), primary_key=True),
+    db.Column('course_id', db.Integer, db.ForeignKey('course.id'), primary_key=True)
+)
+
 class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=True)
@@ -48,7 +53,6 @@ class Course(db.Model):
     menu_items = db.Column(db.JSON, default=list)  # [{name, url, icon, order}]
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     modules = db.relationship('Module', backref='course', lazy=True, cascade="all, delete-orphan", order_by='Module.order')
-    showcases = db.relationship('Showcase', backref='course', lazy=True)
 
 class Module(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -158,7 +162,8 @@ class Promotion(db.Model):
     title = db.Column(db.String(120), nullable=False)
     description = db.Column(db.Text, nullable=False)
     media_type = db.Column(db.String(10), nullable=False)  # 'image' or 'video'
-    media_url = db.Column(db.String(255), nullable=False)  # Image filename or video URL
+    media_url = db.Column(db.Text, nullable=False)  # Image filename, video URL, or embed code
+    video_source = db.Column(db.String(20), nullable=True)  # 'youtube', 'vimeo', 'custom' (VTurb, Panda, etc.)
     start_date = db.Column(db.DateTime, nullable=False)
     end_date = db.Column(db.DateTime, nullable=False)
     button_delay = db.Column(db.Integer, default=0)
@@ -167,7 +172,7 @@ class Promotion(db.Model):
     cta_url = db.Column(db.String(255))
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    hide_video_controls = db.Column(db.Boolean, default=True)  # True para ocultar, False para mostrar controles
+    hide_video_controls = db.Column(db.Boolean, default=True)
 
     @property
     def status(self):
@@ -181,22 +186,26 @@ class Promotion(db.Model):
         else:
             return 'active'
 
+class PromotionAnalytics(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    promotion_id = db.Column(db.Integer, db.ForeignKey('promotion.id'), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    views = db.Column(db.Integer, default=0)
+    clicks = db.Column(db.Integer, default=0)
+    __table_args__ = (db.UniqueConstraint('promotion_id', 'date', name='uix_promotion_date'),)
+    promotion = db.relationship('Promotion', backref='analytics', lazy=True)
+
 class Showcase(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
     description = db.Column(db.Text)
     image = db.Column(db.String(255))
-    button_text = db.Column(db.String(255))
-    button_link = db.Column(db.String(255))
-    price = db.Column(db.String(20))
-    has_video = db.Column(db.Boolean, default=False)
-    video_url = db.Column(db.String(255))
-    status = db.Column(db.String(20), default='active')
+    url = db.Column(db.String(500), nullable=False)
+    status = db.Column(db.String(20), default='inactive')
     priority = db.Column(db.Integer, default=5)
-    button_delay = db.Column(db.Integer, default=0)  # novo campo para delay em segundos
-    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=False)  # Nova coluna para referenciar o curso
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    courses = db.relationship('Course', secondary=showcase_courses, backref=db.backref('showcase_items', lazy='dynamic'))
 
 class ShowcaseAnalytics(db.Model):
     id = db.Column(db.Integer, primary_key=True)
