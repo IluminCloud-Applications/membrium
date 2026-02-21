@@ -4,26 +4,56 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { IntegrationToggle } from "../IntegrationToggle";
+import { aiService, type GeminiSettings, type OpenAISettings } from "@/services/ai";
+import { toast } from "sonner";
 
-/**
- * API tab — toggle cards for Gemini (recommended) and OpenAI.
- * Both share the same simple pattern: toggle + API key.
- */
-export function AIApiTab() {
-    const [geminiEnabled, setGeminiEnabled] = useState(false);
-    const [geminiKey, setGeminiKey] = useState("");
+interface AIApiTabProps {
+    gemini: GeminiSettings;
+    openai: OpenAISettings;
+    onUpdate: () => void;
+}
+
+export function AIApiTab({ gemini, openai, onUpdate }: AIApiTabProps) {
+    const [geminiEnabled, setGeminiEnabled] = useState(gemini.enabled);
+    const [geminiKey, setGeminiKey] = useState(gemini.api_key);
     const [showGeminiKey, setShowGeminiKey] = useState(false);
+    const [savingGemini, setSavingGemini] = useState(false);
 
-    const [openaiEnabled, setOpenaiEnabled] = useState(false);
-    const [openaiKey, setOpenaiKey] = useState("");
+    const [openaiEnabled, setOpenaiEnabled] = useState(openai.enabled);
+    const [openaiKey, setOpenaiKey] = useState(openai.api_key);
     const [showOpenaiKey, setShowOpenaiKey] = useState(false);
+    const [savingOpenai, setSavingOpenai] = useState(false);
 
-    const [saving, setSaving] = useState(false);
+    async function handleSaveGemini() {
+        setSavingGemini(true);
+        try {
+            const resp = await aiService.updateGemini({
+                enabled: geminiEnabled,
+                api_key: geminiKey,
+            });
+            toast.success(resp.message);
+            onUpdate();
+        } catch {
+            toast.error("Erro ao salvar configurações do Gemini");
+        } finally {
+            setSavingGemini(false);
+        }
+    }
 
-    async function handleSave() {
-        setSaving(true);
-        // TODO: API call
-        setTimeout(() => setSaving(false), 800);
+    async function handleSaveOpenai() {
+        setSavingOpenai(true);
+        try {
+            const resp = await aiService.updateOpenAI({
+                enabled: openaiEnabled,
+                api_key: openaiKey,
+            });
+            toast.success(resp.message);
+            onUpdate();
+        } catch {
+            toast.error("Erro ao salvar configurações da OpenAI");
+        } finally {
+            setSavingOpenai(false);
+        }
     }
 
     return (
@@ -74,12 +104,8 @@ export function AIApiTab() {
                 </div>
 
                 <div className="flex justify-end">
-                    <Button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="btn-brand"
-                    >
-                        {saving ? (
+                    <Button onClick={handleSaveGemini} disabled={savingGemini} className="btn-brand">
+                        {savingGemini ? (
                             <>
                                 <i className="ri-loader-4-line animate-spin mr-2" />
                                 Salvando...
@@ -132,12 +158,8 @@ export function AIApiTab() {
                 </div>
 
                 <div className="flex justify-end">
-                    <Button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="btn-brand"
-                    >
-                        {saving ? (
+                    <Button onClick={handleSaveOpenai} disabled={savingOpenai} className="btn-brand">
+                        {savingOpenai ? (
                             <>
                                 <i className="ri-loader-4-line animate-spin mr-2" />
                                 Salvando...

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -12,30 +12,75 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { IntegrationToggle } from "../IntegrationToggle";
+import {
+    aiService,
+    type ChatbotSettings,
+    type GeminiSettings,
+    type OpenAISettings,
+    type AIModel,
+} from "@/services/ai";
+import { toast } from "sonner";
 
-const PROVIDER_MODELS: Record<string, { value: string; label: string }[]> = {
-    openai: [
-        { value: "gpt-4o", label: "GPT-4o" },
-        { value: "gpt-4o-mini", label: "GPT-4o Mini" },
-        { value: "gpt-4-turbo", label: "GPT-4 Turbo" },
-    ],
-    gemini: [
-        { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash" },
-        { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro" },
-        { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash" },
-    ],
-};
+interface ChatbotTabProps {
+    chatbot: ChatbotSettings;
+    gemini: GeminiSettings;
+    openai: OpenAISettings;
+    onUpdate: () => void;
+}
 
-export function ChatbotTab() {
-    const [enabled, setEnabled] = useState(false);
-    const [name, setName] = useState("");
-    const [provider, setProvider] = useState("");
-    const [model, setModel] = useState("");
-    const [welcomeMessage, setWelcomeMessage] = useState("");
-    const [useInternalKnowledge, setUseInternalKnowledge] = useState(false);
+export function ChatbotTab({ chatbot, gemini, openai, onUpdate }: ChatbotTabProps) {
+    const [enabled, setEnabled] = useState(chatbot.enabled);
+    const [name, setName] = useState(chatbot.name);
+    const [provider, setProvider] = useState(chatbot.provider);
+    const [model, setModel] = useState(chatbot.model);
+    const [welcomeMessage, setWelcomeMessage] = useState(chatbot.welcome_message);
+    const [useInternalKnowledge, setUseInternalKnowledge] = useState(chatbot.use_internal_knowledge);
     const [saving, setSaving] = useState(false);
 
-    const models = provider ? PROVIDER_MODELS[provider] ?? [] : [];
+    const [models, setModels] = useState<AIModel[]>([]);
+    const [loadingModels, setLoadingModels] = useState(false);
+
+    // Available providers based on configured API keys
+    const availableProviders = [
+        ...(gemini.enabled ? [{ value: "gemini", label: "Google Gemini" }] : []),
+        ...(openai.enabled ? [{ value: "openai", label: "OpenAI" }] : []),
+    ];
+
+    // Fetch models when provider changes
+    useEffect(() => {
+        if (!provider) {
+            setModels([]);
+            return;
+        }
+        fetchModels(provider);
+    }, [provider]);
+
+    async function fetchModels(selectedProvider: string) {
+        setLoadingModels(true);
+        setModels([]);
+        try {
+            let resp;
+            if (selectedProvider === "gemini" && gemini.api_key) {
+                resp = await aiService.fetchGeminiModels(gemini.api_key);
+            } else if (selectedProvider === "openai" && openai.api_key) {
+                resp = await aiService.fetchOpenAIModels(openai.api_key);
+            } else {
+                toast.error("API Key não configurada para este provedor");
+                setLoadingModels(false);
+                return;
+            }
+
+            if (resp.success && resp.models) {
+                setModels(resp.models);
+            } else {
+                toast.error(resp.message || "Erro ao buscar modelos");
+            }
+        } catch {
+            toast.error("Erro ao buscar modelos disponíveis");
+        } finally {
+            setLoadingModels(false);
+        }
+    }
 
     function handleProviderChange(value: string) {
         setProvider(value);
@@ -44,8 +89,22 @@ export function ChatbotTab() {
 
     async function handleSave() {
         setSaving(true);
-        // TODO: API call
-        setTimeout(() => setSaving(false), 800);
+        try {
+            const resp = await aiService.updateChatbot({
+                enabled,
+                name,
+                provider,
+                model,
+                welcome_message: welcomeMessage,
+                use_internal_knowledge: useInternalKnowledge,
+            });
+            toast.success(resp.message);
+            onUpdate();
+        } catch {
+            toast.error("Erro ao salvar configurações do Chatbot");
+        } finally {
+            setSaving(false);
+        }
     }
 
     return (
@@ -75,8 +134,17 @@ export function ChatbotTab() {
                             <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
                         <SelectContent className="rounded-xl">
-                            <SelectItem value="gemini" className="rounded-lg">Google Gemini</SelectItem>
-                            <SelectItem value="openai" className="rounded-lg">OpenAI</SelectItem>
+                            {availableProviders.length === 0 ? (
+                                <SelectItem value="_none" disabled className="rounded-lg text-muted-foreground">
+                                    Nenhuma API configurada
+                                </SelectItem>
+                            ) : (
+                                availableProviders.map((p) => (
+                                    <SelectItem key={p.value} value={p.value} className="rounded-lg">
+                                        {p.label}
+                                    </SelectItem>
+                                ))
+                            )}
                         </SelectContent>
                     </Select>
                 </div>
@@ -85,15 +153,17 @@ export function ChatbotTab() {
                     <Select
                         value={model}
                         onValueChange={setModel}
-                        disabled={!provider}
+                        disabled={!provider || loadingModels}
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder="Selecione" />
+                            <SelectValue
+                                placeholder={loadingModels ? "Carregando modelos..." : "Selecione"}
+                            />
                         </SelectTrigger>
-                        <SelectContent className="rounded-xl">
+                        <SelectContent className="rounded-xl max-h-60">
                             {models.map((m) => (
-                                <SelectItem key={m.value} value={m.value} className="rounded-lg">
-                                    {m.label}
+                                <SelectItem key={m.id} value={m.id} className="rounded-lg">
+                                    {m.name || m.id}
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -134,33 +204,11 @@ export function ChatbotTab() {
 
             {/* Preview */}
             {(name || welcomeMessage) && (
-                <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
-                    <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                        <i className="ri-eye-line" />
-                        Visualização do Chatbot
-                    </h4>
-                    <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                            <i className="ri-robot-2-line text-primary" />
-                        </div>
-                        <div className="bg-primary text-primary-foreground rounded-lg p-3 max-w-xs">
-                            {name && (
-                                <p className="text-xs font-medium mb-0.5">{name}</p>
-                            )}
-                            <p className="text-sm">
-                                {welcomeMessage || "Olá! Como posso ajudar?"}
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                <ChatbotPreview name={name} welcomeMessage={welcomeMessage} />
             )}
 
             <div className="flex justify-end">
-                <Button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="btn-brand"
-                >
+                <Button onClick={handleSave} disabled={saving} className="btn-brand">
                     {saving ? (
                         <>
                             <i className="ri-loader-4-line animate-spin mr-2" />
@@ -172,5 +220,27 @@ export function ChatbotTab() {
                 </Button>
             </div>
         </IntegrationToggle>
+    );
+}
+
+/* ─── Chatbot Preview ─────────────────────────────────────────── */
+
+function ChatbotPreview({ name, welcomeMessage }: { name: string; welcomeMessage: string }) {
+    return (
+        <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
+            <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                <i className="ri-eye-line" />
+                Visualização do Chatbot
+            </h4>
+            <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <i className="ri-robot-2-line text-primary" />
+                </div>
+                <div className="bg-primary text-primary-foreground rounded-lg p-3 max-w-xs">
+                    {name && <p className="text-xs font-medium mb-0.5">{name}</p>}
+                    <p className="text-sm">{welcomeMessage || "Olá! Como posso ajudar?"}</p>
+                </div>
+            </div>
+        </div>
     );
 }

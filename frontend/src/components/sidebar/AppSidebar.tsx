@@ -12,7 +12,7 @@ import { sidebarNavGroups } from "./sidebar-data";
 
 interface AppSidebarProps {
     platformName: string;
-    user: { name: string; email: string };
+    user: { name: string };
     onLogout: () => void;
 }
 

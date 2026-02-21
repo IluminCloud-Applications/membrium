@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import {
     Avatar,
     AvatarFallback,
@@ -22,7 +23,6 @@ import { useTheme } from "@/hooks/useTheme";
 interface NavUserProps {
     user: {
         name: string;
-        email: string;
     };
     onLogout: () => void;
 }
@@ -30,6 +30,7 @@ interface NavUserProps {
 export function NavUser({ user, onLogout }: NavUserProps) {
     const { isMobile } = useSidebar();
     const { theme, toggleTheme } = useTheme();
+    const navigate = useNavigate();
 
     const initials = user.name
         .split(" ")
@@ -54,8 +55,8 @@ export function NavUser({ user, onLogout }: NavUserProps) {
                             </Avatar>
                             <div className="grid flex-1 text-left text-sm leading-tight">
                                 <span className="truncate font-medium">{user.name}</span>
-                                <span className="truncate text-xs text-muted-foreground">
-                                    {user.email}
+                                <span className="truncate text-[10px] text-muted-foreground/60">
+                                    v2.0.0
                                 </span>
                             </div>
                             <i className="ri-arrow-up-down-line text-base text-muted-foreground" />
@@ -76,15 +77,15 @@ export function NavUser({ user, onLogout }: NavUserProps) {
                                 </Avatar>
                                 <div className="grid flex-1 text-left text-sm leading-tight">
                                     <span className="truncate font-medium">{user.name}</span>
-                                    <span className="truncate text-xs text-muted-foreground">
-                                        {user.email}
+                                    <span className="truncate text-[10px] text-muted-foreground/60">
+                                        v2.0.0
                                     </span>
                                 </div>
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => navigate("/admin/configuracoes")}>
                                 <i className="ri-settings-3-line mr-2" />
                                 Configurações
                             </DropdownMenuItem>
@@ -93,7 +94,7 @@ export function NavUser({ user, onLogout }: NavUserProps) {
                                 {theme === "dark" ? "Modo Claro" : "Modo Escuro"}
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                                <a href="https://help.membriumwl.com/" target="_blank" rel="noopener noreferrer">
+                                <a href="https://ilumin.app/membrium" target="_blank" rel="noopener noreferrer">
                                     <i className="ri-lifebuoy-line mr-2" />
                                     Ajuda
                                 </a>

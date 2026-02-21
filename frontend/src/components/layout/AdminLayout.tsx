@@ -6,7 +6,7 @@ import { authService } from "@/services/authService";
 
 interface AdminLayoutProps {
     platformName: string;
-    user: { name: string; email: string };
+    user: { name: string };
     pageTitle: string;
 }
 

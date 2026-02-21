@@ -149,9 +149,9 @@ class Settings(db.Model):
     youtube_client_id = db.Column(db.String(255), nullable=True)
     youtube_client_secret = db.Column(db.String(255), nullable=True)
     
-    # GROQ AI Integration
-    groq_api_enabled = db.Column(db.Boolean, default=False)
-    groq_api = db.Column(db.String(255), nullable=True)
+    # Gemini AI Integration
+    gemini_api_enabled = db.Column(db.Boolean, default=False)
+    gemini_api_key = db.Column(db.String(255), nullable=True)
 
     # OpenAI Integration
     openai_api_enabled = db.Column(db.Boolean, default=False)
@@ -159,7 +159,7 @@ class Settings(db.Model):
     
     # Chatbot Integration
     chatbot_enabled = db.Column(db.Boolean, default=False)
-    chatbot_provider = db.Column(db.String(20), nullable=True)  # 'groq' or 'openai'
+    chatbot_provider = db.Column(db.String(20), nullable=True)  # 'gemini' or 'openai'
     chatbot_model = db.Column(db.String(50), nullable=True)  # modelo específico a ser usado
     chatbot_name = db.Column(db.String(100), nullable=True)  # nome do chatbot
     chatbot_avatar = db.Column(db.String(255), nullable=True)  # caminho para a imagem do avatar

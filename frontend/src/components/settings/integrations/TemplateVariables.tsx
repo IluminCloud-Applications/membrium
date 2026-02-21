@@ -10,6 +10,8 @@ export interface TemplateVariable {
     tag: string;
     label: string;
     description: string;
+    /** If set, this variable only appears for this format */
+    format?: "email" | "whatsapp";
 }
 
 export const TEMPLATE_VARIABLES: TemplateVariable[] = [
@@ -20,6 +22,7 @@ export const TEMPLATE_VARIABLES: TemplateVariable[] = [
     { tag: "[[curso]]", label: "Curso", description: "Nome do curso matriculado" },
     { tag: "[[link]]", label: "Link de Acesso", description: "Link de acesso ao curso" },
     { tag: "[[fast_link]]", label: "Acesso Rápido", description: "Link de acesso rápido (sem email/senha)" },
+    { tag: "[[unsubscribe_link]]", label: "Descadastrar", description: "Link para o aluno sair da lista de emails", format: "email" },
 ];
 
 const VARIABLE_LABELS: Record<string, string> = Object.fromEntries(
@@ -30,9 +33,13 @@ const VARIABLE_LABELS: Record<string, string> = Object.fromEntries(
 
 interface TemplateVariableBadgesProps {
     onInsert: (tag: string) => void;
+    format?: "email" | "whatsapp";
 }
 
-export function TemplateVariableBadges({ onInsert }: TemplateVariableBadgesProps) {
+export function TemplateVariableBadges({ onInsert, format }: TemplateVariableBadgesProps) {
+    const filteredVars = TEMPLATE_VARIABLES.filter(
+        (v) => !v.format || v.format === format
+    );
     return (
         <TooltipProvider>
             <div className="space-y-2">
@@ -40,7 +47,7 @@ export function TemplateVariableBadges({ onInsert }: TemplateVariableBadgesProps
                     Clique nas variáveis para inseri-las:
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                    {TEMPLATE_VARIABLES.map((v) => (
+                    {filteredVars.map((v) => (
                         <Tooltip key={v.tag}>
                             <TooltipTrigger asChild>
                                 <Badge

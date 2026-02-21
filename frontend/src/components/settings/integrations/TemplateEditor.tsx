@@ -96,7 +96,7 @@ export function TemplateEditor({
                 </div>
             </div>
 
-            <TemplateVariableBadges onInsert={handleInsertTag} />
+            <TemplateVariableBadges onInsert={handleInsertTag} format={format} />
 
             <div className={`grid gap-4 items-start ${showPreview ? "grid-cols-[1fr_0.43fr]" : "grid-cols-1"}`}>
                 {/* Editor side */}
@@ -118,7 +118,7 @@ export function TemplateEditor({
                             ref={textareaRef}
                             value={body}
                             onChange={(e) => onBodyChange(e.target.value)}
-                            className="min-h-[200px] font-mono text-sm resize-y"
+                            className="min-h-[200px] max-h-[600px] font-mono text-sm resize-y"
                             placeholder={
                                 templateMode === "html"
                                     ? "<html>\n  <body>\n    <p>Olá [[name]]!</p>\n  </body>\n</html>"
@@ -167,6 +167,7 @@ function replaceVariablesForHtmlPreview(html: string): string {
         "[[curso]]": '<span style="color: var(--primary); font-weight: 600;">Curso Exemplo</span>',
         "[[link]]": '<span style="color: var(--primary); font-weight: 600;">https://app.com/curso</span>',
         "[[fast_link]]": '<span style="color: var(--primary); font-weight: 600;">https://app.com/fast/xyz</span>',
+        "[[unsubscribe_link]]": '<span style="color: var(--primary); font-weight: 600;">https://app.com/unsubscribe/abc</span>',
     };
 
     let result = html;
