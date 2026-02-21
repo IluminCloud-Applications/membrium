@@ -7,9 +7,11 @@ import {
     TranscriptLessonTable,
     TranscriptEmptyState,
 } from "@/components/transcripts";
+import { AutoTranscriptProgress } from "@/components/transcripts/AutoTranscriptProgress";
 import { TranscriptModal } from "@/components/modals/transcripts/TranscriptModal";
 import { TranscriptDetailsModal } from "@/components/modals/transcripts/TranscriptDetailsModal";
 import { YouTubeImportModal } from "@/components/modals/transcripts/YouTubeImportModal";
+import { AutoTranscriptModal } from "@/components/modals/transcripts/AutoTranscriptModal";
 import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModal";
 import { useTranscriptsPage } from "./useTranscriptsPage";
 
@@ -44,6 +46,7 @@ export function TranscriptsPage() {
                 search={tp.search}
                 onSearchChange={tp.setSearch}
                 onCreateTranscript={tp.handleCreateOpen}
+                onAutoTranscript={() => tp.setAutoTranscriptOpen(true)}
             />
 
             <TranscriptBreadcrumb
@@ -82,6 +85,12 @@ export function TranscriptsPage() {
                 onImport={tp.handleYoutubeImport}
             />
 
+            <AutoTranscriptModal
+                open={tp.autoTranscriptOpen}
+                onOpenChange={tp.setAutoTranscriptOpen}
+                onStartGeneration={tp.autoTranscript.startGeneration}
+            />
+
             <DeleteConfirmModal
                 open={!!tp.deleteTarget}
                 onOpenChange={() => tp.setDeleteTarget(null)}
@@ -89,6 +98,12 @@ export function TranscriptsPage() {
                 title="Excluir Transcrição"
                 description={`Tem certeza que deseja excluir a transcrição da aula "${tp.deleteTarget?.lessonName}"? Esta ação não pode ser desfeita.`}
                 confirmLabel="Excluir Transcrição"
+            />
+
+            {/* Floating progress */}
+            <AutoTranscriptProgress
+                job={tp.autoTranscript.job}
+                onDismiss={tp.autoTranscript.dismiss}
             />
         </div>
     );

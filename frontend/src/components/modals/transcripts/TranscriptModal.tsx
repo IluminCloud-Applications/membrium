@@ -51,6 +51,7 @@ export function TranscriptModal({
     const [courseId, setCourseId] = useState("");
     const [moduleId, setModuleId] = useState("");
     const [saving, setSaving] = useState(false);
+    const [generatingAI, setGeneratingAI] = useState(false);
 
     // Dynamic data from API
     const [courses, setCourses] = useState<TranscriptCourse[]>([]);
@@ -96,7 +97,6 @@ export function TranscriptModal({
             });
             setCourseId(editItem.courseId.toString());
             setModuleId(editItem.moduleId.toString());
-            // Load modules for the course
             loadModules(editItem.courseId.toString());
         } else {
             setForm(emptyForm);
@@ -121,6 +121,31 @@ export function TranscriptModal({
         loadLessons(value);
     }
 
+    async function handleGenerateAI() {
+        if (!form.text.trim()) return;
+        setGeneratingAI(true);
+        try {
+            const res = await transcriptsService.generateMetadata({
+                text: form.text,
+                provider: "gemini",
+            });
+            if (res.success) {
+                const keywords = res.keywords
+                    ? res.keywords.split(",").map((k: string) => k.trim()).filter(Boolean)
+                    : [];
+                setForm((prev) => ({
+                    ...prev,
+                    vector: res.summary || prev.vector,
+                    keywords: keywords.length > 0 ? keywords : prev.keywords,
+                }));
+            }
+        } catch (error) {
+            console.error("Erro ao gerar metadados:", error);
+        } finally {
+            setGeneratingAI(false);
+        }
+    }
+
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         setSaving(true);
@@ -131,7 +156,6 @@ export function TranscriptModal({
         }
     }
 
-    // Resolve selected lesson name for the header
     const selectedLessonName = isEditing
         ? editItem.lessonName
         : lessons.find((l) => l.id === Number(form.lessonId))?.name;
@@ -213,6 +237,8 @@ export function TranscriptModal({
                                     }))
                                 }
                                 onYoutubeImport={onYoutubeImport}
+                                onGenerateAI={handleGenerateAI}
+                                generatingAI={generatingAI}
                             />
                         </div>
                     )}

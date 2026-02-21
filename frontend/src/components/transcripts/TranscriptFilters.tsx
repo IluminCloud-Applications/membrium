@@ -5,12 +5,14 @@ interface TranscriptFiltersProps {
     search: string;
     onSearchChange: (value: string) => void;
     onCreateTranscript: () => void;
+    onAutoTranscript: () => void;
 }
 
 export function TranscriptFilters({
     search,
     onSearchChange,
     onCreateTranscript,
+    onAutoTranscript,
 }: TranscriptFiltersProps) {
     return (
         <div className="flex items-center gap-3">
@@ -23,6 +25,15 @@ export function TranscriptFilters({
                     className="pl-9 h-9"
                 />
             </div>
+
+            <Button
+                onClick={onAutoTranscript}
+                variant="outline"
+                className="h-9 text-sm gap-1.5 border-primary/20 text-primary hover:bg-primary/5"
+            >
+                <i className="ri-robot-2-line" />
+                Transcrição Automática
+            </Button>
 
             <Button
                 onClick={onCreateTranscript}

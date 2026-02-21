@@ -57,3 +57,17 @@ export interface TranscriptModuleSummary {
 }
 
 export type TranscriptDrillLevel = "courses" | "modules" | "lessons";
+
+export interface PendingLesson {
+    lessonId: number;
+    lessonName: string;
+    moduleId: number;
+    moduleName: string;
+    courseId: number;
+    courseName: string;
+    hasTranscript: boolean;
+    hasSummary: boolean;
+    hasKeywords: boolean;
+    isYoutube: boolean;
+    videoUrl: string;
+}

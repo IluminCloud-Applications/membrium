@@ -5,6 +5,7 @@ import type {
     TranscriptModule,
     TranscriptLesson,
     TranscriptStats,
+    PendingLesson,
 } from "@/types/transcript";
 
 /* ============================================
@@ -24,6 +25,18 @@ export interface TranscriptUpdatePayload {
     keywords?: string[];
 }
 
+export interface GenerateMetadataPayload {
+    text: string;
+    provider: string;
+    model?: string;
+}
+
+export interface AutoGeneratePayload {
+    lessonId: number;
+    provider: string;
+    model?: string;
+}
+
 /* ============================================
    API RESPONSE TYPES
    ============================================ */
@@ -32,6 +45,19 @@ interface MutationResponse {
     success: boolean;
     message: string;
     item?: Transcript;
+}
+
+interface MetadataResponse {
+    success: boolean;
+    keywords: string;
+    summary: string;
+    message?: string;
+}
+
+interface AutoGenerateResponse {
+    success: boolean;
+    lessonId: number;
+    message: string;
 }
 
 /* ============================================
@@ -76,4 +102,18 @@ export const transcriptsService = {
     /** Get available lessons (without existing transcripts) */
     getLessons: (moduleId: number) =>
         apiClient.get<TranscriptLesson[]>(`/transcripts/modules/${moduleId}/lessons`),
+
+    /* ---- AI Features ---- */
+
+    /** Get pending lessons (missing transcript/summary/keywords) */
+    getPendingLessons: () =>
+        apiClient.get<PendingLesson[]>("/transcripts/pending-lessons"),
+
+    /** Generate metadata (summary + keywords) with AI */
+    generateMetadata: (data: GenerateMetadataPayload) =>
+        apiClient.post<MetadataResponse>("/transcripts/generate-metadata", data),
+
+    /** Auto-generate transcript + metadata for a single lesson */
+    autoGenerate: (data: AutoGeneratePayload) =>
+        apiClient.post<AutoGenerateResponse>("/transcripts/auto-generate", data),
 };

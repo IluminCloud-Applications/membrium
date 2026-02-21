@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { transcriptsService } from "@/services/transcripts";
+import { useAutoTranscript } from "./useAutoTranscript";
 import type {
     Transcript,
     TranscriptDrillLevel,
@@ -32,6 +33,7 @@ export function useTranscriptsPage() {
     const [detailsItem, setDetailsItem] = useState<Transcript | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Transcript | null>(null);
     const [youtubeOpen, setYoutubeOpen] = useState(false);
+    const [autoTranscriptOpen, setAutoTranscriptOpen] = useState(false);
 
     /* ---- Data fetching ---- */
 
@@ -54,6 +56,10 @@ export function useTranscriptsPage() {
     useEffect(() => {
         fetchData();
     }, [fetchData]);
+
+    /* ---- Auto transcript ---- */
+
+    const autoTranscript = useAutoTranscript(fetchData);
 
     /* ---- Drill-down computed data ---- */
 
@@ -239,6 +245,8 @@ export function useTranscriptsPage() {
         modalOpen, setModalOpen, editingItem, setEditingItem,
         detailsItem, setDetailsItem, deleteTarget, setDeleteTarget,
         youtubeOpen, setYoutubeOpen,
+        autoTranscriptOpen, setAutoTranscriptOpen,
+        autoTranscript,
         handleCreateOpen, handleEdit, handleView, handleSubmit, handleConfirmDelete, handleYoutubeImport,
     };
 }
