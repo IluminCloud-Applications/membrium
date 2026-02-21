@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { ModelCombobox } from "@/components/settings/ai/ModelCombobox";
+import type { AIModel } from "@/services/ai";
 
 interface TranscriptFormContentProps {
     transcriptText: string;
@@ -12,13 +15,16 @@ interface TranscriptFormContentProps {
     onKeywordsChange: (keywords: string[]) => void;
     onYoutubeImport: () => void;
     importingYoutube?: boolean;
-    onGenerateAI?: () => void;
+    onGenerateAI?: (model: string) => void;
     generatingAI?: boolean;
+    aiModels: AIModel[];
+    aiModelsLoading: boolean;
+    selectedModel: string;
+    onModelChange: (model: string) => void;
 }
 
 /**
  * Right column — transcript text area, AI summary, and keyword tags.
- * Groups all content editing fields together.
  */
 export function TranscriptFormContent({
     transcriptText,
@@ -31,6 +37,10 @@ export function TranscriptFormContent({
     importingYoutube = false,
     onGenerateAI,
     generatingAI = false,
+    aiModels,
+    aiModelsLoading,
+    selectedModel,
+    onModelChange,
 }: TranscriptFormContentProps) {
     const [keywordInput, setKeywordInput] = useState("");
 
@@ -48,6 +58,8 @@ export function TranscriptFormContent({
     function handleRemoveKeyword(keyword: string) {
         onKeywordsChange(keywords.filter((k) => k !== keyword));
     }
+
+    const canGenerate = !!transcriptText.trim() && !!selectedModel;
 
     return (
         <div className="space-y-5">
@@ -86,36 +98,49 @@ export function TranscriptFormContent({
                 />
             </div>
 
-            {/* Gerar com IA — botão unificado */}
+            {/* Gerar com IA — modelo + botão */}
             {onGenerateAI && (
-                <button
-                    type="button"
-                    onClick={onGenerateAI}
-                    disabled={generatingAI || !transcriptText.trim()}
-                    className="w-full inline-flex items-center justify-center gap-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-2 rounded-lg transition-colors"
-                >
-                    {generatingAI ? (
-                        <>
-                            <i className="ri-loader-4-line animate-spin" />
-                            Gerando resumo e palavras-chave com IA...
-                        </>
-                    ) : (
-                        <>
-                            <i className="ri-sparkle-line" />
-                            Gerar Resumo e Palavras-chave com IA
-                        </>
-                    )}
-                </button>
+                <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-3 space-y-3">
+                    <div className="flex items-center gap-2">
+                        <i className="ri-sparkle-line text-blue-600" />
+                        <Label className="text-sm font-semibold text-blue-800">Gerar com IA</Label>
+                    </div>
+
+                    <ModelCombobox
+                        models={aiModels}
+                        value={selectedModel}
+                        onValueChange={onModelChange}
+                        placeholder="Selecione o modelo de IA..."
+                        loading={aiModelsLoading}
+                    />
+
+                    <button
+                        type="button"
+                        onClick={() => onGenerateAI(selectedModel)}
+                        disabled={generatingAI || !canGenerate}
+                        className="w-full inline-flex items-center justify-center gap-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-2 rounded-lg transition-colors"
+                    >
+                        {generatingAI ? (
+                            <>
+                                <i className="ri-loader-4-line animate-spin" />
+                                Gerando resumo e palavras-chave...
+                            </>
+                        ) : (
+                            <>
+                                <i className="ri-sparkle-fill" />
+                                Gerar Resumo e Palavras-chave
+                            </>
+                        )}
+                    </button>
+                </div>
             )}
 
             {/* Resumo */}
             <div>
-                <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                        <i className="ri-magic-line text-primary" />
-                        Resumo da Aula
-                    </h3>
-                </div>
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2">
+                    <i className="ri-magic-line text-primary" />
+                    Resumo da Aula
+                </h3>
                 <Textarea
                     value={vector}
                     onChange={(e) => onVectorChange(e.target.value)}
@@ -127,12 +152,10 @@ export function TranscriptFormContent({
 
             {/* Palavras-chave */}
             <div>
-                <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                        <i className="ri-hashtag text-primary" />
-                        Palavras-chave
-                    </h3>
-                </div>
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2">
+                    <i className="ri-hashtag text-primary" />
+                    Palavras-chave
+                </h3>
 
                 <Input
                     value={keywordInput}

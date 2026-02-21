@@ -12,9 +12,8 @@ import { Label } from "@/components/ui/label";
 import { ModelCombobox } from "@/components/settings/ai/ModelCombobox";
 import { AutoTranscriptTable } from "./AutoTranscriptTable";
 import { transcriptsService } from "@/services/transcripts";
-import { aiService } from "@/services/ai";
+import { useAIModels } from "@/hooks/useAIModels";
 import type { PendingLesson } from "@/types/transcript";
-import type { AIModel } from "@/services/ai";
 
 interface AutoTranscriptModalProps {
     open: boolean;
@@ -29,10 +28,9 @@ export function AutoTranscriptModal({
 }: AutoTranscriptModalProps) {
     const [lessons, setLessons] = useState<PendingLesson[]>([]);
     const [loading, setLoading] = useState(false);
-    const [provider, setProvider] = useState("gemini");
-    const [model, setModel] = useState("");
-    const [models, setModels] = useState<AIModel[]>([]);
-    const [modelsLoading, setModelsLoading] = useState(false);
+
+    // AI model selection (reusable hook)
+    const ai = useAIModels(open);
 
     // Fetch pending lessons when modal opens
     useEffect(() => {
@@ -43,37 +41,6 @@ export function AutoTranscriptModal({
             .then(setLessons)
             .catch(console.error)
             .finally(() => setLoading(false));
-    }, [open]);
-
-    // Fetch AI models (settings)
-    useEffect(() => {
-        if (!open) return;
-        setModelsLoading(true);
-        aiService
-            .getAll()
-            .then((data) => {
-                const geminiEnabled = data.gemini.enabled;
-                const openaiEnabled = data.openai.enabled;
-
-                if (geminiEnabled && data.gemini.api_key) {
-                    setProvider("gemini");
-                    aiService
-                        .fetchGeminiModels(data.gemini.api_key)
-                        .then((res) => setModels(res.models || []))
-                        .catch(console.error)
-                        .finally(() => setModelsLoading(false));
-                } else if (openaiEnabled && data.openai.api_key) {
-                    setProvider("openai");
-                    aiService
-                        .fetchOpenAIModels(data.openai.api_key)
-                        .then((res) => setModels(res.models || []))
-                        .catch(console.error)
-                        .finally(() => setModelsLoading(false));
-                } else {
-                    setModelsLoading(false);
-                }
-            })
-            .catch(() => setModelsLoading(false));
     }, [open]);
 
     // Filter only lessons that need something
@@ -94,8 +61,8 @@ export function AutoTranscriptModal({
     }), [lessons, pendingLessons, pendingWithYoutube]);
 
     function handleStart() {
-        if (pendingWithYoutube.length === 0 || !model) return;
-        onStartGeneration(pendingWithYoutube, provider, model);
+        if (pendingWithYoutube.length === 0 || !ai.model) return;
+        onStartGeneration(pendingWithYoutube, ai.provider, ai.model);
         onOpenChange(false);
     }
 
@@ -123,11 +90,11 @@ export function AutoTranscriptModal({
                 <div className="space-y-2">
                     <Label className="text-sm font-medium">Modelo de IA para Metadados</Label>
                     <ModelCombobox
-                        models={models}
-                        value={model}
-                        onValueChange={setModel}
+                        models={ai.models}
+                        value={ai.model}
+                        onValueChange={ai.setModel}
                         placeholder="Selecione o modelo de IA..."
-                        loading={modelsLoading}
+                        loading={ai.loading}
                     />
                     <p className="text-xs text-muted-foreground">
                         O modelo será usado para gerar resumo e palavras-chave de cada transcrição.
@@ -154,7 +121,7 @@ export function AutoTranscriptModal({
                     <Button
                         onClick={handleStart}
                         className="btn-brand"
-                        disabled={stats.processable === 0 || !model}
+                        disabled={stats.processable === 0 || !ai.model}
                     >
                         <i className="ri-play-line mr-1" />
                         Gerar {stats.processable} Transcrições

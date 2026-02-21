@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { TranscriptFormLesson } from "./TranscriptFormLesson";
 import { TranscriptFormContent } from "./TranscriptFormContent";
 import { transcriptsService } from "@/services/transcripts";
+import { useAIModels } from "@/hooks/useAIModels";
 import type {
     Transcript,
     TranscriptCourse,
@@ -56,6 +57,9 @@ export function TranscriptModal({
     const [courses, setCourses] = useState<TranscriptCourse[]>([]);
     const [modules, setModules] = useState<TranscriptModule[]>([]);
     const [lessons, setLessons] = useState<TranscriptLesson[]>([]);
+
+    // AI model selection
+    const ai = useAIModels(open);
 
     const isEditing = !!editItem;
     const lessonSelected = !!form.lessonId;
@@ -135,13 +139,14 @@ export function TranscriptModal({
         }
     }
 
-    async function handleGenerateAI() {
-        if (!form.text.trim()) return;
+    async function handleGenerateAI(modelId: string) {
+        if (!form.text.trim() || !modelId) return;
         setGeneratingAI(true);
         try {
             const res = await transcriptsService.generateMetadata({
                 text: form.text,
-                provider: "gemini",
+                provider: ai.provider,
+                model: modelId,
             });
             if (res.success) {
                 const keywords = res.keywords
@@ -245,15 +250,16 @@ export function TranscriptModal({
                                     setForm((prev) => ({ ...prev, vector: v }))
                                 }
                                 onKeywordsChange={(kw) =>
-                                    setForm((prev) => ({
-                                        ...prev,
-                                        keywords: kw,
-                                    }))
+                                    setForm((prev) => ({ ...prev, keywords: kw }))
                                 }
                                 onYoutubeImport={handleYoutubeImport}
                                 importingYoutube={importingYoutube}
                                 onGenerateAI={handleGenerateAI}
                                 generatingAI={generatingAI}
+                                aiModels={ai.models}
+                                aiModelsLoading={ai.loading}
+                                selectedModel={ai.model}
+                                onModelChange={ai.setModel}
                             />
                         </div>
                     )}
