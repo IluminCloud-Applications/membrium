@@ -1,15 +1,22 @@
-Flask==2.3.3
-Flask-SQLAlchemy==3.1.1
-Flask-Cors==4.0.0
-SQLAlchemy==2.0.21
-Werkzeug==2.3.7
-PyMySQL==1.1.0
-python-dotenv==1.0.0
-Flask-Migrate==4.0.5
-requests==2.31.0
-groq>=0.4.3
-openai>=1.0.0
+Flask
+Flask-SQLAlchemy
+Flask-Cors
+SQLAlchemy
+Werkzeug
+PyMySQL
+python-dotenv
+Flask-Migrate
+requests
 pytz
 psycopg2-binary
-Pillow==10.0.0
-gunicorn==21.2.0
+Pillow
+gunicorn
+
+# AI — Langchain
+langchain
+langchain-core
+langchain-openai
+langchain-google-genai
+
+# YouTube Transcript API
+youtube-transcript-api

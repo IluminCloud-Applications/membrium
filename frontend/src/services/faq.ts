@@ -26,6 +26,19 @@ export interface FAQUpdatePayload {
     faqs: { question: string; answer: string }[];
 }
 
+export interface FAQAIGeneratePayload {
+    lesson_id: number;
+    provider: string;
+    model: string;
+    num_questions?: number;
+}
+
+export interface FAQAIGenerateResponse {
+    success: boolean;
+    faqs?: { question: string; answer: string }[];
+    message?: string;
+}
+
 /* ============================================
    FAQ SERVICE
    ============================================ */
@@ -74,4 +87,8 @@ export const faqService = {
     /** Get lessons for a module (only without existing FAQs) */
     getLessons: (moduleId: number) =>
         apiClient.get<FAQLesson[]>(`/faq/modules/${moduleId}/lessons`),
+
+    /** Generate FAQs using AI */
+    generateWithAI: (data: FAQAIGeneratePayload) =>
+        apiClient.post<FAQAIGenerateResponse>("/faq/ai/generate", data),
 };

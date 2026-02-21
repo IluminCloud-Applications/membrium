@@ -221,9 +221,30 @@ export function useFAQPage() {
         setAiModalOpen(true);
     }
 
-    function handleApplyAIFaqs(faqs: FAQItem[]) {
-        console.log("Apply AI FAQs:", faqs);
-        setAiModalOpen(false);
+    async function handleApplyAIFaqs(faqs: FAQItem[]) {
+        if (!editingItem) {
+            setAiModalOpen(false);
+            return;
+        }
+        try {
+            const faqsPayload = faqs
+                .filter((f) => f.question.trim() && f.answer.trim())
+                .map((f) => ({ question: f.question, answer: f.answer }));
+
+            // Check if lesson already has FAQs (editingItem has faqs array)
+            if (editingItem.faqs && editingItem.faqs.length > 0) {
+                await faqService.update(editingItem.lessonId, { faqs: faqsPayload });
+            } else {
+                await faqService.create({ lesson_id: editingItem.lessonId, faqs: faqsPayload });
+            }
+
+            setAiModalOpen(false);
+            setModalOpen(false);
+            setEditingItem(null);
+            await fetchData();
+        } catch (error) {
+            console.error("Erro ao salvar FAQ gerado por IA:", error);
+        }
     }
 
     return {

@@ -78,6 +78,7 @@ export function FAQPage() {
             <FAQAIModal
                 open={faq.aiModalOpen}
                 onOpenChange={faq.setAiModalOpen}
+                lessonId={faq.editingItem?.lessonId ?? 0}
                 lessonName={faq.editingItem?.lessonName ?? ""}
                 onApplyFaqs={faq.handleApplyAIFaqs}
             />

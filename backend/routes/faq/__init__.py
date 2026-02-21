@@ -2,6 +2,7 @@ from flask import Blueprint
 from .crud import crud_bp
 from .stats import stats_bp
 from .selectors import selectors_bp
+from .ai import ai_bp
 
 faq_bp = Blueprint('faq', __name__, url_prefix='/api/faq')
 
@@ -9,3 +10,4 @@ faq_bp = Blueprint('faq', __name__, url_prefix='/api/faq')
 faq_bp.register_blueprint(crud_bp)
 faq_bp.register_blueprint(stats_bp)
 faq_bp.register_blueprint(selectors_bp)
+faq_bp.register_blueprint(ai_bp)

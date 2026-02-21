@@ -19,11 +19,9 @@ from routes.dashboard import dashboard_bp
 from routes.courses import courses_bp
 from routes.course_modification import course_modification_bp
 from routes.showcase import showcase_bp
-
 from routes.promote import promote_bp
 from routes.faq import faq_bp
-
-from chatbot import chatbot
+from routes.chatbot import chatbot_bp
 from routes.transcripts import transcripts_bp
 from webhook import webhook
 
@@ -52,14 +50,12 @@ def create_app():
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(courses_bp)
     app.register_blueprint(course_modification_bp)
-
-    # Register existing blueprints
-    app.register_blueprint(webhook)
-    app.register_blueprint(promote_bp)
     app.register_blueprint(showcase_bp)
+    app.register_blueprint(promote_bp)
     app.register_blueprint(faq_bp)
-    app.register_blueprint(chatbot)
+    app.register_blueprint(chatbot_bp)
     app.register_blueprint(transcripts_bp)
+    app.register_blueprint(webhook)
 
     # Ensure upload directory exists
     with app.app_context():

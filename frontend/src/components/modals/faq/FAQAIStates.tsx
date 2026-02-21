@@ -8,6 +8,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import type { FAQItem } from "@/types/faq";
+import type { AIModel } from "@/services/ai";
 
 /* ---- No API Warning ---- */
 
@@ -48,7 +49,7 @@ interface FAQAIConfigStateProps {
     onProviderChange: (value: string) => void;
     model: string;
     onModelChange: (value: string) => void;
-    models: { id: string; name: string }[];
+    models: AIModel[];
     hasGemini: boolean;
     hasOpenai: boolean;
 }
@@ -79,10 +80,10 @@ export function FAQAIConfigState({
                 <Label className="text-sm">Provedor de IA</Label>
                 <div className="flex gap-3">
                     {hasGemini && (
-                        <ProviderCard name="Gemini" icon="ri-google-line" recommended selected={provider === "gemini"} onClick={() => { onProviderChange("gemini"); onModelChange(""); }} />
+                        <ProviderCard name="Gemini" icon="ri-google-line" recommended selected={provider === "gemini"} onClick={() => onProviderChange("gemini")} />
                     )}
                     {hasOpenai && (
-                        <ProviderCard name="OpenAI" icon="ri-openai-line" selected={provider === "openai"} onClick={() => { onProviderChange("openai"); onModelChange(""); }} />
+                        <ProviderCard name="OpenAI" icon="ri-openai-line" selected={provider === "openai"} onClick={() => onProviderChange("openai")} />
                     )}
                 </div>
             </div>
@@ -91,11 +92,13 @@ export function FAQAIConfigState({
                 <Label className="text-sm">Modelo de IA</Label>
                 <Select value={model} onValueChange={onModelChange}>
                     <SelectTrigger className="h-9">
-                        <SelectValue placeholder="Selecione um modelo" />
+                        <SelectValue placeholder={models.length ? "Selecione um modelo" : "Carregando modelos..."} />
                     </SelectTrigger>
-                    <SelectContent className="rounded-xl">
+                    <SelectContent className="rounded-xl max-h-[200px]">
                         {models.map((m) => (
-                            <SelectItem key={m.id} value={m.id} className="rounded-lg">{m.name}</SelectItem>
+                            <SelectItem key={m.id} value={m.id} className="rounded-lg">
+                                {m.name}
+                            </SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
@@ -131,7 +134,7 @@ export function FAQAIGeneratingState() {
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600" />
             <div>
                 <h3 className="text-lg font-medium">Gerando FAQ...</h3>
-                <p className="text-sm text-muted-foreground mt-1">Isso pode levar alguns segundos dependendo do conteúdo da aula.</p>
+                <p className="text-sm text-muted-foreground mt-1">A IA está analisando a transcrição e gerando perguntas. Isso pode levar alguns segundos.</p>
             </div>
         </div>
     );
@@ -161,7 +164,12 @@ export function FAQAIResultState({ faqs }: { faqs: FAQItem[] }) {
 
 /* ---- Error State ---- */
 
-export function FAQAIErrorState() {
+interface FAQAIErrorStateProps {
+    message?: string;
+    onRetry?: () => void;
+}
+
+export function FAQAIErrorState({ message, onRetry }: FAQAIErrorStateProps) {
     return (
         <div className="py-8 text-center space-y-3">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-destructive/10">
@@ -169,8 +177,16 @@ export function FAQAIErrorState() {
             </div>
             <div>
                 <h3 className="text-lg font-medium">Erro na geração</h3>
-                <p className="text-sm text-muted-foreground mt-1">Ocorreu um erro ao gerar o FAQ. Por favor, tente novamente.</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                    {message || "Ocorreu um erro ao gerar o FAQ. Por favor, tente novamente."}
+                </p>
             </div>
+            {onRetry && (
+                <Button variant="outline" size="sm" onClick={onRetry} className="mt-2">
+                    <i className="ri-refresh-line mr-1" />
+                    Tentar novamente
+                </Button>
+            )}
         </div>
     );
 }

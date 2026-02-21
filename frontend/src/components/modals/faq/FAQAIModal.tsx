@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     Dialog,
     DialogContent,
@@ -16,52 +16,115 @@ import {
     FAQAIErrorState,
 } from "./FAQAIStates";
 import type { FAQItem } from "@/types/faq";
+import { aiService, type AIModel } from "@/services/ai";
+import { faqService } from "@/services/faq";
 
-type GenerationState = "config" | "no-api" | "generating" | "result" | "error";
+type GenerationState = "loading" | "config" | "no-api" | "generating" | "result" | "error";
 
 interface FAQAIModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    lessonId: number;
     lessonName: string;
     onApplyFaqs: (faqs: FAQItem[]) => void;
 }
 
-const GEMINI_MODELS = [
-    { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash (Recomendado)" },
-    { id: "gemini-2.0-pro", name: "Gemini 2.0 Pro" },
-    { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash" },
-];
-
-const OPENAI_MODELS = [
-    { id: "gpt-4o", name: "GPT-4o (Recomendado)" },
-    { id: "gpt-4o-mini", name: "GPT-4o Mini" },
-    { id: "gpt-4-turbo", name: "GPT-4 Turbo" },
-];
-
-// Mock: set to true to simulate having API configured
-const HAS_GEMINI_API = true;
-const HAS_OPENAI_API = true;
-
-const MOCK_GENERATED: FAQItem[] = [
-    { id: 100, question: "Qual o objetivo principal desta aula?", answer: "O objetivo principal é apresentar os conceitos fundamentais e práticos que serão aplicados ao longo do módulo." },
-    { id: 101, question: "Preciso de conhecimento prévio?", answer: "Não é necessário conhecimento prévio. A aula foi projetada para guiar você do básico ao avançado." },
-    { id: 102, question: "Onde posso tirar dúvidas?", answer: "Você pode utilizar a área de comentários da aula ou participar do grupo exclusivo de alunos." },
-    { id: 103, question: "Existe material complementar?", answer: "Sim! Na descrição da aula você encontra links para materiais complementares, planilhas e templates." },
-    { id: 104, question: "Posso aplicar o conteúdo imediatamente?", answer: "Sim, todo o conteúdo é prático e pode ser aplicado imediatamente no seu negócio." },
-];
-
-export function FAQAIModal({ open, onOpenChange, lessonName, onApplyFaqs }: FAQAIModalProps) {
-    const hasAnyApi = HAS_GEMINI_API || HAS_OPENAI_API;
-    const [state, setState] = useState<GenerationState>(hasAnyApi ? "config" : "no-api");
-    const [provider, setProvider] = useState(HAS_GEMINI_API ? "gemini" : "openai");
+export function FAQAIModal({ open, onOpenChange, lessonId, lessonName, onApplyFaqs }: FAQAIModalProps) {
+    const [state, setState] = useState<GenerationState>("loading");
+    const [provider, setProvider] = useState("");
     const [model, setModel] = useState("");
+    const [models, setModels] = useState<AIModel[]>([]);
     const [generatedFaqs, setGeneratedFaqs] = useState<FAQItem[]>([]);
+    const [errorMessage, setErrorMessage] = useState("");
+    const [hasGemini, setHasGemini] = useState(false);
+    const [hasOpenai, setHasOpenai] = useState(false);
+    const [geminiKey, setGeminiKey] = useState("");
+    const [openaiKey, setOpenaiKey] = useState("");
 
-    const models = provider === "gemini" ? GEMINI_MODELS : OPENAI_MODELS;
+    // Carregar configurações de IA ao abrir
+    useEffect(() => {
+        if (!open) return;
+        loadAISettings();
+    }, [open]);
 
-    function handleStartGeneration() {
+    async function loadAISettings() {
+        setState("loading");
+        try {
+            const data = await aiService.getAll();
+            const gEnabled = data.gemini.enabled && !!data.gemini.api_key;
+            const oEnabled = data.openai.enabled && !!data.openai.api_key;
+
+            setHasGemini(gEnabled);
+            setHasOpenai(oEnabled);
+            setGeminiKey(data.gemini.api_key);
+            setOpenaiKey(data.openai.api_key);
+
+            if (!gEnabled && !oEnabled) {
+                setState("no-api");
+                return;
+            }
+
+            const defaultProvider = gEnabled ? "gemini" : "openai";
+            setProvider(defaultProvider);
+            setState("config");
+
+            // Load models for default provider
+            await loadModels(defaultProvider, gEnabled ? data.gemini.api_key : data.openai.api_key);
+        } catch {
+            setState("no-api");
+        }
+    }
+
+    async function loadModels(prov: string, apiKey: string) {
+        try {
+            const fetcher = prov === "gemini"
+                ? aiService.fetchGeminiModels
+                : aiService.fetchOpenAIModels;
+            const result = await fetcher(apiKey);
+            if (result.success && result.models) {
+                setModels(result.models);
+            } else {
+                setModels([]);
+            }
+        } catch {
+            setModels([]);
+        }
+    }
+
+    async function handleProviderChange(newProvider: string) {
+        setProvider(newProvider);
+        setModel("");
+        const key = newProvider === "gemini" ? geminiKey : openaiKey;
+        await loadModels(newProvider, key);
+    }
+
+    async function handleStartGeneration() {
         setState("generating");
-        setTimeout(() => { setGeneratedFaqs(MOCK_GENERATED); setState("result"); }, 3000);
+        setErrorMessage("");
+        try {
+            const result = await faqService.generateWithAI({
+                lesson_id: lessonId,
+                provider,
+                model,
+            });
+
+            if (result.success && result.faqs) {
+                const mapped: FAQItem[] = result.faqs.map((f, idx) => ({
+                    id: Date.now() + idx,
+                    question: f.question,
+                    answer: f.answer,
+                }));
+                setGeneratedFaqs(mapped);
+                setState("result");
+            } else {
+                setErrorMessage(result.message || "Erro ao gerar FAQ");
+                setState("error");
+            }
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Erro desconhecido";
+            setErrorMessage(message);
+            setState("error");
+        }
     }
 
     function handleApply() {
@@ -71,10 +134,12 @@ export function FAQAIModal({ open, onOpenChange, lessonName, onApplyFaqs }: FAQA
 
     function handleClose() {
         onOpenChange(false);
-        setState(hasAnyApi ? "config" : "no-api");
-        setProvider(HAS_GEMINI_API ? "gemini" : "openai");
+        setState("loading");
+        setProvider("");
         setModel("");
+        setModels([]);
         setGeneratedFaqs([]);
+        setErrorMessage("");
     }
 
     return (
@@ -90,22 +155,28 @@ export function FAQAIModal({ open, onOpenChange, lessonName, onApplyFaqs }: FAQA
                     </DialogDescription>
                 </DialogHeader>
 
+                {state === "loading" && (
+                    <div className="py-8 text-center">
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
+                        <p className="text-sm text-muted-foreground mt-2">Carregando configurações...</p>
+                    </div>
+                )}
                 {state === "no-api" && <FAQAINoApiState />}
                 {state === "config" && (
                     <FAQAIConfigState
                         lessonName={lessonName}
                         provider={provider}
-                        onProviderChange={setProvider}
+                        onProviderChange={handleProviderChange}
                         model={model}
                         onModelChange={setModel}
                         models={models}
-                        hasGemini={HAS_GEMINI_API}
-                        hasOpenai={HAS_OPENAI_API}
+                        hasGemini={hasGemini}
+                        hasOpenai={hasOpenai}
                     />
                 )}
                 {state === "generating" && <FAQAIGeneratingState />}
                 {state === "result" && <FAQAIResultState faqs={generatedFaqs} />}
-                {state === "error" && <FAQAIErrorState />}
+                {state === "error" && <FAQAIErrorState message={errorMessage} onRetry={() => setState("config")} />}
 
                 <DialogFooter className="gap-2 pt-2">
                     {state === "config" && (
