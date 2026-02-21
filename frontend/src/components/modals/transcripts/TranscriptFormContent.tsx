@@ -11,6 +11,7 @@ interface TranscriptFormContentProps {
     onVectorChange: (value: string) => void;
     onKeywordsChange: (keywords: string[]) => void;
     onYoutubeImport: () => void;
+    importingYoutube?: boolean;
     onGenerateAI?: () => void;
     generatingAI?: boolean;
 }
@@ -27,6 +28,7 @@ export function TranscriptFormContent({
     onVectorChange,
     onKeywordsChange,
     onYoutubeImport,
+    importingYoutube = false,
     onGenerateAI,
     generatingAI = false,
 }: TranscriptFormContentProps) {
@@ -59,10 +61,20 @@ export function TranscriptFormContent({
                     <button
                         type="button"
                         onClick={onYoutubeImport}
-                        className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground bg-muted hover:bg-accent px-2 py-1 rounded-md transition-colors"
+                        disabled={importingYoutube}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground bg-muted hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed px-2 py-1 rounded-md transition-colors"
                     >
-                        <i className="ri-youtube-line text-red-500" />
-                        Importar do YouTube
+                        {importingYoutube ? (
+                            <>
+                                <i className="ri-loader-4-line animate-spin text-red-500" />
+                                Importando...
+                            </>
+                        ) : (
+                            <>
+                                <i className="ri-youtube-line text-red-500" />
+                                Importar do YouTube
+                            </>
+                        )}
                     </button>
                 </div>
                 <Textarea

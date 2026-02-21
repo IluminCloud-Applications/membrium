@@ -32,7 +32,6 @@ export function useTranscriptsPage() {
     const [editingItem, setEditingItem] = useState<Transcript | null>(null);
     const [detailsItem, setDetailsItem] = useState<Transcript | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Transcript | null>(null);
-    const [youtubeOpen, setYoutubeOpen] = useState(false);
     const [autoTranscriptOpen, setAutoTranscriptOpen] = useState(false);
 
     /* ---- Data fetching ---- */
@@ -231,10 +230,7 @@ export function useTranscriptsPage() {
         }
     }
 
-    function handleYoutubeImport(url: string, provider: string) {
-        console.log("YouTube import:", url, provider);
-        setYoutubeOpen(false);
-    }
+
 
     return {
         loading, stats,
@@ -244,9 +240,8 @@ export function useTranscriptsPage() {
         handleSelectCourse, handleSelectModule, handleNavigateCourses, handleNavigateModules,
         modalOpen, setModalOpen, editingItem, setEditingItem,
         detailsItem, setDetailsItem, deleteTarget, setDeleteTarget,
-        youtubeOpen, setYoutubeOpen,
         autoTranscriptOpen, setAutoTranscriptOpen,
         autoTranscript,
-        handleCreateOpen, handleEdit, handleView, handleSubmit, handleConfirmDelete, handleYoutubeImport,
+        handleCreateOpen, handleEdit, handleView, handleSubmit, handleConfirmDelete,
     };
 }

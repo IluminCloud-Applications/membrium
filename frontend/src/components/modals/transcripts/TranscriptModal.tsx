@@ -30,7 +30,6 @@ interface TranscriptModalProps {
     onOpenChange: (open: boolean) => void;
     editItem: Transcript | null;
     onSubmit: (data: TranscriptFormData) => void;
-    onYoutubeImport: () => void;
 }
 
 const emptyForm: TranscriptFormData = {
@@ -45,13 +44,13 @@ export function TranscriptModal({
     onOpenChange,
     editItem,
     onSubmit,
-    onYoutubeImport,
 }: TranscriptModalProps) {
     const [form, setForm] = useState<TranscriptFormData>(emptyForm);
     const [courseId, setCourseId] = useState("");
     const [moduleId, setModuleId] = useState("");
     const [saving, setSaving] = useState(false);
     const [generatingAI, setGeneratingAI] = useState(false);
+    const [importingYoutube, setImportingYoutube] = useState(false);
 
     // Dynamic data from API
     const [courses, setCourses] = useState<TranscriptCourse[]>([]);
@@ -119,6 +118,21 @@ export function TranscriptModal({
         setModuleId(value);
         setForm((prev) => ({ ...prev, lessonId: "" }));
         loadLessons(value);
+    }
+
+    async function handleYoutubeImport() {
+        if (!form.lessonId) return;
+        setImportingYoutube(true);
+        try {
+            const res = await transcriptsService.fetchYoutubeTranscript(Number(form.lessonId));
+            if (res.success && res.text) {
+                setForm((prev) => ({ ...prev, text: res.text }));
+            }
+        } catch (error) {
+            console.error("Erro ao importar do YouTube:", error);
+        } finally {
+            setImportingYoutube(false);
+        }
     }
 
     async function handleGenerateAI() {
@@ -236,7 +250,8 @@ export function TranscriptModal({
                                         keywords: kw,
                                     }))
                                 }
-                                onYoutubeImport={onYoutubeImport}
+                                onYoutubeImport={handleYoutubeImport}
+                                importingYoutube={importingYoutube}
                                 onGenerateAI={handleGenerateAI}
                                 generatingAI={generatingAI}
                             />

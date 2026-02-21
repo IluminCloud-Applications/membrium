@@ -10,7 +10,6 @@ import {
 import { AutoTranscriptProgress } from "@/components/transcripts/AutoTranscriptProgress";
 import { TranscriptModal } from "@/components/modals/transcripts/TranscriptModal";
 import { TranscriptDetailsModal } from "@/components/modals/transcripts/TranscriptDetailsModal";
-import { YouTubeImportModal } from "@/components/modals/transcripts/YouTubeImportModal";
 import { AutoTranscriptModal } from "@/components/modals/transcripts/AutoTranscriptModal";
 import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModal";
 import { useTranscriptsPage } from "./useTranscriptsPage";
@@ -66,7 +65,6 @@ export function TranscriptsPage() {
                 onOpenChange={tp.setModalOpen}
                 editItem={tp.editingItem}
                 onSubmit={tp.handleSubmit}
-                onYoutubeImport={() => tp.setYoutubeOpen(true)}
             />
 
             <TranscriptDetailsModal
@@ -77,12 +75,6 @@ export function TranscriptsPage() {
                     tp.setDetailsItem(null);
                     tp.handleEdit(item);
                 }}
-            />
-
-            <YouTubeImportModal
-                open={tp.youtubeOpen}
-                onOpenChange={tp.setYoutubeOpen}
-                onImport={tp.handleYoutubeImport}
             />
 
             <AutoTranscriptModal

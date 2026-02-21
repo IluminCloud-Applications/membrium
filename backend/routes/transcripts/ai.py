@@ -2,9 +2,10 @@
 Transcripts AI Routes — Geração de metadados e transcrições automáticas com IA.
 
 Endpoints:
-- GET  /api/transcripts/pending-lessons  → Lista aulas sem transcrição/resumo/keywords
-- POST /api/transcripts/generate-metadata → Gera keywords e resumo para uma transcrição
-- POST /api/transcripts/auto-generate     → Gera transcrição + metadados em batch
+- GET  /api/transcripts/pending-lessons    → Lista aulas sem transcrição/resumo/keywords
+- POST /api/transcripts/generate-metadata  → Gera keywords e resumo para uma transcrição
+- POST /api/transcripts/auto-generate      → Gera transcrição + metadados em batch
+- POST /api/transcripts/youtube-transcript → Busca transcrição do YouTube por lessonId
 """
 
 import logging
@@ -236,3 +237,45 @@ def auto_generate():
         db.session.rollback()
         logger.error(f"Erro na auto-geração para aula {data.get('lessonId')}: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@ai_bp.route('/youtube-transcript', methods=['POST'])
+@admin_required
+def fetch_youtube_transcript():
+    """
+    Busca a transcrição do YouTube para uma aula.
+
+    Body JSON:
+    - lessonId: ID da aula
+    """
+    try:
+        data = request.get_json()
+        lesson_id = data.get('lessonId')
+
+        if not lesson_id:
+            return jsonify({'success': False, 'message': 'lessonId obrigatório'}), 400
+
+        lesson = Lesson.query.get(lesson_id)
+        if not lesson:
+            return jsonify({'success': False, 'message': 'Aula não encontrada'}), 404
+
+        video_url = lesson.video_url
+        if not video_url or not YouTubeTranscriptTool.is_youtube_url(video_url):
+            return jsonify({
+                'success': False,
+                'message': 'Esta aula não possui vídeo do YouTube.'
+            }), 400
+
+        result = YouTubeTranscriptTool.fetch_transcript(video_url)
+
+        return jsonify({
+            'success': True,
+            'text': result['text'],
+            'wordCount': result.get('word_count', 0),
+            'language': result.get('language_code', 'pt-BR'),
+        })
+
+    except Exception as e:
+        logger.error(f"Erro ao buscar transcrição do YouTube: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
