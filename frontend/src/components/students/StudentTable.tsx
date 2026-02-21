@@ -14,6 +14,12 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import type { Student } from "@/types/student";
 import { statusLabels, statusColors } from "@/types/student";
@@ -127,12 +133,32 @@ function StudentRow({
                                 </Badge>
                             ))}
                             {extraCount > 0 && (
-                                <Badge
-                                    variant="secondary"
-                                    className="text-[10px] bg-muted text-muted-foreground"
-                                >
-                                    +{extraCount}
-                                </Badge>
+                                <TooltipProvider delayDuration={200}>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Badge
+                                                variant="secondary"
+                                                className="text-[10px] bg-muted text-muted-foreground cursor-default"
+                                            >
+                                                +{extraCount}
+                                            </Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent
+                                            side="bottom"
+                                            className="max-w-[220px] p-2"
+                                        >
+                                            <p className="text-xs font-medium mb-1">Todos os cursos:</p>
+                                            <ul className="space-y-0.5">
+                                                {student.courses.map((c) => (
+                                                    <li key={c.id} className="text-xs flex items-center gap-1">
+                                                        <i className="ri-book-open-line text-[10px] text-primary" />
+                                                        {c.name}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                             )}
                         </>
                     )}
