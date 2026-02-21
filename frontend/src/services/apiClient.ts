@@ -13,12 +13,18 @@ class ApiClient {
     ): Promise<T> {
         const url = `${this.baseUrl}${endpoint}`;
 
+        // Only set default JSON Content-Type if no custom headers are provided
+        const hasCustomHeaders = options.headers !== undefined;
+        const defaultHeaders: Record<string, string> = hasCustomHeaders
+            ? {}
+            : { "Content-Type": "application/json" };
+
         const config: RequestInit = {
-            headers: {
-                "Content-Type": "application/json",
-                ...options.headers,
-            },
             ...options,
+            headers: {
+                ...defaultHeaders,
+                ...(hasCustomHeaders ? {} : (options.headers as Record<string, string> || {})),
+            },
         };
 
         const response = await fetch(url, config);

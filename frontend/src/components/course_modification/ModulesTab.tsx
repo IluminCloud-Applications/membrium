@@ -1,3 +1,4 @@
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ModuleCard } from "./ModuleCard";
 import type { CourseModule } from "@/types/course-modification";
@@ -10,6 +11,8 @@ interface ModulesTabProps {
     onAddLesson: (moduleId: number) => void;
     onEditLesson: (moduleId: number, lessonId: number) => void;
     onDeleteLesson: (moduleId: number, lessonId: number) => void;
+    onReorderModules?: (orderedIds: number[]) => void;
+    onReorderLessons?: (moduleId: number, orderedIds: number[]) => void;
 }
 
 export function ModulesTab({
@@ -20,7 +23,46 @@ export function ModulesTab({
     onAddLesson,
     onEditLesson,
     onDeleteLesson,
+    onReorderModules,
+    onReorderLessons,
 }: ModulesTabProps) {
+    const [dragOverId, setDragOverId] = useState<number | null>(null);
+    const dragItemRef = useRef<number | null>(null);
+
+    function handleDragStart(moduleId: number) {
+        dragItemRef.current = moduleId;
+    }
+
+    function handleDragOver(e: React.DragEvent, moduleId: number) {
+        e.preventDefault();
+        if (dragItemRef.current !== moduleId) {
+            setDragOverId(moduleId);
+        }
+    }
+
+    function handleDrop(targetModuleId: number) {
+        const sourceId = dragItemRef.current;
+        if (sourceId == null || sourceId === targetModuleId) {
+            cleanup();
+            return;
+        }
+        const ids = modules.map((m) => m.id);
+        const fromIndex = ids.indexOf(sourceId);
+        const toIndex = ids.indexOf(targetModuleId);
+        if (fromIndex === -1 || toIndex === -1) { cleanup(); return; }
+
+        const reordered = [...ids];
+        reordered.splice(fromIndex, 1);
+        reordered.splice(toIndex, 0, sourceId);
+        onReorderModules?.(reordered);
+        cleanup();
+    }
+
+    function cleanup() {
+        dragItemRef.current = null;
+        setDragOverId(null);
+    }
+
     if (modules.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
@@ -41,7 +83,6 @@ export function ModulesTab({
 
     return (
         <div className="space-y-4">
-            {/* Add module button */}
             <div className="flex justify-end">
                 <Button onClick={onAddModule} className="btn-brand gap-2 rounded-lg">
                     <i className="ri-folder-add-line" />
@@ -49,19 +90,29 @@ export function ModulesTab({
                 </Button>
             </div>
 
-            {/* Module list */}
             <div className="space-y-4">
                 {modules.map((mod, index) => (
-                    <ModuleCard
+                    <div
                         key={mod.id}
-                        module={mod}
-                        index={index}
-                        onEdit={() => onEditModule(mod)}
-                        onDelete={() => onDeleteModule(mod)}
-                        onAddLesson={() => onAddLesson(mod.id)}
-                        onEditLesson={(lessonId) => onEditLesson(mod.id, lessonId)}
-                        onDeleteLesson={(lessonId) => onDeleteLesson(mod.id, lessonId)}
-                    />
+                        draggable
+                        onDragStart={() => handleDragStart(mod.id)}
+                        onDragOver={(e) => handleDragOver(e, mod.id)}
+                        onDrop={() => handleDrop(mod.id)}
+                        onDragEnd={cleanup}
+                        className={`transition-all duration-150 ${dragOverId === mod.id ? "border-2 border-primary/40 rounded-xl" : ""
+                            }`}
+                    >
+                        <ModuleCard
+                            module={mod}
+                            index={index}
+                            onEdit={() => onEditModule(mod)}
+                            onDelete={() => onDeleteModule(mod)}
+                            onAddLesson={() => onAddLesson(mod.id)}
+                            onEditLesson={(lessonId) => onEditLesson(mod.id, lessonId)}
+                            onDeleteLesson={(lessonId) => onDeleteLesson(mod.id, lessonId)}
+                            onReorderLessons={onReorderLessons ? (ids) => onReorderLessons(mod.id, ids) : undefined}
+                        />
+                    </div>
                 ))}
             </div>
         </div>

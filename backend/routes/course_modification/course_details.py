@@ -121,7 +121,7 @@ def update_cover(course_id):
     })
 
 
-@course_details_bp.route('/<int:course_id>/menu', methods=['PUT'])
+@course_details_bp.route('/<int:course_id>/menu', methods=['PUT', 'POST'])
 @admin_required
 def update_menu(course_id):
     """Replace all menu items for a course."""

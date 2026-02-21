@@ -116,6 +116,16 @@ export function CourseModificationPage() {
         catch (err) { console.error("Erro ao remover capa:", err); }
     }
 
+    /* ---- Reorder handlers ---- */
+    async function handleReorderModules(orderedIds: number[]) {
+        try { await courseModificationService.reorderModules(orderedIds); await refetch(); }
+        catch (err) { console.error("Erro ao reordenar módulos:", err); }
+    }
+    async function handleReorderLessons(_moduleId: number, orderedIds: number[]) {
+        try { await courseModificationService.reorderLessons(orderedIds); await refetch(); }
+        catch (err) { console.error("Erro ao reordenar aulas:", err); }
+    }
+
     /* ---- Menu handlers ---- */
     function handleAddMenuItem() { setEditingMenuItem(null); setMenuModalOpen(true); }
     function handleEditMenuItem(item: CourseMenuItem) { setEditingMenuItem(item); setMenuModalOpen(true); }
@@ -181,6 +191,7 @@ export function CourseModificationPage() {
                 modules={course.modules} cover={course.cover} menuItems={course.menuItems}
                 onAddModule={handleAddModule} onEditModule={handleEditModule} onDeleteModule={handleDeleteModule}
                 onAddLesson={handleAddLesson} onEditLesson={handleEditLesson} onDeleteLesson={handleDeleteLesson}
+                onReorderModules={handleReorderModules} onReorderLessons={handleReorderLessons}
                 onCoverChange={handleCoverChange} onCoverDelete={handleCoverDelete}
                 onAddMenuItem={handleAddMenuItem} onEditMenuItem={handleEditMenuItem} onDeleteMenuItem={handleDeleteMenuItem}
             />
