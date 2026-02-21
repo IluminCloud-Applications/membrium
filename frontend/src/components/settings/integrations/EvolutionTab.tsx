@@ -206,10 +206,10 @@ export function EvolutionTab() {
                                         <SelectItem key={inst.name} value={inst.name} className="rounded-lg">
                                             <span className="flex items-center gap-2">
                                                 <span className={`w-2 h-2 rounded-full shrink-0 ${inst.status === "open"
-                                                        ? "bg-green-500"
-                                                        : inst.status === "close"
-                                                            ? "bg-red-400"
-                                                            : "bg-muted-foreground/40"
+                                                    ? "bg-green-500"
+                                                    : inst.status === "close"
+                                                        ? "bg-red-400"
+                                                        : "bg-muted-foreground/40"
                                                     }`} />
                                                 {inst.name}
                                                 {inst.phone && (

@@ -62,7 +62,7 @@ export function BrevoTab() {
         <IntegrationToggle
             id="brevoToggle"
             icon="ri-mail-send-line"
-            title="Brevo Email Marketing"
+            title="Brevo"
             description="Envie emails automáticos para seus alunos"
             enabled={data.enabled}
             onToggle={(v) => update({ enabled: v })}

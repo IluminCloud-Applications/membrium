@@ -18,7 +18,7 @@ export function IntegrationsPage() {
                 <i className="ri-alert-line text-amber-500 text-lg mt-0.5" />
                 <p className="text-sm text-amber-700 dark:text-amber-300">
                     A MembriumWL não dispara mensagens automaticamente. É necessário integrar ao menos
-                    uma opção (Evolution API ou Brevo) para notificar seus alunos.
+                    uma opção (Email ou WhatsApp) para notificar seus alunos.
                 </p>
             </div>
 
@@ -26,11 +26,11 @@ export function IntegrationsPage() {
                 <TabsList className="h-9">
                     <TabsTrigger value="brevo" className="text-sm px-4 h-8 gap-1.5">
                         <i className="ri-mail-send-line" />
-                        Brevo
+                        Email
                     </TabsTrigger>
                     <TabsTrigger value="evolution" className="text-sm px-4 h-8 gap-1.5">
                         <i className="ri-whatsapp-line" />
-                        Evolution API
+                        WhatsApp
                     </TabsTrigger>
                     <TabsTrigger value="youtube" className="text-sm px-4 h-8 gap-1.5">
                         <i className="ri-youtube-line" />
