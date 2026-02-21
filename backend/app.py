@@ -7,7 +7,7 @@ from db.utils import ensure_upload_directory
 # Import blueprints
 from routes.auth import auth_bp
 from routes.admin import admin_bp
-from routes.admin_students import admin_students_bp
+from routes.students import students_bp
 from routes.course import course_bp
 from routes.module import module_bp
 from routes.lesson import lesson_bp
@@ -42,7 +42,7 @@ def create_app():
     # Register blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
-    app.register_blueprint(admin_students_bp)
+    app.register_blueprint(students_bp)
     app.register_blueprint(course_bp)
     app.register_blueprint(module_bp)
     app.register_blueprint(lesson_bp)

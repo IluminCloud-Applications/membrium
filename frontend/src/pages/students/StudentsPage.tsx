@@ -13,11 +13,15 @@ import { ResendAccessModal } from "@/components/modals/students/ResendAccessModa
 import { QuickAccessModal } from "@/components/modals/students/QuickAccessModal";
 import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModal";
 import type { Student } from "@/types/student";
-import { mockStudents, mockAvailableCourses } from "./mock-data";
+import { useStudents } from "@/hooks/useStudents";
 
 export function StudentsPage() {
     const navigate = useNavigate();
-    const [students] = useState<Student[]>(mockStudents);
+    const {
+        students, courses, stats, loading, actionLoading,
+        createStudent, updateStudent, deleteStudent,
+        addCourse, removeCourse, resendAccess,
+    } = useStudents();
 
     // Filters
     const [search, setSearch] = useState("");
@@ -56,14 +60,58 @@ export function StudentsPage() {
 
     const hasActiveFilters = search.trim() !== "" || courseFilter !== "all";
 
-    // Handlers
-    function handleImport() {
-        navigate("/admin/alunos/importar");
+    /* ---- Handlers ---- */
+
+    async function handleCreate(data: { name: string; email: string; password: string; courseId: number | null }) {
+        const ok = await createStudent(data);
+        if (ok) setAddModalOpen(false);
     }
 
-    function handleConfirmDelete() {
-        console.log("Delete student:", deleteTarget?.id);
-        setDeleteTarget(null);
+    async function handleUpdate(data: { id: number; name: string; email: string; password: string }) {
+        const ok = await updateStudent(data);
+        if (ok) setEditTarget(null);
+    }
+
+    async function handleDelete() {
+        if (!deleteTarget) return;
+        const ok = await deleteStudent(deleteTarget.id);
+        if (ok) setDeleteTarget(null);
+    }
+
+    async function handleAddCourse(studentId: number, courseId: number) {
+        const updatedCourses = await addCourse(studentId, courseId);
+        if (updatedCourses && manageCoursesTarget) {
+            setManageCoursesTarget({
+                ...manageCoursesTarget,
+                courses: updatedCourses,
+                status: updatedCourses.length > 0 ? "active" : "inactive",
+            });
+        }
+    }
+
+    async function handleRemoveCourse(studentId: number, courseId: number) {
+        const updatedCourses = await removeCourse(studentId, courseId);
+        if (updatedCourses && manageCoursesTarget) {
+            setManageCoursesTarget({
+                ...manageCoursesTarget,
+                courses: updatedCourses,
+                status: updatedCourses.length > 0 ? "active" : "inactive",
+            });
+        }
+    }
+
+    async function handleResendAccess(studentId: number) {
+        const ok = await resendAccess(studentId);
+        if (ok) setResendTarget(null);
+    }
+
+    /* ---- Loading ---- */
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-20">
+                <i className="ri-loader-4-line animate-spin text-3xl text-primary" />
+            </div>
+        );
     }
 
     return (
@@ -79,24 +127,18 @@ export function StudentsPage() {
                 </p>
             </div>
 
-            {/* Stats */}
-            <StudentStats
-                total={students.length}
-                filteredCount={filteredStudents.length}
-            />
+            <StudentStats total={stats.total} active={stats.active} inactive={stats.inactive} />
 
-            {/* Filters */}
             <StudentFilters
                 search={search}
                 onSearchChange={setSearch}
                 courseFilter={courseFilter}
                 onCourseFilterChange={setCourseFilter}
-                availableCourses={mockAvailableCourses}
+                availableCourses={courses}
                 onAddStudent={() => setAddModalOpen(true)}
-                onImport={handleImport}
+                onImport={() => navigate("/admin/alunos/importar")}
             />
 
-            {/* Content */}
             {filteredStudents.length === 0 ? (
                 <StudentEmptyState
                     hasFilters={hasActiveFilters}
@@ -117,44 +159,35 @@ export function StudentsPage() {
             <AddStudentModal
                 open={addModalOpen}
                 onOpenChange={setAddModalOpen}
-                availableCourses={mockAvailableCourses}
-                onSubmit={(data) => {
-                    console.log("Create student:", data);
-                    setAddModalOpen(false);
-                }}
+                availableCourses={courses}
+                isLoading={actionLoading}
+                onSubmit={handleCreate}
             />
 
             <EditStudentModal
                 open={!!editTarget}
                 onOpenChange={() => setEditTarget(null)}
                 student={editTarget}
-                onSubmit={(data) => {
-                    console.log("Update student:", data);
-                    setEditTarget(null);
-                }}
+                isLoading={actionLoading}
+                onSubmit={handleUpdate}
             />
 
             <ManageCoursesModal
                 open={!!manageCoursesTarget}
                 onOpenChange={() => setManageCoursesTarget(null)}
                 student={manageCoursesTarget}
-                availableCourses={mockAvailableCourses}
-                onAddCourse={(studentId, courseId) => {
-                    console.log("Add course:", studentId, courseId);
-                }}
-                onRemoveCourse={(studentId, courseId) => {
-                    console.log("Remove course:", studentId, courseId);
-                }}
+                availableCourses={courses}
+                isLoading={actionLoading}
+                onAddCourse={handleAddCourse}
+                onRemoveCourse={handleRemoveCourse}
             />
 
             <ResendAccessModal
                 open={!!resendTarget}
                 onOpenChange={() => setResendTarget(null)}
                 student={resendTarget}
-                onConfirm={(studentId) => {
-                    console.log("Resend access:", studentId);
-                    setResendTarget(null);
-                }}
+                isLoading={actionLoading}
+                onConfirm={handleResendAccess}
             />
 
             <QuickAccessModal
@@ -166,7 +199,8 @@ export function StudentsPage() {
             <DeleteConfirmModal
                 open={!!deleteTarget}
                 onOpenChange={() => setDeleteTarget(null)}
-                onConfirm={handleConfirmDelete}
+                onConfirm={handleDelete}
+                isLoading={actionLoading}
                 title="Excluir Aluno"
                 description={`Tem certeza que deseja excluir "${deleteTarget?.name}"? O aluno será removido de todos os cursos permanentemente.`}
                 confirmLabel="Excluir Aluno"

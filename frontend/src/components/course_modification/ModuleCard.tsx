@@ -37,7 +37,7 @@ export function ModuleCard({
     onDeleteLesson,
     onReorderLessons,
 }: ModuleCardProps) {
-    const [isOpen, setIsOpen] = useState(true);
+    const [isOpen, setIsOpen] = useState(false);
     const lessonsCount = module.lessons.length;
 
     // Lesson drag state
