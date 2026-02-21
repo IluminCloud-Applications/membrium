@@ -4,3 +4,4 @@ export { FileCard } from "./FileCard";
 export { FileGrid } from "./FileGrid";
 export { FileEmptyState } from "./FileEmptyState";
 export { FilePagination } from "./FilePagination";
+export { FileLoadingSkeleton } from "./FileLoadingSkeleton";

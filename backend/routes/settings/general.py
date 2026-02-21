@@ -85,9 +85,9 @@ def get_settings():
             'version': settings.evolution_version,
             'instance': settings.evolution_instance
         },
-        'groq': {
-            'enabled': settings.groq_api_enabled,
-            'api_key': settings.groq_api
+        'gemini': {
+            'enabled': settings.gemini_api_enabled,
+            'api_key': settings.gemini_api_key
         },
         'openai': {
             'enabled': settings.openai_api_enabled,

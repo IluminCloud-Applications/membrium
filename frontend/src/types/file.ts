@@ -15,6 +15,7 @@ export interface FileStats {
     totalFiles: number;
     unusedFiles: number;
     totalSize: number;
+    unusedSize: number;
 }
 
 export interface DiskUsage {

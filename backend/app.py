@@ -12,7 +12,7 @@ from routes.course import course_bp
 from routes.module import module_bp
 from routes.lesson import lesson_bp
 from routes.student import student_bp
-from routes.file_manager import file_manager_bp
+from routes.files import files_bp
 from routes.settings import settings_bp
 from routes.misc import misc_bp
 from routes.dashboard import dashboard_bp
@@ -46,7 +46,7 @@ def create_app():
     app.register_blueprint(module_bp)
     app.register_blueprint(lesson_bp)
     app.register_blueprint(student_bp)
-    app.register_blueprint(file_manager_bp)
+    app.register_blueprint(files_bp)
     app.register_blueprint(settings_bp)
     app.register_blueprint(misc_bp)
     app.register_blueprint(dashboard_bp)

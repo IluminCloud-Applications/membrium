@@ -4,6 +4,7 @@ interface FileStatsProps {
     totalFiles: number;
     unusedFiles: number;
     totalSize: number;
+    unusedSize: number;
     diskUsage: DiskUsage | null;
 }
 
@@ -19,55 +20,53 @@ export function FileStats({
     totalFiles,
     unusedFiles,
     totalSize,
+    unusedSize,
     diskUsage,
 }: FileStatsProps) {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Total de Arquivos */}
-            <div className="rounded-xl border bg-card p-4 shadow-sm flex items-center gap-4">
-                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <i className="ri-file-3-line text-primary text-lg" />
-                </div>
-                <div>
-                    <p className="text-xs text-muted-foreground font-medium">
-                        Total de Arquivos
-                    </p>
-                    <p className="text-xl font-bold">{totalFiles}</p>
-                </div>
-            </div>
+            <StatCard
+                icon="ri-file-3-line"
+                iconBg="bg-primary/10"
+                iconColor="text-primary"
+                label="Total de Arquivos"
+                value={String(totalFiles)}
+            />
 
             {/* Espaço Utilizado (Arquivos) */}
-            <div className="rounded-xl border bg-card p-4 shadow-sm flex items-center gap-4">
-                <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                    <i className="ri-hard-drive-2-line text-blue-600 text-lg" />
-                </div>
-                <div>
-                    <p className="text-xs text-muted-foreground font-medium">
-                        Espaço dos Arquivos
-                    </p>
-                    <p className="text-xl font-bold">{formatBytes(totalSize)}</p>
-                </div>
-            </div>
+            <StatCard
+                icon="ri-hard-drive-2-line"
+                iconBg="bg-blue-500/10"
+                iconColor="text-blue-600"
+                label="Espaço dos Arquivos"
+                value={formatBytes(totalSize)}
+            />
 
             {/* Arquivos Não Utilizados */}
             <div className="rounded-xl border bg-card p-4 shadow-sm flex items-center gap-4">
-                <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
                     <i className="ri-file-warning-line text-amber-600 text-lg" />
                 </div>
-                <div>
+                <div className="min-w-0">
                     <p className="text-xs text-muted-foreground font-medium">
                         Não Utilizados
                     </p>
                     <p className="text-xl font-bold text-amber-600">
                         {unusedFiles}
                     </p>
+                    {unusedSize > 0 && (
+                        <p className="text-xs text-amber-600/70">
+                            {formatBytes(unusedSize)} podem ser liberados
+                        </p>
+                    )}
                 </div>
             </div>
 
             {/* Espaço em Disco (Docker) */}
             <div className="rounded-xl border bg-card p-4 shadow-sm">
                 <div className="flex items-center gap-4 mb-2">
-                    <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
                         <i className="ri-server-line text-emerald-600 text-lg" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -96,6 +95,34 @@ export function FileStats({
     );
 }
 
+/* ---- Reusable stat card ---- */
+interface StatCardProps {
+    icon: string;
+    iconBg: string;
+    iconColor: string;
+    label: string;
+    value: string;
+}
+
+function StatCard({ icon, iconBg, iconColor, label, value }: StatCardProps) {
+    return (
+        <div className="rounded-xl border bg-card p-4 shadow-sm flex items-center gap-4">
+            <div
+                className={`h-10 w-10 rounded-lg ${iconBg} flex items-center justify-center shrink-0`}
+            >
+                <i className={`${icon} ${iconColor} text-lg`} />
+            </div>
+            <div>
+                <p className="text-xs text-muted-foreground font-medium">
+                    {label}
+                </p>
+                <p className="text-xl font-bold">{value}</p>
+            </div>
+        </div>
+    );
+}
+
+/* ---- Disk progress bar ---- */
 function DiskProgressBar({ percentage }: { percentage: number }) {
     const color =
         percentage > 90

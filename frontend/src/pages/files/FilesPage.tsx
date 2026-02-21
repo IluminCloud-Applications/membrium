@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import {
     FileStats,
     FileFilters,
@@ -9,78 +9,46 @@ import {
 import { CleanUnusedModal } from "@/components/modals/files/CleanUnusedModal";
 import { FilePreviewModal } from "@/components/modals/files/FilePreviewModal";
 import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModal";
-import type { FileItem, FileType, FileStatus } from "@/types/file";
-import { mockFiles, mockDiskUsage } from "./mock-data";
-
-const ITEMS_PER_PAGE = 12;
+import { FileLoadingSkeleton } from "@/components/files/FileLoadingSkeleton";
+import type { FileItem } from "@/types/file";
+import { useFilesPage } from "./useFilesPage";
 
 export function FilesPage() {
-    const [files] = useState<FileItem[]>(mockFiles);
-    const [diskUsage] = useState(mockDiskUsage);
-
-    // Filters
-    const [search, setSearch] = useState("");
-    const [fileType, setFileType] = useState<FileType>("all");
-    const [status, setStatus] = useState<FileStatus>("all");
-    const [currentPage, setCurrentPage] = useState(1);
+    const {
+        files,
+        stats,
+        diskUsage,
+        totalPages,
+        isLoading,
+        isCleanLoading,
+        isDeleteLoading,
+        search,
+        fileType,
+        status,
+        currentPage,
+        setSearch,
+        setFileType,
+        setStatus,
+        setCurrentPage,
+        hasActiveFilters,
+        deleteFile,
+        cleanUnusedFiles,
+    } = useFilesPage();
 
     // Modals
     const [cleanModalOpen, setCleanModalOpen] = useState(false);
     const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<FileItem | null>(null);
 
-    // Filtered files
-    const filteredFiles = useMemo(() => {
-        let result = [...files];
-
-        if (search.trim()) {
-            const q = search.toLowerCase();
-            result = result.filter((f) =>
-                f.filename.toLowerCase().includes(q)
-            );
-        }
-
-        if (fileType !== "all") {
-            result = result.filter((f) => {
-                const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(f.filename);
-                return fileType === "image" ? isImage : !isImage;
-            });
-        }
-
-        if (status !== "all") {
-            result = result.filter((f) =>
-                status === "used" ? f.is_used : !f.is_used
-            );
-        }
-
-        return result;
-    }, [files, search, fileType, status]);
-
-    // Stats
-    const stats = useMemo(() => {
-        const totalSize = files.reduce((acc, f) => acc + f.size, 0);
-        const unusedCount = files.filter((f) => !f.is_used).length;
-        return { totalFiles: files.length, unusedFiles: unusedCount, totalSize };
-    }, [files]);
-
-    // Pagination
-    const totalPages = Math.ceil(filteredFiles.length / ITEMS_PER_PAGE);
-    const paginatedFiles = useMemo(() => {
-        const start = (currentPage - 1) * ITEMS_PER_PAGE;
-        return filteredFiles.slice(start, start + ITEMS_PER_PAGE);
-    }, [filteredFiles, currentPage]);
-
-    const hasActiveFilters =
-        search.trim() !== "" || fileType !== "all" || status !== "all";
-
     // Handlers
-    function handleCleanConfirm() {
-        console.log("Clean unused files");
+    async function handleCleanConfirm() {
+        await cleanUnusedFiles();
         setCleanModalOpen(false);
     }
 
-    function handleDeleteConfirm() {
-        console.log("Delete file:", deleteTarget?.filename);
+    async function handleDeleteConfirm() {
+        if (!deleteTarget) return;
+        await deleteFile(deleteTarget);
         setDeleteTarget(null);
     }
 
@@ -107,37 +75,31 @@ export function FilesPage() {
                 totalFiles={stats.totalFiles}
                 unusedFiles={stats.unusedFiles}
                 totalSize={stats.totalSize}
+                unusedSize={stats.unusedSize}
                 diskUsage={diskUsage}
             />
 
             {/* Filters */}
             <FileFilters
                 search={search}
-                onSearchChange={(v) => {
-                    setSearch(v);
-                    setCurrentPage(1);
-                }}
+                onSearchChange={setSearch}
                 fileType={fileType}
-                onFileTypeChange={(v) => {
-                    setFileType(v);
-                    setCurrentPage(1);
-                }}
+                onFileTypeChange={setFileType}
                 status={status}
-                onStatusChange={(v) => {
-                    setStatus(v);
-                    setCurrentPage(1);
-                }}
+                onStatusChange={setStatus}
                 unusedCount={stats.unusedFiles}
                 onCleanUnused={() => setCleanModalOpen(true)}
             />
 
             {/* Content */}
-            {paginatedFiles.length === 0 ? (
+            {isLoading ? (
+                <FileLoadingSkeleton />
+            ) : files.length === 0 ? (
                 <FileEmptyState hasFilters={hasActiveFilters} />
             ) : (
                 <>
                     <FileGrid
-                        files={paginatedFiles}
+                        files={files}
                         onView={setPreviewFile}
                         onDelete={setDeleteTarget}
                     />
@@ -155,6 +117,7 @@ export function FilesPage() {
                 onOpenChange={setCleanModalOpen}
                 onConfirm={handleCleanConfirm}
                 unusedCount={stats.unusedFiles}
+                isLoading={isCleanLoading}
             />
 
             <FilePreviewModal
@@ -170,6 +133,7 @@ export function FilesPage() {
                 title="Excluir Arquivo"
                 description={`Tem certeza que deseja excluir "${deleteTarget?.filename}"? Esta ação não pode ser desfeita.`}
                 confirmLabel="Excluir Arquivo"
+                isLoading={isDeleteLoading}
             />
         </div>
     );
