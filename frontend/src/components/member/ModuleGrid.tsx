@@ -6,9 +6,10 @@ interface ModuleCarouselProps {
     modules: MemberModule[];
     onModuleClick: (moduleId: number) => void;
     externalTrackRef?: React.RefObject<HTMLDivElement | null>;
+    onScrollStateChange?: (canLeft: boolean, canRight: boolean) => void;
 }
 
-export function ModuleGrid({ modules, onModuleClick, externalTrackRef }: ModuleCarouselProps) {
+export function ModuleGrid({ modules, onModuleClick, externalTrackRef, onScrollStateChange }: ModuleCarouselProps) {
     const internalRef = useRef<HTMLDivElement>(null);
     const trackRef = externalTrackRef || internalRef;
     const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -20,9 +21,12 @@ export function ModuleGrid({ modules, onModuleClick, externalTrackRef }: ModuleC
     const updateScrollState = useCallback(() => {
         const el = trackRef.current;
         if (!el) return;
-        setCanScrollLeft(el.scrollLeft > 4);
-        setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
-    }, []);
+        const left = el.scrollLeft > 4;
+        const right = el.scrollLeft < el.scrollWidth - el.clientWidth - 4;
+        setCanScrollLeft(left);
+        setCanScrollRight(right);
+        onScrollStateChange?.(left, right);
+    }, [onScrollStateChange]);
 
     useEffect(() => {
         updateScrollState();

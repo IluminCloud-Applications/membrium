@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState, useCallback } from "react";
 import type { MemberCourse } from "@/types/member";
 import { CourseBanner } from "./CourseBanner";
 import { ModuleGrid } from "./ModuleGrid";
@@ -11,6 +11,13 @@ interface CourseSectionProps {
 
 export function CourseSection({ course, isPrimary = false, onModuleClick }: CourseSectionProps) {
     const trackRef = useRef<HTMLDivElement>(null);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(false);
+
+    const handleScrollState = useCallback((left: boolean, right: boolean) => {
+        setCanScrollLeft(left);
+        setCanScrollRight(right);
+    }, []);
 
     function scrollModules(direction: "left" | "right") {
         const el = trackRef.current;
@@ -18,6 +25,8 @@ export function CourseSection({ course, isPrimary = false, onModuleClick }: Cour
         const amount = el.clientWidth * 0.75;
         el.scrollBy({ left: direction === "left" ? -amount : amount, behavior: "smooth" });
     }
+
+    const showArrows = canScrollLeft || canScrollRight;
 
     return (
         <section className="member-course-section">
@@ -42,22 +51,26 @@ export function CourseSection({ course, isPrimary = false, onModuleClick }: Cour
                         )}
                     </h2>
 
-                    {course.modules.length > 0 && (
+                    {showArrows && (
                         <div className="member-course-nav-arrows">
-                            <button
-                                className="member-course-nav-btn"
-                                onClick={() => scrollModules("left")}
-                                aria-label="Anterior"
-                            >
-                                <i className="ri-arrow-left-s-line" />
-                            </button>
-                            <button
-                                className="member-course-nav-btn"
-                                onClick={() => scrollModules("right")}
-                                aria-label="Próximo"
-                            >
-                                <i className="ri-arrow-right-s-line" />
-                            </button>
+                            {canScrollLeft && (
+                                <button
+                                    className="member-course-nav-btn"
+                                    onClick={() => scrollModules("left")}
+                                    aria-label="Anterior"
+                                >
+                                    <i className="ri-arrow-left-s-line" />
+                                </button>
+                            )}
+                            {canScrollRight && (
+                                <button
+                                    className="member-course-nav-btn"
+                                    onClick={() => scrollModules("right")}
+                                    aria-label="Próximo"
+                                >
+                                    <i className="ri-arrow-right-s-line" />
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>
@@ -73,6 +86,7 @@ export function CourseSection({ course, isPrimary = false, onModuleClick }: Cour
                     modules={course.modules}
                     onModuleClick={(moduleId) => onModuleClick(course.id, moduleId)}
                     externalTrackRef={trackRef}
+                    onScrollStateChange={handleScrollState}
                 />
             </div>
         </section>
