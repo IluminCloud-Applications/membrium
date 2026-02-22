@@ -12,12 +12,20 @@ export function ModuleCard({ module, index, onClick }: ModuleCardProps) {
         : 0;
 
     const isCompleted = progress === 100;
+    const isLocked = module.isLocked ?? false;
+    const daysRemaining = module.unlockDaysRemaining ?? 0;
+
+    function handleClick() {
+        if (isLocked) return; // Don't navigate if locked
+        onClick();
+    }
 
     return (
         <button
-            className="member-module-card"
-            onClick={onClick}
+            className={`member-module-card ${isLocked ? "member-module-locked" : ""}`}
+            onClick={handleClick}
             style={{ animationDelay: `${index * 0.05}s` }}
+            title={isLocked ? `Libera em ${daysRemaining} dia${daysRemaining !== 1 ? "s" : ""}` : module.name}
         >
             <div className="member-module-image-wrap">
                 {module.image ? (
@@ -33,8 +41,15 @@ export function ModuleCard({ module, index, onClick }: ModuleCardProps) {
                     </div>
                 )}
 
-                {/* Progress overlay */}
-                {module.totalLessons > 0 && (
+                {/* Lock badge */}
+                {isLocked && (
+                    <div className="member-module-lock-badge">
+                        <i className="ri-lock-line" />
+                    </div>
+                )}
+
+                {/* Progress overlay (only if unlocked) */}
+                {!isLocked && module.totalLessons > 0 && (
                     <div className="member-module-progress-bar">
                         <div
                             className="member-module-progress-fill"
@@ -44,7 +59,7 @@ export function ModuleCard({ module, index, onClick }: ModuleCardProps) {
                 )}
 
                 {/* Completed badge */}
-                {isCompleted && (
+                {!isLocked && isCompleted && (
                     <div className="member-module-completed-badge">
                         <i className="ri-check-line" />
                     </div>
@@ -54,8 +69,16 @@ export function ModuleCard({ module, index, onClick }: ModuleCardProps) {
             <div className="member-module-info">
                 <h3 className="member-module-name">{module.name}</h3>
                 <p className="member-module-meta">
-                    {module.completedLessons}/{module.totalLessons} aulas
-                    {progress > 0 && !isCompleted && ` · ${progress}%`}
+                    {isLocked ? (
+                        <span className="member-module-lock-text">
+                            <i className="ri-lock-line" /> Libera em {daysRemaining} dia{daysRemaining !== 1 ? "s" : ""}
+                        </span>
+                    ) : (
+                        <>
+                            {module.completedLessons}/{module.totalLessons} aulas
+                            {progress > 0 && !isCompleted && ` · ${progress}%`}
+                        </>
+                    )}
                 </p>
             </div>
         </button>

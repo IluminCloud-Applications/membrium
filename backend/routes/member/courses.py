@@ -24,6 +24,9 @@ def get_student_courses(student):
     """Returns all courses the student has access to, with modules and progress."""
     from models import Module, Lesson, CourseGroup, course_group_courses, student_lessons
     from db.database import db
+    from datetime import datetime
+
+    now = datetime.utcnow()
 
     courses_data = []
     for course in student.courses:
@@ -39,6 +42,15 @@ def get_student_courses(student):
                 student_lessons.c.lesson_id.in_([l.id for l in module.lessons])
             ).count() if module.lessons else 0
 
+            # Calculate lock status
+            is_locked = False
+            unlock_days_remaining = 0
+            if module.unlock_after_days and module.unlock_after_days > 0:
+                days_since_enrollment = (now - student.created_at).days
+                if days_since_enrollment < module.unlock_after_days:
+                    is_locked = True
+                    unlock_days_remaining = module.unlock_after_days - days_since_enrollment
+
             modules.append({
                 'id': module.id,
                 'name': module.name,
@@ -47,6 +59,8 @@ def get_student_courses(student):
                 'totalLessons': total,
                 'completedLessons': completed,
                 'unlockAfterDays': module.unlock_after_days,
+                'isLocked': is_locked,
+                'unlockDaysRemaining': unlock_days_remaining,
             })
 
         courses_data.append({

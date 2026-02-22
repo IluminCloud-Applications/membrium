@@ -10,6 +10,8 @@ export interface MemberModule {
     totalLessons: number;
     completedLessons: number;
     unlockAfterDays?: number;
+    isLocked?: boolean;
+    unlockDaysRemaining?: number;
 }
 
 export interface MemberCourse {
