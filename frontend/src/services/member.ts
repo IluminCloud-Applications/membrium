@@ -21,6 +21,10 @@ export const memberService = {
     getProfile: () =>
         apiClient.get<MemberProfile>("/member/profile"),
 
+    /** Update student profile (name, phone) */
+    updateProfile: (data: { name: string; phone: string }) =>
+        apiClient.put<ApiResponse>("/member/profile", data),
+
     /** Update student password */
     updatePassword: (newPassword: string) =>
         apiClient.put<ApiResponse>("/member/profile/password", {

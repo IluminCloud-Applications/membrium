@@ -36,6 +36,24 @@ def get_profile(student):
     })
 
 
+@member_profile_bp.route('/profile', methods=['PUT'])
+@student_required
+def update_profile(student):
+    """Updates student name and phone."""
+    data = request.json
+    name = data.get('name', '').strip()
+    phone = data.get('phone', '').strip()
+
+    if not name:
+        return jsonify({'error': 'Nome é obrigatório'}), 400
+
+    student.name = name
+    student.phone = phone or None
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'Perfil atualizado com sucesso!'})
+
+
 @member_profile_bp.route('/profile/password', methods=['PUT'])
 @student_required
 def update_password(student):

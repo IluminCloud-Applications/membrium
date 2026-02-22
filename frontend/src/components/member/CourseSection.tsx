@@ -11,8 +11,8 @@ interface CourseSectionProps {
 export function CourseSection({ course, isPrimary = false, onModuleClick }: CourseSectionProps) {
     return (
         <section className="member-course-section">
-            {/* Banner only for primary course */}
-            {isPrimary && (
+            {/* Banner — show if course has covers */}
+            {(course.coverDesktop || course.coverMobile) && (
                 <CourseBanner
                     coverDesktop={course.coverDesktop}
                     coverMobile={course.coverMobile}

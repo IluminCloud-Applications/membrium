@@ -1111,3 +1111,212 @@
     font-size: 1.35rem;
   }
 }
+
+/* ============================================
+   MEMBER PROFILE PAGE
+   ============================================ */
+
+/* Page header with avatar */
+.member-profile-header {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.member-profile-avatar-small {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #E62020, #F06422);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.member-profile-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: oklch(0.95 0 0);
+  letter-spacing: -0.02em;
+}
+
+.member-profile-email {
+  font-size: 0.85rem;
+  color: oklch(0.5 0 0);
+  margin-top: 0.1rem;
+}
+
+/* Two-column wrapper */
+.member-profile-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 4rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+/* Cards */
+.member-profile-card {
+  background: oklch(0.14 0 0);
+  border: 1px solid oklch(1 0 0 / 6%);
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+
+.member-profile-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: oklch(0.9 0 0);
+  margin-bottom: 1.25rem;
+  letter-spacing: -0.01em;
+}
+
+.member-profile-card-title i {
+  font-size: 1.15rem;
+  color: oklch(0.6 0 0);
+}
+
+/* Fields */
+.member-profile-field {
+  margin-bottom: 1rem;
+}
+
+.member-profile-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: oklch(0.6 0 0);
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.member-profile-input {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.92rem;
+  color: oklch(0.95 0 0);
+  background: oklch(0.1 0 0);
+  border: 1px solid oklch(1 0 0 / 8%);
+  border-radius: 0.6rem;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.member-profile-input:focus {
+  border-color: oklch(0.6 0.15 25);
+  box-shadow: 0 0 0 3px oklch(0.6 0.15 25 / 15%);
+}
+
+.member-profile-input::placeholder {
+  color: oklch(0.35 0 0);
+}
+
+.member-profile-input-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: oklch(0.12 0 0);
+}
+
+.member-profile-hint {
+  font-size: 0.75rem;
+  color: oklch(0.45 0 0);
+  margin-top: 0.3rem;
+  display: block;
+}
+
+/* Messages */
+.member-profile-message {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.member-profile-message-success {
+  background: oklch(0.35 0.1 150 / 15%);
+  color: oklch(0.7 0.15 150);
+  border: 1px solid oklch(0.5 0.1 150 / 20%);
+}
+
+.member-profile-message-error {
+  background: oklch(0.35 0.1 25 / 15%);
+  color: oklch(0.7 0.15 25);
+  border: 1px solid oklch(0.5 0.1 25 / 20%);
+}
+
+/* Button */
+.member-profile-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #E62020, #F06422);
+  border: none;
+  border-radius: 0.6rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.member-profile-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.member-profile-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Skeleton */
+.member-profile-skeleton {
+  background: oklch(0.14 0 0);
+  border: 1px solid oklch(1 0 0 / 6%);
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+
+/* Responsive — stack on mobile */
+@media (max-width: 768px) {
+  .member-profile-wrapper {
+    grid-template-columns: 1fr;
+    padding: 1rem 1rem 3rem;
+  }
+
+  .member-profile-header {
+    padding: 1.5rem 1rem 0;
+  }
+
+  .member-profile-avatar-small {
+    width: 44px;
+    height: 44px;
+    font-size: 1.1rem;
+  }
+
+  .member-profile-title {
+    font-size: 1.15rem;
+  }
+}
