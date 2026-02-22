@@ -2155,7 +2155,7 @@
   border: 1px solid oklch(1 0 0 / 6%);
   border-radius: 1rem;
   padding: 1.5rem;
-  min-width: 420px;
+  min-width: 360px;
 }
 
 .member-profile-card-title {
@@ -2304,6 +2304,119 @@
 
   .member-profile-title {
     font-size: 1.15rem;
+  }
+}
+
+/* ---- Support card wrapper ---- */
+.member-profile-support-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem 3rem;
+}
+
+.member-support-card {
+  max-width: 680px;
+}
+
+.member-support-description {
+  font-size: 0.88rem;
+  color: oklch(0.55 0 0);
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+}
+
+.member-support-channels {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.member-support-channel {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.75rem;
+  background: oklch(0.1 0 0);
+  border: 1px solid oklch(1 0 0 / 6%);
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.member-support-channel:hover {
+  border-color: oklch(1 0 0 / 12%);
+  background: oklch(0.12 0 0);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px oklch(0 0 0 / 30%);
+}
+
+.member-support-channel-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.member-support-channel-email {
+  background: oklch(0.25 0.08 250 / 30%);
+  color: oklch(0.7 0.15 250);
+}
+
+.member-support-channel-whatsapp {
+  background: oklch(0.3 0.1 150 / 25%);
+  color: oklch(0.7 0.18 150);
+}
+
+.member-support-channel-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.member-support-channel-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: oklch(0.5 0 0);
+}
+
+.member-support-channel-value {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: oklch(0.85 0 0);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.member-support-channel-arrow {
+  font-size: 1rem;
+  color: oklch(0.35 0 0);
+  flex-shrink: 0;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.member-support-channel:hover .member-support-channel-arrow {
+  color: oklch(0.6 0 0);
+  transform: translateX(2px);
+}
+
+@media (max-width: 768px) {
+  .member-profile-support-wrapper {
+    padding: 0 1rem 3rem;
+  }
+
+  .member-support-card {
+    max-width: 100%;
   }
 }
 

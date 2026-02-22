@@ -4,6 +4,7 @@ import { MemberHeader } from "@/components/member";
 import { ChatBubble } from "@/components/member/chatbot";
 import { ProfileForm } from "./ProfileForm";
 import { PasswordForm } from "./PasswordForm";
+import { SupportCard } from "./SupportCard";
 import type { MemberMenuItem } from "@/types/member";
 
 export function MemberProfilePage() {
@@ -11,6 +12,8 @@ export function MemberProfilePage() {
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
     const [platformName, setPlatformName] = useState("Área de Membros");
+    const [supportEmail, setSupportEmail] = useState("");
+    const [supportWhatsapp, setSupportWhatsapp] = useState("");
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -24,6 +27,8 @@ export function MemberProfilePage() {
             setEmail(profile.email);
             setPhone(profile.phone || "");
             setPlatformName(profile.platformName);
+            setSupportEmail(profile.supportEmail || "");
+            setSupportWhatsapp(profile.supportWhatsapp || "");
         } catch (err) {
             console.error("Erro ao carregar perfil:", err);
         } finally {
@@ -89,7 +94,17 @@ export function MemberProfilePage() {
                 />
                 <PasswordForm />
             </div>
+
+            {/* Support card */}
+            <div className="member-profile-support-wrapper">
+                <SupportCard
+                    supportEmail={supportEmail}
+                    supportWhatsapp={supportWhatsapp}
+                />
+            </div>
+
             <ChatBubble />
         </div>
     );
 }
+

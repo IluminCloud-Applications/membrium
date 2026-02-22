@@ -43,9 +43,9 @@ SUPPORTED_PLATFORMS = [
     {'id': 'perfectpay', 'name': 'PerfectPay', 'logo': '/platforms/perfectpay.png'},
     {'id': 'kirvano', 'name': 'Kirvano', 'logo': '/platforms/kirvano.png'},
     {'id': 'lastlink', 'name': 'LastLink', 'logo': '/platforms/lastlink.png'},
-    {'id': 'cartpanda', 'name': 'CartPanda', 'logo': '/platforms/active.webp'},
-    {'id': 'activecampaign', 'name': 'ActiveCampaign', 'logo': '/platforms/active.webp'},
-    {'id': 'manual', 'name': 'Manual (n8n)', 'logo': '/platforms/n8n.png'},
+    {'id': 'cartpanda', 'name': 'CartPanda', 'logo': '/platforms/cartpanda.svg'},
+    {'id': 'activecampaign', 'name': 'ActiveCampaign', 'logo': '/platforms/active.png'},
+    {'id': 'manual', 'name': 'Manual (n8n)', 'logo': '/platforms/n8n.webp'},
 ]
 
 

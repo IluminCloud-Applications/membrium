@@ -17,7 +17,7 @@ export function SidebarBrand({ platformName }: SidebarBrandProps) {
                     className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                     asChild
                 >
-                    <a href="https://ilumin.app/membrium" target="_blank" rel="noopener noreferrer">
+                    <a href="https://ilumin.app/docs/membrium" target="_blank" rel="noopener noreferrer">
                         {/* Fire gradient icon */}
                         <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                             <i className="ri-fire-fill text-base" />

@@ -90,6 +90,8 @@ export interface MemberProfile {
     email: string;
     phone: string;
     platformName: string;
+    supportEmail: string;
+    supportWhatsapp: string;
 }
 
 export interface MemberProgress {

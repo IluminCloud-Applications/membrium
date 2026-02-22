@@ -1,10 +1,19 @@
 from flask import Blueprint, jsonify, session, request
 from werkzeug.security import generate_password_hash
 from db.database import db
-from models import Student, Admin
+from models import Student, Admin, Settings
 from .auth_helpers import student_required, member_or_preview
 
 member_profile_bp = Blueprint('member_profile', __name__)
+
+
+def _get_support_info():
+    """Returns support contact info from Settings."""
+    settings = Settings.query.first()
+    return {
+        'supportEmail': (settings.support_email or '') if settings else '',
+        'supportWhatsapp': (settings.support_whatsapp or '') if settings else '',
+    }
 
 
 @member_profile_bp.route('/profile', methods=['GET'])
@@ -14,6 +23,7 @@ def get_profile(student):
     In admin preview mode (student=None), returns admin info."""
     admin = Admin.query.first()
     platform_name = admin.platform_name if admin else 'Membrium'
+    support = _get_support_info()
 
     if student is None:
         # Admin preview mode
@@ -23,6 +33,7 @@ def get_profile(student):
             'email': admin.email if admin else '',
             'phone': '',
             'platformName': platform_name,
+            **support,
         })
 
     return jsonify({
@@ -31,6 +42,7 @@ def get_profile(student):
         'email': student.email,
         'phone': student.phone or '',
         'platformName': platform_name,
+        **support,
     })
 
 
