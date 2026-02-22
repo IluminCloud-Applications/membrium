@@ -92,13 +92,9 @@ export const coursesService = {
 
     /** Update a course group */
     updateGroup: (id: number, data: GroupFormPayload) =>
-        apiClient.request<{ success: boolean; group: CourseGroupResponse }>(
+        apiClient.put<{ success: boolean; group: CourseGroupResponse }>(
             `/courses/groups/${id}`,
-            {
-                method: "PUT",
-                body: JSON.stringify(data),
-                headers: { "Content-Type": "application/json" },
-            }
+            data
         ),
 
     /** Delete a course group */
