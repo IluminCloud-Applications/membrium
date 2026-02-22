@@ -6,7 +6,6 @@ import { apiClient } from "./apiClient";
 
 export interface GeneralSettings {
     platform_name: string;
-    default_theme: 'light' | 'dark';
     admin_email: string;
     admin_name: string;
     support_email: string;
@@ -15,7 +14,6 @@ export interface GeneralSettings {
 
 export interface UpdatePlatformPayload {
     platform_name: string;
-    default_theme: 'light' | 'dark';
 }
 
 export interface UpdateAdminPayload {

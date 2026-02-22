@@ -20,6 +20,7 @@ interface VideoPlayerProps {
     src: string;
     videoType: string;
     hasNextLesson?: boolean;
+    initialTime?: number;
     onNextLesson?: () => void;
     onTimeUpdate?: (currentTime: number, duration: number) => void;
 }
@@ -29,10 +30,12 @@ export function VideoPlayer({
     src,
     videoType,
     hasNextLesson,
+    initialTime,
     onNextLesson,
     onTimeUpdate,
 }: VideoPlayerProps) {
     const playerRef = useRef<MediaPlayerInstance>(null);
+    const seekedRef = useRef(false);
 
     // For YouTube, convert to proper src format
     const videoSrc = getVideoSource(src, videoType);
@@ -41,8 +44,14 @@ export function VideoPlayer({
         if (!playerRef.current || !onTimeUpdate) return;
         return playerRef.current.subscribe(({ currentTime, duration }) => {
             onTimeUpdate(currentTime, duration);
+
+            // Seek to initialTime once the player has duration
+            if (!seekedRef.current && initialTime && initialTime > 0 && duration > 0) {
+                seekedRef.current = true;
+                playerRef.current!.currentTime = initialTime;
+            }
         });
-    }, [onTimeUpdate]);
+    }, [onTimeUpdate, initialTime]);
 
     // If it's vturb/custom, render as raw HTML
     if (videoType === "vturb") {

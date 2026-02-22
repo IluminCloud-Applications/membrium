@@ -1,5 +1,6 @@
 import { useLessonPage } from "@/hooks/useLessonPage";
 import { MemberHeader } from "@/components/member";
+import { ChatBubble } from "@/components/member/chatbot";
 import {
     VideoPlayer,
     LessonSidebar,
@@ -23,6 +24,7 @@ export function LessonPlayerPage() {
         ctaVisible,
         studentName,
         platformName,
+        initialVideoTime,
         selectLesson,
         goToPrevious,
         goToNext,
@@ -86,6 +88,7 @@ export function LessonPlayerPage() {
                             src={currentLesson.videoUrl}
                             videoType={currentLesson.videoType}
                             hasNextLesson={lessons.findIndex((l) => l.id === currentLesson.id) < lessons.length - 1}
+                            initialTime={initialVideoTime}
                             onNextLesson={goToNext}
                             onTimeUpdate={handleVideoTime}
                         />
@@ -133,6 +136,7 @@ export function LessonPlayerPage() {
             <footer className="member-footer">
                 <p>{platformName} · Todos os direitos reservados</p>
             </footer>
+            <ChatBubble />
         </div>
     );
 }

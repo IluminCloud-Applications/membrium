@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { memberService } from "@/services/member";
 import { MemberHeader } from "@/components/member";
+import { ChatBubble } from "@/components/member/chatbot";
 import { ProfileForm } from "./ProfileForm";
 import { PasswordForm } from "./PasswordForm";
 import type { MemberMenuItem } from "@/types/member";
@@ -88,6 +89,7 @@ export function MemberProfilePage() {
                 />
                 <PasswordForm />
             </div>
+            <ChatBubble />
         </div>
     );
 }

@@ -130,6 +130,7 @@ export function MemberHeader({ platformName, studentName, menuItems }: MemberHea
    SEARCH MODAL
    ============================================ */
 function SearchModal({ onClose }: { onClose: () => void }) {
+    const navigate = useNavigate();
     const [query, setQuery] = useState("");
     const [results, setResults] = useState<SearchResult[]>([]);
     const [loading, setLoading] = useState(false);
@@ -160,6 +161,19 @@ function SearchModal({ onClose }: { onClose: () => void }) {
         }, 300);
     }
 
+    function buildResultUrl(r: SearchResult): string {
+        if (r.type === "lesson" && r.moduleId) {
+            return `/member/${r.courseId}/${r.moduleId}?lesson=${r.id}`;
+        }
+        // Module: go to first module of course (moduleId is the module itself)
+        return `/member/${r.courseId}/${r.id}`;
+    }
+
+    function handleResultClick(r: SearchResult) {
+        onClose();
+        navigate(buildResultUrl(r));
+    }
+
     return (
         <div className="member-search-overlay" onClick={onClose}>
             <div className="member-search-modal animate-slide-up" onClick={(e) => e.stopPropagation()}>
@@ -187,11 +201,11 @@ function SearchModal({ onClose }: { onClose: () => void }) {
                             </div>
                         ) : (
                             results.map((r) => (
-                                <a
+                                <button
                                     key={`${r.type}-${r.id}`}
-                                    href={r.type === "module" ? `/member/curso/${r.courseId}` : `/member/curso/${r.courseId}`}
                                     className="member-search-result"
-                                    onClick={onClose}
+                                    onClick={() => handleResultClick(r)}
+                                    type="button"
                                 >
                                     <i className={r.type === "module" ? "ri-folder-line" : "ri-play-circle-line"} />
                                     <div>
@@ -201,7 +215,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
                                             {r.moduleName && ` · ${r.moduleName}`}
                                         </p>
                                     </div>
-                                </a>
+                                </button>
                             ))
                         )}
                     </div>

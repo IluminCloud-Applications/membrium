@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { memberService } from "@/services/member";
+import { getContinueWatching, saveContinueWatching } from "@/utils/continueWatching";
 import type {
     MemberLessonDetail,
     MemberModuleLessonsResponse,
@@ -22,6 +23,7 @@ interface UseLessonPageReturn {
     ctaVisible: boolean;
     studentName: string;
     platformName: string;
+    initialVideoTime: number;
     selectLesson: (lessonId: number) => void;
     goToPrevious: () => void;
     goToNext: () => void;
@@ -34,6 +36,7 @@ export function useLessonPage(): UseLessonPageReturn {
         courseId: string;
         moduleId: string;
     }>();
+    const [searchParams, setSearchParams] = useSearchParams();
 
     const courseId = Number(courseIdParam);
     const moduleId = Number(moduleIdParam);
@@ -48,6 +51,9 @@ export function useLessonPage(): UseLessonPageReturn {
     const autoCompletedRef = useRef(false);
     const [studentName, setStudentName] = useState("");
     const [platformName, setPlatformName] = useState("Área de Membros");
+    const [initialVideoTime, setInitialVideoTime] = useState(0);
+    const lastSaveRef = useRef(0);
+    const currentVideoTimeRef = useRef(0);
 
     useEffect(() => {
         loadData();
@@ -67,9 +73,22 @@ export function useLessonPage(): UseLessonPageReturn {
             setStudentName(profile.name);
             setPlatformName(profile.platformName);
 
-            // Select first lesson by default
-            if (moduleData.lessons.length > 0) {
-                setCurrentLessonId(moduleData.lessons[0].id);
+            // Check for lesson query param to select specific lesson
+            const lessonParam = searchParams.get("lesson");
+            const lessonIdFromParam = lessonParam ? Number(lessonParam) : null;
+
+            if (lessonIdFromParam && moduleData.lessons.some((l) => l.id === lessonIdFromParam)) {
+                setCurrentLessonId(lessonIdFromParam);
+                setSearchParams({}, { replace: true });
+            } else {
+                // Try to restore from "continue watching"
+                const saved = getContinueWatching(courseId, moduleId);
+                if (saved && moduleData.lessons.some((l) => l.id === saved.lessonId)) {
+                    setCurrentLessonId(saved.lessonId);
+                    setInitialVideoTime(saved.videoTime);
+                } else if (moduleData.lessons.length > 0) {
+                    setCurrentLessonId(moduleData.lessons[0].id);
+                }
             }
         } catch (err) {
             console.error("Erro ao carregar módulo:", err);
@@ -86,6 +105,8 @@ export function useLessonPage(): UseLessonPageReturn {
         setCTAVisible(false);
         setCTATriggered(false);
         autoCompletedRef.current = false;
+        setInitialVideoTime(0);
+        currentVideoTimeRef.current = 0;
         window.scrollTo({ top: 0, behavior: "smooth" });
     }, []);
 
@@ -133,6 +154,8 @@ export function useLessonPage(): UseLessonPageReturn {
 
     const handleVideoTime = useCallback(
         (time: number, duration: number) => {
+            currentVideoTimeRef.current = time;
+
             // CTA trigger
             if (
                 !ctaTriggered &&
@@ -155,9 +178,25 @@ export function useLessonPage(): UseLessonPageReturn {
                 autoCompletedRef.current = true;
                 markLessonComplete(currentLesson.id, true);
             }
+
+            // Save continue-watching every 10 seconds
+            const now = Date.now();
+            if (now - lastSaveRef.current >= 10_000 && currentLesson) {
+                lastSaveRef.current = now;
+                saveContinueWatching(courseId, moduleId, currentLesson.id, time);
+            }
         },
-        [currentLesson, ctaTriggered, markLessonComplete]
+        [currentLesson, ctaTriggered, markLessonComplete, courseId, moduleId]
     );
+
+    // Save on unmount (leaving the page)
+    useEffect(() => {
+        return () => {
+            if (currentLessonId && currentVideoTimeRef.current > 0) {
+                saveContinueWatching(courseId, moduleId, currentLessonId, currentVideoTimeRef.current);
+            }
+        };
+    }, [courseId, moduleId, currentLessonId]);
 
     return {
         loading,
@@ -174,6 +213,7 @@ export function useLessonPage(): UseLessonPageReturn {
         ctaVisible,
         studentName,
         platformName,
+        initialVideoTime,
         selectLesson,
         goToPrevious,
         goToNext,

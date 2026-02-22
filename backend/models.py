@@ -48,7 +48,7 @@ class Course(db.Model):
     category = db.Column(db.String(20), default='principal')  # 'principal', 'order_bump', 'upsell', 'bonus'
     is_published = db.Column(db.Boolean, default=True)
     module_format = db.Column(db.String(20), default='standard')  # 'standard' or 'netflix'
-    theme = db.Column(db.String(20), default='light')  # 'light' or 'dark'
+    theme = db.Column(db.String(20), default='dark')  # dark mode only
     cover_desktop = db.Column(db.String(255))  # filename for desktop cover
     cover_mobile = db.Column(db.String(255))   # filename for mobile cover
     menu_items = db.Column(db.JSON, default=list)  # [{name, url, icon, order}]
@@ -129,8 +129,6 @@ class CourseGroup(db.Model):
 
 class Settings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    # Platform preferences
-    default_theme = db.Column(db.String(10), default='light')  # 'light' or 'dark' — default theme for students
     # Support
     support_email = db.Column(db.String(120), nullable=True)
     support_whatsapp = db.Column(db.String(20), nullable=True)

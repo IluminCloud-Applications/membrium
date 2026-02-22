@@ -7,7 +7,10 @@ interface LessonContentProps {
 }
 
 export function LessonContent({ lesson }: LessonContentProps) {
-    if (!lesson.description && lesson.documents.length === 0 && lesson.faqs.length === 0) {
+    const documents = lesson.documents ?? [];
+    const faqs = lesson.faqs ?? [];
+
+    if (!lesson.description && documents.length === 0 && faqs.length === 0) {
         return null;
     }
 
@@ -28,14 +31,15 @@ export function LessonContent({ lesson }: LessonContentProps) {
             )}
 
             {/* Documents / Attachments */}
-            {lesson.documents.length > 0 && (
-                <LessonDocuments documents={lesson.documents} />
+            {documents.length > 0 && (
+                <LessonDocuments documents={documents} />
             )}
 
             {/* FAQ */}
-            {lesson.faqs.length > 0 && (
-                <LessonFAQ faqs={lesson.faqs} />
+            {faqs.length > 0 && (
+                <LessonFAQ faqs={faqs} />
             )}
         </div>
     );
 }
+

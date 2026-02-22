@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { memberService } from "@/services/member";
 import { MemberHeader, CourseSection, GroupSelectorModal, GroupedCourseView } from "@/components/member";
+import { ChatBubble } from "@/components/member/chatbot";
+import { getContinueWatching } from "@/utils/continueWatching";
 import type { MemberCourse, MemberCourseGroup, MemberMenuItem } from "@/types/member";
 
 export function MemberHomePage() {
@@ -76,7 +78,13 @@ export function MemberHomePage() {
         const course = courses.find((c) => c.id === courseId);
         const mod = course?.modules.find((m) => m.id === moduleId);
         if (!mod || mod.totalLessons === 0) return;
-        window.location.href = `/member/${courseId}/${moduleId}`;
+
+        // Check for saved continue watching position
+        const saved = getContinueWatching(courseId, moduleId);
+        const url = saved
+            ? `/member/${courseId}/${moduleId}?lesson=${saved.lessonId}`
+            : `/member/${courseId}/${moduleId}`;
+        window.location.href = url;
     }
 
     if (loading) {
@@ -96,6 +104,7 @@ export function MemberHomePage() {
                     <h2>Nenhum curso disponível</h2>
                     <p>Você ainda não possui acesso a nenhum curso.</p>
                 </div>
+                <ChatBubble />
             </div>
         );
     }
@@ -114,6 +123,7 @@ export function MemberHomePage() {
                     onSelect={setSelectedGroupId}
                     platformName={platformName}
                 />
+                <ChatBubble />
             </div>
         );
     }
@@ -147,6 +157,7 @@ export function MemberHomePage() {
                 <footer className="member-footer">
                     <p>{platformName} · Todos os direitos reservados</p>
                 </footer>
+                <ChatBubble />
             </div>
         );
     }
@@ -184,6 +195,7 @@ export function MemberHomePage() {
             <footer className="member-footer">
                 <p>{platformName} · Todos os direitos reservados</p>
             </footer>
+            <ChatBubble />
         </div>
     );
 }

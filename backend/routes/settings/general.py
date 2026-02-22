@@ -64,7 +64,6 @@ def get_settings():
 
     return jsonify({
         'platform_name': admin.platform_name,
-        'default_theme': settings.default_theme or 'light',
         'admin_email': admin.email,
         'admin_name': admin.name or '',
         'support_email': settings.support_email or '',
@@ -103,7 +102,6 @@ def get_settings():
 def update_platform():
     data = request.json or request.form
     platform_name = data.get('platform_name')
-    default_theme = data.get('default_theme')
 
     if not platform_name:
         return jsonify({'success': False, 'message': 'Nome da plataforma é obrigatório'}), 400
@@ -113,14 +111,6 @@ def update_platform():
         return jsonify({'success': False, 'message': 'Administrador não encontrado'}), 404
 
     admin.platform_name = platform_name
-
-    # Update default theme
-    if default_theme in ('light', 'dark'):
-        settings = Settings.query.first()
-        if not settings:
-            settings = Settings()
-            db.session.add(settings)
-        settings.default_theme = default_theme
 
     db.session.commit()
     return jsonify({'success': True, 'message': 'Configurações da plataforma atualizadas com sucesso'})
