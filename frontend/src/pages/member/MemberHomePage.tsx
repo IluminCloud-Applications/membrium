@@ -42,6 +42,12 @@ export function MemberHomePage() {
     const secondaryCourses = courses.filter((c) => c.category !== "principal");
 
     function handleModuleClick(courseId: number, moduleId: number) {
+        // Find the module to check if it has lessons
+        const course = courses.find((c) => c.id === courseId);
+        const mod = course?.modules.find((m) => m.id === moduleId);
+
+        if (!mod || mod.totalLessons === 0) return; // No lessons — stay on /member
+
         window.location.href = `/member/${courseId}/${moduleId}`;
     }
 

@@ -34,6 +34,7 @@ export function ModuleCard({ module, index, onClick }: ModuleCardProps) {
                         alt={module.name}
                         className="member-module-image"
                         loading="lazy"
+                        draggable="false"
                     />
                 ) : (
                     <div className="member-module-placeholder">

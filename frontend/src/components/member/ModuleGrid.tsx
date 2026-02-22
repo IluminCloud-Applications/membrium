@@ -9,7 +9,7 @@ interface ModuleCarouselProps {
     onScrollStateChange?: (canLeft: boolean, canRight: boolean) => void;
 }
 
-const DRAG_THRESHOLD = 10; // px — minimum movement to consider it a drag
+const DRAG_THRESHOLD = 8; // px — minimum movement to consider a drag
 
 export function ModuleGrid({ modules, onModuleClick, externalTrackRef, onScrollStateChange }: ModuleCarouselProps) {
     const internalRef = useRef<HTMLDivElement>(null);
@@ -17,9 +17,9 @@ export function ModuleGrid({ modules, onModuleClick, externalTrackRef, onScrollS
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
-    const dragState = useRef({ startX: 0, scrollLeft: 0, hasDragged: false, isMouseDown: false });
+    const dragRef = useRef({ startX: 0, scrollLeft: 0, hasDragged: false, active: false });
 
-    // Check scroll boundaries
+    // ── Scroll boundaries ──
     const updateScrollState = useCallback(() => {
         const el = trackRef.current;
         if (!el) return;
@@ -45,7 +45,7 @@ export function ModuleGrid({ modules, onModuleClick, externalTrackRef, onScrollS
         };
     }, [updateScrollState, modules]);
 
-    // Arrow click scroll
+    // ── Arrow click ──
     function scrollBy(direction: "left" | "right") {
         const el = trackRef.current;
         if (!el) return;
@@ -53,54 +53,68 @@ export function ModuleGrid({ modules, onModuleClick, externalTrackRef, onScrollS
         el.scrollBy({ left: direction === "left" ? -amount : amount, behavior: "smooth" });
     }
 
-    // --- Desktop drag-to-scroll (mouse events only) ---
+    // ── Document-level listeners for drag end (catches mouseup outside the track) ──
+    useEffect(() => {
+        function onDocumentMouseMove(e: MouseEvent) {
+            if (!dragRef.current.active) return;
+
+            const el = trackRef.current;
+            if (!el) return;
+
+            const dx = e.clientX - dragRef.current.startX;
+
+            if (!dragRef.current.hasDragged && Math.abs(dx) < DRAG_THRESHOLD) {
+                return; // Not a drag yet
+            }
+
+            e.preventDefault();
+            dragRef.current.hasDragged = true;
+            setIsDragging(true);
+            el.scrollLeft = dragRef.current.scrollLeft - dx;
+        }
+
+        function onDocumentMouseUp() {
+            if (!dragRef.current.active) return;
+            dragRef.current.active = false;
+
+            // Delay reset so click handler can check hasDragged
+            requestAnimationFrame(() => {
+                dragRef.current.hasDragged = false;
+                setIsDragging(false);
+            });
+        }
+
+        document.addEventListener("mousemove", onDocumentMouseMove);
+        document.addEventListener("mouseup", onDocumentMouseUp);
+
+        return () => {
+            document.removeEventListener("mousemove", onDocumentMouseMove);
+            document.removeEventListener("mouseup", onDocumentMouseUp);
+        };
+    }, []);
+
+    // ── Mouse down on track ──
     function handleMouseDown(e: React.MouseEvent) {
-        // Only handle left mouse button
-        if (e.button !== 0) return;
+        if (e.button !== 0) return; // Only left click
         const el = trackRef.current;
         if (!el) return;
 
-        dragState.current = {
+        dragRef.current = {
             startX: e.clientX,
             scrollLeft: el.scrollLeft,
             hasDragged: false,
-            isMouseDown: true,
+            active: true,
         };
     }
 
-    function handleMouseMove(e: React.MouseEvent) {
-        if (!dragState.current.isMouseDown) return;
-        const el = trackRef.current;
-        if (!el) return;
-
-        const dx = e.clientX - dragState.current.startX;
-
-        // Only start dragging after passing threshold
-        if (!dragState.current.hasDragged && Math.abs(dx) < DRAG_THRESHOLD) {
-            return; // Not a drag yet, allow normal click behavior
-        }
-
-        // Now it's a drag — prevent text selection and start scrolling
+    // ── Prevent native image/link drag (ghost image fix) ──
+    function handleDragStart(e: React.DragEvent) {
         e.preventDefault();
-        dragState.current.hasDragged = true;
-        setIsDragging(true);
-        el.scrollLeft = dragState.current.scrollLeft - dx;
     }
 
-    function handleMouseUp() {
-        dragState.current.isMouseDown = false;
-        // Small delay to ensure click events check hasDragged before we reset
-        setTimeout(() => {
-            dragState.current.hasDragged = false;
-            setIsDragging(false);
-        }, 0);
-    }
-
-    // Handle click — only navigate if it wasn't a drag
+    // ── Card click — only navigate if it wasn't a drag ──
     function handleCardClick(moduleId: number) {
-        if (dragState.current.hasDragged) {
-            return; // Was a drag, don't navigate
-        }
+        if (dragRef.current.hasDragged) return;
         onModuleClick(moduleId);
     }
 
@@ -128,14 +142,12 @@ export function ModuleGrid({ modules, onModuleClick, externalTrackRef, onScrollS
                 </button>
             )}
 
-            {/* Track — drag only via mouse (desktop), touch scroll is native */}
+            {/* Track */}
             <div
                 ref={trackRef}
                 className={`member-carousel-track ${isDragging ? "is-dragging" : ""}`}
                 onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
+                onDragStart={handleDragStart}
             >
                 {sorted.map((mod, index) => (
                     <ModuleCard
