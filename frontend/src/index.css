@@ -3097,26 +3097,13 @@
   color: oklch(0.55 0 0);
 }
 
-/* ---- Other modules section ---- */
-.lesson-sidebar-modules {
-  border-top: 1px solid oklch(1 0 0 / 6%);
-  padding: 0.5rem;
-}
-
-.lesson-sidebar-modules-title {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: oklch(0.45 0 0);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 0.25rem 0.4rem 0.5rem;
-}
-
+/* ---- Module accordion items ---- */
 .lesson-sidebar-module-item {
-  margin-bottom: 0.15rem;
+  margin-bottom: 0.1rem;
+}
+
+.lesson-sidebar-module-current .lesson-sidebar-module-header {
+  color: oklch(0.9 0 0);
 }
 
 .lesson-sidebar-module-header {
@@ -3124,13 +3111,13 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 0.4rem 0.6rem;
+  padding: 0.45rem 0.6rem;
   border: none;
   background: transparent;
   border-radius: 0.4rem;
   cursor: pointer;
   font-family: inherit;
-  color: oklch(0.6 0 0);
+  color: oklch(0.55 0 0);
   transition: all 0.15s;
 }
 
@@ -3161,18 +3148,50 @@
 }
 
 .lesson-sidebar-module-count {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   color: oklch(0.4 0 0);
   flex-shrink: 0;
+  opacity: 0.7;
 }
 
 .lesson-sidebar-module-lessons {
-  padding-left: 0.5rem;
+  padding-left: 0.4rem;
   border-left: 2px solid oklch(1 0 0 / 6%);
-  margin-left: 0.8rem;
-  margin-top: 0.15rem;
-  margin-bottom: 0.25rem;
+  margin-left: 1rem;
+  margin-top: 0.1rem;
+  margin-bottom: 0.35rem;
 }
+
+/* Next module button */
+.lesson-sidebar-next-module {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.55rem;
+  margin-top: 0.25rem;
+  border: 1px dashed oklch(1 0 0 / 10%);
+  background: transparent;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: oklch(0.6 0.1 25);
+  transition: all 0.2s;
+}
+
+.lesson-sidebar-next-module:hover {
+  background: oklch(0.53 0.22 25 / 10%);
+  border-color: oklch(0.53 0.22 25 / 25%);
+  color: oklch(0.7 0.15 25);
+}
+
+.lesson-sidebar-next-module i {
+  font-size: 0.9rem;
+}
+
 
 /* ---- Showcase banners in sidebar ---- */
 .lesson-sidebar-showcases {
