@@ -3,6 +3,8 @@ import { useLessonPage } from "@/hooks/useLessonPage";
 import { memberService } from "@/services/member";
 import { MemberHeader } from "@/components/member";
 import { ChatBubble } from "@/components/member/chatbot";
+import { PreviewBanner } from "@/components/member/PreviewBanner";
+import { usePreview } from "@/contexts/PreviewContext";
 import {
     VideoPlayer,
     LessonSidebar,
@@ -38,10 +40,11 @@ export function LessonPlayerPage() {
         handleVideoTime,
     } = useLessonPage();
 
+    const { isPreview } = usePreview();
     const [showcases, setShowcases] = useState<MemberShowcaseItem[]>([]);
 
     useEffect(() => {
-        memberService.getShowcases().then(setShowcases).catch(() => { });
+        memberService.getShowcases(isPreview).then(setShowcases).catch(() => { });
     }, []);
 
     if (loading) return <LessonSkeleton />;
@@ -71,6 +74,7 @@ export function LessonPlayerPage() {
 
     return (
         <div className="member-page dark">
+            {isPreview && <PreviewBanner />}
             <MemberHeader
                 platformName={platformName}
                 studentName={studentName}

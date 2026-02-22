@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { memberService } from "@/services/member";
+import { usePreview } from "@/contexts/PreviewContext";
 import { getContinueWatching, saveContinueWatching } from "@/utils/continueWatching";
 import type {
     MemberLessonDetail,
@@ -41,6 +42,8 @@ export function useLessonPage(): UseLessonPageReturn {
     }>();
     const [searchParams, setSearchParams] = useSearchParams();
 
+    const { isPreview } = usePreview();
+
     const courseId = Number(courseIdParam);
     const moduleId = Number(moduleIdParam);
 
@@ -70,9 +73,9 @@ export function useLessonPage(): UseLessonPageReturn {
         setCTATriggered(false);
         try {
             const [moduleData, profile, courseDetail] = await Promise.all([
-                memberService.getModuleLessons(courseId, moduleId),
-                memberService.getProfile(),
-                memberService.getCourseDetail(courseId).catch(() => null),
+                memberService.getModuleLessons(courseId, moduleId, isPreview),
+                memberService.getProfile(isPreview),
+                memberService.getCourseDetail(courseId, isPreview).catch(() => null),
             ]);
             setData(moduleData);
             setStudentName(profile.name);
@@ -135,9 +138,9 @@ export function useLessonPage(): UseLessonPageReturn {
         setCompleting(true);
         try {
             if (markComplete) {
-                await memberService.completeLesson(lessonId);
+                await memberService.completeLesson(lessonId, isPreview);
             } else {
-                await memberService.uncompleteLesson(lessonId);
+                await memberService.uncompleteLesson(lessonId, isPreview);
             }
 
             setData((prev) => {

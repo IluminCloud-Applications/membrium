@@ -4,12 +4,18 @@ import { useNavigate } from "react-router-dom";
 
 interface CourseHeaderProps {
     courseName: string;
+    courseId?: number;
     modulesCount: number;
     lessonsCount: number;
 }
 
-export function CourseHeader({ courseName, modulesCount, lessonsCount }: CourseHeaderProps) {
+export function CourseHeader({ courseName, courseId, modulesCount, lessonsCount }: CourseHeaderProps) {
     const navigate = useNavigate();
+
+    function handlePreview() {
+        if (!courseId) return;
+        window.open(`/member?preview=true`, "_blank");
+    }
 
     return (
         <div className="space-y-4">
@@ -44,10 +50,10 @@ export function CourseHeader({ courseName, modulesCount, lessonsCount }: CourseH
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => window.open(`/course/${1}`, "_blank")}
+                    onClick={handlePreview}
                     className="gap-2"
                 >
-                    <i className="ri-external-link-line" />
+                    <i className="ri-eye-line" />
                     Ver como Aluno
                 </Button>
             </div>

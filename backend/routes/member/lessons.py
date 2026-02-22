@@ -1,33 +1,21 @@
 """Member lesson API — provides lesson detail for the student-facing player page."""
 from flask import Blueprint, jsonify, session
-from functools import wraps
 from db.database import db
 from models import Student, Course, Module, Lesson, Document, FAQ, student_lessons
+from .auth_helpers import member_or_preview
 
 member_lessons_bp = Blueprint('member_lessons', __name__)
 
 
-def student_required(f):
-    """Ensures the user is a logged-in student."""
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'student':
-            return jsonify({'error': 'Não autorizado'}), 401
-        student = Student.query.get(session['user_id'])
-        if not student:
-            return jsonify({'error': 'Aluno não encontrado'}), 401
-        return f(student, *args, **kwargs)
-    return decorated
-
-
 @member_lessons_bp.route('/courses/<int:course_id>/modules/<int:module_id>', methods=['GET'])
-@student_required
+@member_or_preview
 def get_module_lessons(student, course_id, module_id):
-    """Returns all lessons in a module with completion status and metadata."""
+    """Returns all lessons in a module with completion status and metadata.
+    In admin preview mode (student=None), skips access check."""
     course = Course.query.get_or_404(course_id)
 
-    # Check student has access
-    if course not in student.courses:
+    # Check student has access (skip for admin preview)
+    if student is not None and course not in student.courses:
         return jsonify({'error': 'Sem acesso a este curso'}), 403
 
     module = Module.query.filter_by(id=module_id, course_id=course_id).first_or_404()
@@ -35,10 +23,13 @@ def get_module_lessons(student, course_id, module_id):
     # Build lessons list
     lessons = []
     for lesson in module.lessons:
-        is_completed = db.session.query(student_lessons).filter_by(
-            student_id=student.id,
-            lesson_id=lesson.id,
-        ).first() is not None
+        if student is not None:
+            is_completed = db.session.query(student_lessons).filter_by(
+                student_id=student.id,
+                lesson_id=lesson.id,
+            ).first() is not None
+        else:
+            is_completed = False
 
         # Get documents for this lesson
         documents = [{

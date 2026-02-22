@@ -5,7 +5,11 @@ from werkzeug.utils import secure_filename
 from db.database import db
 from db.utils import ensure_upload_directory
 from models import Admin, Module, Lesson, Document, FAQ, LessonTranscript
+from .transcript_sync import auto_fetch_transcript
 import os
+import logging
+
+logger = logging.getLogger("routes.course_modification.lessons")
 
 lessons_bp = Blueprint('course_mod_lessons', __name__)
 
@@ -57,9 +61,18 @@ def create_lesson(module_id):
     _handle_document_uploads(request, new_lesson)
 
     db.session.commit()
+
+    # Auto-fetch YouTube transcript in background (non-blocking)
+    transcript_result = {"success": False, "message": "Skipped"}
+    if video_url and new_lesson.video_type == 'youtube':
+        logger.info(f"Auto-importando transcrição para lesson={new_lesson.id}")
+        transcript_result = auto_fetch_transcript(new_lesson.id)
+
     return jsonify({
         'success': True,
         'lesson': _serialize_lesson(new_lesson),
+        'transcript_imported': transcript_result.get('success', False),
+        'transcript_message': transcript_result.get('message', ''),
     })
 
 

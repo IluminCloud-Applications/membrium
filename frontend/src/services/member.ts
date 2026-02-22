@@ -12,28 +12,35 @@ import type {
 } from "@/types/member";
 import type { ApiResponse } from "@/types/api";
 
+/** Appends ?preview=true to the endpoint if preview mode is enabled */
+function withPreview(endpoint: string, preview?: boolean): string {
+    if (!preview) return endpoint;
+    const separator = endpoint.includes("?") ? "&" : "?";
+    return `${endpoint}${separator}preview=true`;
+}
+
 export const memberService = {
     /** Get all courses the student is enrolled in */
-    getCourses: () =>
-        apiClient.get<MemberCourse[]>("/member/courses"),
+    getCourses: (preview?: boolean) =>
+        apiClient.get<MemberCourse[]>(withPreview("/member/courses", preview)),
 
     /** Get courses organized by groups for the member area */
-    getCoursesGrouped: () =>
-        apiClient.get<MemberGroupedResponse>("/member/courses/grouped"),
+    getCoursesGrouped: (preview?: boolean) =>
+        apiClient.get<MemberGroupedResponse>(withPreview("/member/courses/grouped", preview)),
 
     /** Get single course detail with lessons */
-    getCourseDetail: (courseId: number) =>
-        apiClient.get<MemberCourseDetail>(`/member/courses/${courseId}`),
+    getCourseDetail: (courseId: number, preview?: boolean) =>
+        apiClient.get<MemberCourseDetail>(withPreview(`/member/courses/${courseId}`, preview)),
 
     /** Get all lessons in a module for the player page */
-    getModuleLessons: (courseId: number, moduleId: number) =>
+    getModuleLessons: (courseId: number, moduleId: number, preview?: boolean) =>
         apiClient.get<MemberModuleLessonsResponse>(
-            `/member/courses/${courseId}/modules/${moduleId}`
+            withPreview(`/member/courses/${courseId}/modules/${moduleId}`, preview)
         ),
 
     /** Get student profile */
-    getProfile: () =>
-        apiClient.get<MemberProfile>("/member/profile"),
+    getProfile: (preview?: boolean) =>
+        apiClient.get<MemberProfile>(withPreview("/member/profile", preview)),
 
     /** Update student profile (name, phone) */
     updateProfile: (data: { name: string; phone: string }) =>
@@ -50,43 +57,42 @@ export const memberService = {
         apiClient.get<MemberProgress>("/member/progress"),
 
     /** Mark a lesson as completed */
-    completeLesson: (lessonId: number) =>
-        apiClient.post<ApiResponse>(`/member/lessons/${lessonId}/complete`, {}),
+    completeLesson: (lessonId: number, preview?: boolean) =>
+        apiClient.post<ApiResponse>(withPreview(`/member/lessons/${lessonId}/complete`, preview), {}),
 
     /** Unmark a lesson as completed */
-    uncompleteLesson: (lessonId: number) =>
-        apiClient.post<ApiResponse>(`/member/lessons/${lessonId}/uncomplete`, {}),
+    uncompleteLesson: (lessonId: number, preview?: boolean) =>
+        apiClient.post<ApiResponse>(withPreview(`/member/lessons/${lessonId}/uncomplete`, preview), {}),
 
     /** Search content */
-    search: (query: string) =>
-        apiClient.get<SearchResult[]>(`/member/search?q=${encodeURIComponent(query)}`),
+    search: (query: string, preview?: boolean) =>
+        apiClient.get<SearchResult[]>(withPreview(`/member/search?q=${encodeURIComponent(query)}`, preview)),
 
     /* ======= SHOWCASE (Vitrine) ======= */
 
     /** Get active showcases for the member */
-    getShowcases: () =>
-        apiClient.get<MemberShowcaseItem[]>("/member/showcase"),
+    getShowcases: (preview?: boolean) =>
+        apiClient.get<MemberShowcaseItem[]>(withPreview("/member/showcase", preview)),
 
     /** Track showcase view */
-    trackShowcaseView: (showcaseId: number) =>
-        apiClient.post<ApiResponse>(`/member/showcase/${showcaseId}/view`, {}),
+    trackShowcaseView: (showcaseId: number, preview?: boolean) =>
+        apiClient.post<ApiResponse>(withPreview(`/member/showcase/${showcaseId}/view`, preview), {}),
 
     /** Track showcase click */
-    trackShowcaseClick: (showcaseId: number) =>
-        apiClient.post<ApiResponse>(`/member/showcase/${showcaseId}/click`, {}),
+    trackShowcaseClick: (showcaseId: number, preview?: boolean) =>
+        apiClient.post<ApiResponse>(withPreview(`/member/showcase/${showcaseId}/click`, preview), {}),
 
     /* ======= PROMOTION (Promoção) ======= */
 
     /** Get all currently active promotions */
-    getActivePromotions: () =>
-        apiClient.get<{ promotions: MemberActivePromotion[] }>("/member/promotions/active"),
+    getActivePromotions: (preview?: boolean) =>
+        apiClient.get<{ promotions: MemberActivePromotion[] }>(withPreview("/member/promotions/active", preview)),
 
     /** Track promotion view */
-    trackPromotionView: (promoId: number) =>
-        apiClient.post<ApiResponse>(`/member/promotions/${promoId}/view`, {}),
+    trackPromotionView: (promoId: number, preview?: boolean) =>
+        apiClient.post<ApiResponse>(withPreview(`/member/promotions/${promoId}/view`, preview), {}),
 
     /** Track promotion CTA click */
-    trackPromotionClick: (promoId: number) =>
-        apiClient.post<ApiResponse>(`/member/promotions/${promoId}/click`, {}),
+    trackPromotionClick: (promoId: number, preview?: boolean) =>
+        apiClient.post<ApiResponse>(withPreview(`/member/promotions/${promoId}/click`, preview), {}),
 };
-

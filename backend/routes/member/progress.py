@@ -1,22 +1,9 @@
 from flask import Blueprint, jsonify, session, request
-from functools import wraps
 from db.database import db
-from models import Student, Lesson, Module, student_lessons
+from models import Student, Lesson, Module, Course, student_lessons
+from .auth_helpers import student_required, member_or_preview
 
 member_progress_bp = Blueprint('member_progress', __name__)
-
-
-def student_required(f):
-    """Ensures the user is a logged-in student."""
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'student':
-            return jsonify({'error': 'Não autorizado'}), 401
-        student = Student.query.get(session['user_id'])
-        if not student:
-            return jsonify({'error': 'Aluno não encontrado'}), 401
-        return f(student, *args, **kwargs)
-    return decorated
 
 
 @member_progress_bp.route('/progress', methods=['GET'])
@@ -42,9 +29,12 @@ def get_progress(student):
 
 
 @member_progress_bp.route('/lessons/<int:lesson_id>/complete', methods=['POST'])
-@student_required
+@member_or_preview
 def mark_lesson_complete(student, lesson_id):
-    """Marks a lesson as completed."""
+    """Marks a lesson as completed. No-op for admin preview."""
+    if student is None:
+        return jsonify({'success': True, 'message': 'Preview mode — sem alteração'})
+
     lesson = Lesson.query.get_or_404(lesson_id)
 
     if lesson not in student.completed_lessons:
@@ -55,9 +45,12 @@ def mark_lesson_complete(student, lesson_id):
 
 
 @member_progress_bp.route('/lessons/<int:lesson_id>/uncomplete', methods=['POST'])
-@student_required
+@member_or_preview
 def unmark_lesson_complete(student, lesson_id):
-    """Removes completion mark from a lesson."""
+    """Removes completion mark from a lesson. No-op for admin preview."""
+    if student is None:
+        return jsonify({'success': True, 'message': 'Preview mode — sem alteração'})
+
     lesson = Lesson.query.get_or_404(lesson_id)
 
     if lesson in student.completed_lessons:
@@ -68,17 +61,21 @@ def unmark_lesson_complete(student, lesson_id):
 
 
 @member_progress_bp.route('/search', methods=['GET'])
-@student_required
+@member_or_preview
 def search_content(student):
     """Search through course modules and lessons."""
     query = request.args.get('q', '').strip()
     if not query or len(query) < 2:
         return jsonify([])
 
+    # Admin preview: search all published courses
+    if student is None:
+        courses_list = Course.query.filter_by(is_published=True).all()
+    else:
+        courses_list = [c for c in student.courses if c.is_published]
+
     results = []
-    for course in student.courses:
-        if not course.is_published:
-            continue
+    for course in courses_list:
         for module in course.modules:
             # Match module name
             if query.lower() in module.name.lower():

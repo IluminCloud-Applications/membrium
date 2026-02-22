@@ -99,7 +99,12 @@ export const courseModificationService = {
     /* ---------- Lessons ---------- */
 
     createLesson: (moduleId: number, formData: FormData) =>
-        apiClient.request<{ success: boolean; lesson: LessonResponse }>(
+        apiClient.request<{
+            success: boolean;
+            lesson: LessonResponse;
+            transcript_imported: boolean;
+            transcript_message: string;
+        }>(
             `${BASE}/modules/${moduleId}/lessons`, { method: "POST", body: formData, headers: {} }
         ),
 

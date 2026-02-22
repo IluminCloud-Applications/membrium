@@ -1,38 +1,36 @@
 from flask import Blueprint, jsonify, session, request
-from functools import wraps
 from werkzeug.security import generate_password_hash
 from db.database import db
-from models import Student
+from models import Student, Admin
+from .auth_helpers import student_required, member_or_preview
 
 member_profile_bp = Blueprint('member_profile', __name__)
 
 
-def student_required(f):
-    """Ensures the user is a logged-in student."""
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'student':
-            return jsonify({'error': 'Não autorizado'}), 401
-        student = Student.query.get(session['user_id'])
-        if not student:
-            return jsonify({'error': 'Aluno não encontrado'}), 401
-        return f(student, *args, **kwargs)
-    return decorated
-
-
 @member_profile_bp.route('/profile', methods=['GET'])
-@student_required
+@member_or_preview
 def get_profile(student):
-    """Returns the student's profile info."""
-    from models import Admin
+    """Returns the student's profile info.
+    In admin preview mode (student=None), returns admin info."""
     admin = Admin.query.first()
+    platform_name = admin.platform_name if admin else 'Membrium'
+
+    if student is None:
+        # Admin preview mode
+        return jsonify({
+            'id': admin.id if admin else 0,
+            'name': admin.name or 'Admin',
+            'email': admin.email if admin else '',
+            'phone': '',
+            'platformName': platform_name,
+        })
 
     return jsonify({
         'id': student.id,
         'name': student.name,
         'email': student.email,
         'phone': student.phone or '',
-        'platformName': admin.platform_name if admin else 'Membrium',
+        'platformName': platform_name,
     })
 
 

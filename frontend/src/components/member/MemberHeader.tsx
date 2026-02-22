@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { memberService } from "@/services/member";
 import { authService } from "@/services/authService";
+import { usePreview } from "@/contexts/PreviewContext";
 import { MobileBottomNav } from "./MobileBottomNav";
 import type { MemberMenuItem, SearchResult } from "@/types/member";
 
@@ -13,6 +14,7 @@ interface MemberHeaderProps {
 
 export function MemberHeader({ platformName, studentName, menuItems }: MemberHeaderProps) {
     const navigate = useNavigate();
+    const { isPreview } = usePreview();
     const [searchOpen, setSearchOpen] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
@@ -113,7 +115,7 @@ export function MemberHeader({ platformName, studentName, menuItems }: MemberHea
             </header>
 
             {searchOpen && (
-                <SearchModal onClose={() => setSearchOpen(false)} />
+                <SearchModal onClose={() => setSearchOpen(false)} isPreview={isPreview} />
             )}
 
             {/* Mobile floating bottom nav */}
@@ -129,7 +131,7 @@ export function MemberHeader({ platformName, studentName, menuItems }: MemberHea
 /* ============================================
    SEARCH MODAL
    ============================================ */
-function SearchModal({ onClose }: { onClose: () => void }) {
+function SearchModal({ onClose, isPreview }: { onClose: () => void; isPreview?: boolean }) {
     const navigate = useNavigate();
     const [query, setQuery] = useState("");
     const [results, setResults] = useState<SearchResult[]>([]);
@@ -154,7 +156,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
         timerRef.current = setTimeout(async () => {
             setLoading(true);
             try {
-                const data = await memberService.search(value);
+                const data = await memberService.search(value, isPreview);
                 setResults(data);
             } catch { setResults([]); }
             finally { setLoading(false); }
@@ -162,11 +164,11 @@ function SearchModal({ onClose }: { onClose: () => void }) {
     }
 
     function buildResultUrl(r: SearchResult): string {
+        const previewParam = isPreview ? "preview=true" : "";
         if (r.type === "lesson" && r.moduleId) {
-            return `/member/${r.courseId}/${r.moduleId}?lesson=${r.id}`;
+            return `/member/${r.courseId}/${r.moduleId}?${previewParam ? previewParam + "&" : ""}lesson=${r.id}`;
         }
-        // Module: go to first module of course (moduleId is the module itself)
-        return `/member/${r.courseId}/${r.id}`;
+        return `/member/${r.courseId}/${r.id}${previewParam ? "?" + previewParam : ""}`;
     }
 
     function handleResultClick(r: SearchResult) {

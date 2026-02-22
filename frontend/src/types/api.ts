@@ -45,3 +45,13 @@ export interface ApiResponse {
     success: boolean;
     message: string;
 }
+
+export interface CheckMeResponse {
+    authenticated: boolean;
+    user?: {
+        id: number;
+        type: "admin" | "student";
+        email: string;
+        name: string;
+    };
+}

@@ -5,6 +5,7 @@ import type {
     SetupRequest,
     SetupResponse,
     CheckInstallResponse,
+    CheckMeResponse,
     ResetPasswordRequest,
     ApiResponse,
 } from "@/types/api";
@@ -13,6 +14,10 @@ export const authService = {
     /** Check if the platform is already installed */
     checkInstall: () =>
         apiClient.get<CheckInstallResponse>("/auth/check-install"),
+
+    /** Check current user session */
+    checkMe: () =>
+        apiClient.get<CheckMeResponse>("/auth/me"),
 
     /** Setup (first install) — create admin + platform */
     setup: (data: SetupRequest) =>

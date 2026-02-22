@@ -4,9 +4,12 @@ import { MemberHeader, CourseSection, GroupSelectorModal, GroupedCourseView, Sho
 import { PromotionQueue } from "@/components/member/promotion";
 import { ChatBubble } from "@/components/member/chatbot";
 import { getContinueWatching } from "@/utils/continueWatching";
+import { usePreview } from "@/contexts/PreviewContext";
+import { PreviewBanner } from "@/components/member/PreviewBanner";
 import type { MemberCourse, MemberCourseGroup, MemberMenuItem, MemberShowcaseItem, MemberActivePromotion } from "@/types/member";
 
 export function MemberHomePage() {
+    const { isPreview } = usePreview();
     const [courses, setCourses] = useState<MemberCourse[]>([]);
     const [groups, setGroups] = useState<MemberCourseGroup[]>([]);
     const [ungrouped, setUngrouped] = useState<MemberCourse[]>([]);
@@ -24,10 +27,10 @@ export function MemberHomePage() {
     async function loadData() {
         try {
             const [groupedData, profile, showcaseData, promoData] = await Promise.all([
-                memberService.getCoursesGrouped(),
-                memberService.getProfile(),
-                memberService.getShowcases().catch(() => []),
-                memberService.getActivePromotions().catch(() => ({ promotions: [] })),
+                memberService.getCoursesGrouped(isPreview),
+                memberService.getProfile(isPreview),
+                memberService.getShowcases(isPreview).catch(() => []),
+                memberService.getActivePromotions(isPreview).catch(() => ({ promotions: [] })),
             ]);
 
             setGroups(groupedData.groups);
@@ -77,10 +80,12 @@ export function MemberHomePage() {
         const mod = course?.modules.find((m) => m.id === moduleId);
         if (!mod || mod.totalLessons === 0) return;
 
+        const previewParam = isPreview ? "preview=true&" : "";
+
         const saved = getContinueWatching(courseId, moduleId);
         const url = saved
-            ? `/member/${courseId}/${moduleId}?lesson=${saved.lessonId}`
-            : `/member/${courseId}/${moduleId}`;
+            ? `/member/${courseId}/${moduleId}?${previewParam}lesson=${saved.lessonId}`
+            : `/member/${courseId}/${moduleId}${isPreview ? "?preview=true" : ""}`;
         window.location.href = url;
     }
 
@@ -91,6 +96,7 @@ export function MemberHomePage() {
     if (!courses.length) {
         return (
             <div className="member-page dark">
+                {isPreview && <PreviewBanner />}
                 <MemberHeader
                     platformName={platformName}
                     studentName={studentName || "Aluno"}
@@ -109,6 +115,7 @@ export function MemberHomePage() {
     if (showGroupSelector) {
         return (
             <div className="member-page dark">
+                {isPreview && <PreviewBanner />}
                 <MemberHeader
                     platformName={platformName}
                     studentName={studentName}
@@ -128,6 +135,7 @@ export function MemberHomePage() {
     if (selectedGroup) {
         return (
             <div className="member-page dark">
+                {isPreview && <PreviewBanner />}
                 <MemberHeader
                     platformName={platformName}
                     studentName={studentName}
@@ -165,6 +173,7 @@ export function MemberHomePage() {
 
     return (
         <div className="member-page dark">
+            {isPreview && <PreviewBanner />}
             <MemberHeader
                 platformName={platformName}
                 studentName={studentName}

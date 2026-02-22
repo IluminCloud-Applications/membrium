@@ -1,27 +1,14 @@
 from flask import Blueprint, jsonify, session
-from functools import wraps
 from datetime import datetime, date
 from models import Student, Promotion, PromotionAnalytics
 from db.database import db
+from .auth_helpers import member_or_preview
 
 member_promotions_bp = Blueprint('member_promotions', __name__)
 
 
-def student_required(f):
-    """Ensures the user is a logged-in student."""
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'student':
-            return jsonify({'error': 'Não autorizado'}), 401
-        student = Student.query.get(session['user_id'])
-        if not student:
-            return jsonify({'error': 'Aluno não encontrado'}), 401
-        return f(student, *args, **kwargs)
-    return decorated
-
-
 @member_promotions_bp.route('/promotions/active', methods=['GET'])
-@student_required
+@member_or_preview
 def get_active_promotions(student):
     """Returns all currently active promotions for the member modal queue."""
     now = datetime.utcnow()
@@ -56,9 +43,12 @@ def get_active_promotions(student):
 
 
 @member_promotions_bp.route('/promotions/<int:promo_id>/view', methods=['POST'])
-@student_required
+@member_or_preview
 def track_promo_view(student, promo_id):
-    """Track a view for a promotion."""
+    """Track a view for a promotion. No-op for admin preview."""
+    if student is None:
+        return jsonify({'success': True})
+
     today = date.today()
     analytics = PromotionAnalytics.query.filter_by(
         promotion_id=promo_id, date=today
@@ -77,9 +67,12 @@ def track_promo_view(student, promo_id):
 
 
 @member_promotions_bp.route('/promotions/<int:promo_id>/click', methods=['POST'])
-@student_required
+@member_or_preview
 def track_promo_click(student, promo_id):
-    """Track a CTA click for a promotion."""
+    """Track a CTA click for a promotion. No-op for admin preview."""
+    if student is None:
+        return jsonify({'success': True})
+
     today = date.today()
     analytics = PromotionAnalytics.query.filter_by(
         promotion_id=promo_id, date=today

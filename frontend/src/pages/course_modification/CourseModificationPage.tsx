@@ -11,6 +11,7 @@ import type {
 } from "@/types/course-modification";
 import { courseModificationService } from "@/services/courseModification";
 import { useCourseModification } from "./useCourseModification";
+import { toast } from "sonner";
 
 export function CourseModificationPage() {
     const { id } = useParams<{ id: string }>();
@@ -91,8 +92,14 @@ export function CourseModificationPage() {
         for (const file of data.attachments) formData.append("documents", file);
 
         try {
-            if (editingLesson) await courseModificationService.updateLesson(editingLesson.id, formData);
-            else if (activeModuleId) await courseModificationService.createLesson(activeModuleId, formData);
+            if (editingLesson) {
+                await courseModificationService.updateLesson(editingLesson.id, formData);
+            } else if (activeModuleId) {
+                const result = await courseModificationService.createLesson(activeModuleId, formData);
+                if (result.transcript_imported) {
+                    toast.success("Transcrição importada automaticamente do YouTube!");
+                }
+            }
             await refetch();
         } catch (err) { console.error("Erro ao salvar aula:", err); }
         setLessonModalOpen(false);
@@ -186,7 +193,7 @@ export function CourseModificationPage() {
 
     return (
         <div className="space-y-6 animate-fade-in">
-            <CourseHeader courseName={course.name} modulesCount={course.modules.length} lessonsCount={totalLessons} />
+            <CourseHeader courseName={course.name} courseId={courseId} modulesCount={course.modules.length} lessonsCount={totalLessons} />
             <CourseTabs
                 modules={course.modules} cover={course.cover} menuItems={course.menuItems}
                 onAddModule={handleAddModule} onEditModule={handleEditModule} onDeleteModule={handleDeleteModule}
