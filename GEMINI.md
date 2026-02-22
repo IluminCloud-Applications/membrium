@@ -15,6 +15,7 @@ Lembre-se de no frontend criar em services/ as funções que serão utilizadas, 
 - SEMPRE lembre-se de limpar o código.
 - LEMBRE-SE de que existia um código antigo feito em HTML + JS e precisa excluir após a reorganização. Caso tenha alguma rota/funcionalidade que não vai utilizar na nova versão apague. E lembre-se de organizar corretamente as pastas para qualquer pessoa conseguir encontrar facilmente as APIs/Rotas daquela página, por isso, a slug da página como folder em routes/.
 - SEMPRE lembre-se de criar a folder no routes/ com o nome da slug da página caso ela não exista, exemplo: backend/routes/dashboard/ para a página dashboard.
+- NÃO ABRA NAVEGADOR (only open browser if user request)
 
 # Organização do código:
 - O projeto é dividido em frontend/ e backend/

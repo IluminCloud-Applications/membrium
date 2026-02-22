@@ -1144,14 +1144,313 @@
     font-size: 1.35rem;
   }
 
-  /* Hide desktop search & avatar on mobile */
-  .member-header-right {
+  /* Hide desktop search, avatar, and logo on mobile */
+  .member-header-right,
+  .member-logo {
     display: none;
+  }
+
+  /* Make header scroll normally on mobile instead of being sticky */
+  .member-header {
+    position: relative;
+    background: transparent;
+  }
+
+  .member-header-scrolled {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-bottom-color: transparent;
   }
 
   /* Space for floating bottom nav */
   .member-main {
     padding-bottom: 80px;
+  }
+}
+
+/* ============================================
+   GROUP SELECTOR — Choose which course group to enter
+   ============================================ */
+.group-selector-overlay {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  min-height: 70vh;
+}
+
+.group-selector-content {
+  width: 100%;
+  max-width: 900px;
+}
+
+.group-selector-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.group-selector-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: oklch(0.95 0 0);
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, oklch(0.95 0 0), oklch(0.7 0 0));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.group-selector-subtitle {
+  font-size: 1rem;
+  color: oklch(0.55 0 0);
+  margin-top: 0.5rem;
+}
+
+.group-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.group-selector-card {
+  position: relative;
+  border: none;
+  background: oklch(0.14 0 0);
+  border-radius: 1rem;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+  transition: all 0.35s ease;
+  box-shadow: 0 4px 16px oklch(0 0 0 / 25%);
+  border: 1px solid oklch(1 0 0 / 5%);
+}
+
+.group-selector-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 48px oklch(0 0 0 / 50%);
+  border-color: oklch(1 0 0 / 12%);
+}
+
+.group-selector-card-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: oklch(0.12 0 0);
+}
+
+.group-selector-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.group-selector-card:hover .group-selector-card-img {
+  transform: scale(1.08);
+}
+
+.group-selector-card-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: oklch(0.3 0 0);
+}
+
+.group-selector-card-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60%;
+  background: linear-gradient(to top, oklch(0.14 0 0), transparent);
+  pointer-events: none;
+}
+
+.group-selector-card-info {
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.group-selector-card-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: oklch(0.95 0 0);
+  letter-spacing: -0.02em;
+}
+
+.group-selector-card-meta {
+  font-size: 0.8rem;
+  color: oklch(0.5 0 0);
+  margin-top: 0.3rem;
+}
+
+@media (max-width: 640px) {
+  .group-selector-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .group-selector-title {
+    font-size: 1.5rem;
+  }
+}
+
+/* ============================================
+   GROUPED VIEW — Single banner + vertical courses
+   ============================================ */
+.grouped-view {
+  position: relative;
+}
+
+.grouped-view-header {
+  padding: 2rem 1.5rem 0.5rem;
+  margin-top: -3rem;
+  position: relative;
+  z-index: 2;
+}
+
+.grouped-view-header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.grouped-view-back-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid oklch(1 0 0 / 12%);
+  background: oklch(1 0 0 / 5%);
+  color: oklch(0.7 0 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.4rem;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.grouped-view-back-btn:hover {
+  background: oklch(1 0 0 / 12%);
+  color: oklch(0.95 0 0);
+}
+
+.grouped-view-title {
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: oklch(0.95 0 0);
+  letter-spacing: -0.02em;
+}
+
+.grouped-view-description {
+  font-size: 0.9rem;
+  color: oklch(0.6 0 0);
+  margin-top: 0.4rem;
+  max-width: 700px;
+}
+
+.grouped-view-courses {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 0 2rem;
+}
+
+/* ---- GROUPED COURSE ROW (Netflix-style) ---- */
+.grouped-course-row {
+  padding: 0;
+}
+
+.grouped-course-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem 0.25rem;
+  gap: 1rem;
+}
+
+.grouped-course-row-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.grouped-course-row-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: oklch(0.9 0 0);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.grouped-course-row-modules {
+  padding: 0.5rem 1.5rem 1rem;
+}
+
+/* Locked course */
+.grouped-course-row-locked {
+  opacity: 0.6;
+}
+
+.grouped-course-locked-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: oklch(1 0 0 / 8%);
+  color: oklch(0.55 0 0);
+  border: 1px solid oklch(1 0 0 / 10%);
+}
+
+.grouped-course-locked-badge i {
+  font-size: 0.65rem;
+}
+
+.grouped-course-locked-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2rem 1.5rem;
+  color: oklch(0.4 0 0);
+  font-size: 0.88rem;
+}
+
+.grouped-course-locked-content i {
+  font-size: 1.4rem;
+}
+
+@media (max-width: 768px) {
+  .grouped-view-title {
+    font-size: 1.35rem;
+  }
+
+  .grouped-view-header {
+    margin-top: -2rem;
+  }
+
+  .grouped-course-row-header {
+    padding: 0.75rem 1rem 0.25rem;
+  }
+
+  .grouped-course-row-modules {
+    padding: 0.5rem 1rem 0.75rem;
+  }
+
+  .grouped-course-row-title {
+    font-size: 1.05rem;
   }
 }
 
@@ -1277,6 +1576,7 @@
   border: 1px solid oklch(1 0 0 / 6%);
   border-radius: 1rem;
   padding: 1.5rem;
+  min-width: 420px;
 }
 
 .member-profile-card-title {

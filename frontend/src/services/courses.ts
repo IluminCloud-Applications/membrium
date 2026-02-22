@@ -106,4 +106,11 @@ export const coursesService = {
         apiClient.request<MutationResult>(`/courses/groups/${id}`, {
             method: "DELETE",
         }),
+
+    /** Reorder courses within a group */
+    reorderGroup: (id: number, courseIds: number[]) =>
+        apiClient.post<{ success: boolean; group: CourseGroupResponse }>(
+            `/courses/groups/${id}/reorder`,
+            { course_ids: courseIds }
+        ),
 };

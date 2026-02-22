@@ -5,6 +5,7 @@ import type {
     MemberProfile,
     MemberProgress,
     MemberModuleLessonsResponse,
+    MemberGroupedResponse,
     SearchResult,
 } from "@/types/member";
 import type { ApiResponse } from "@/types/api";
@@ -13,6 +14,10 @@ export const memberService = {
     /** Get all courses the student is enrolled in */
     getCourses: () =>
         apiClient.get<MemberCourse[]>("/member/courses"),
+
+    /** Get courses organized by groups for the member area */
+    getCoursesGrouped: () =>
+        apiClient.get<MemberGroupedResponse>("/member/courses/grouped"),
 
     /** Get single course detail with lessons */
     getCourseDetail: (courseId: number) =>

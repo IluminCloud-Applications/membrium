@@ -16,7 +16,8 @@ student_lessons = db.Table('student_lessons',
 
 course_group_courses = db.Table('course_group_courses',
     db.Column('group_id', db.Integer, db.ForeignKey('course_group.id'), primary_key=True),
-    db.Column('course_id', db.Integer, db.ForeignKey('course.id'), primary_key=True)
+    db.Column('course_id', db.Integer, db.ForeignKey('course.id'), primary_key=True),
+    db.Column('order', db.Integer, default=0)
 )
 
 showcase_courses = db.Table('showcase_courses',

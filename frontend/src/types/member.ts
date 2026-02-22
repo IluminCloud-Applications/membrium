@@ -27,6 +27,19 @@ export interface MemberCourse {
     coverMobile: string | null;
     menuItems: MemberMenuItem[];
     modules: MemberModule[];
+    hasAccess?: boolean;
+}
+
+export interface MemberCourseGroup {
+    id: number;
+    name: string;
+    principalCourseId: number | null;
+    courses: MemberCourse[];
+}
+
+export interface MemberGroupedResponse {
+    groups: MemberCourseGroup[];
+    ungrouped: MemberCourse[];
 }
 
 export interface MemberMenuItem {
