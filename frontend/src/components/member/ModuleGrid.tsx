@@ -9,13 +9,15 @@ interface ModuleCarouselProps {
     onScrollStateChange?: (canLeft: boolean, canRight: boolean) => void;
 }
 
+const DRAG_THRESHOLD = 10; // px — minimum movement to consider it a drag
+
 export function ModuleGrid({ modules, onModuleClick, externalTrackRef, onScrollStateChange }: ModuleCarouselProps) {
     const internalRef = useRef<HTMLDivElement>(null);
     const trackRef = externalTrackRef || internalRef;
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
-    const dragState = useRef({ startX: 0, scrollLeft: 0, moved: false });
+    const dragState = useRef({ startX: 0, scrollLeft: 0, hasDragged: false, isMouseDown: false });
 
     // Check scroll boundaries
     const updateScrollState = useCallback(() => {
@@ -51,34 +53,53 @@ export function ModuleGrid({ modules, onModuleClick, externalTrackRef, onScrollS
         el.scrollBy({ left: direction === "left" ? -amount : amount, behavior: "smooth" });
     }
 
-    // Drag handlers
-    function handlePointerDown(e: React.PointerEvent) {
+    // --- Desktop drag-to-scroll (mouse events only) ---
+    function handleMouseDown(e: React.MouseEvent) {
+        // Only handle left mouse button
+        if (e.button !== 0) return;
         const el = trackRef.current;
         if (!el) return;
-        setIsDragging(true);
-        dragState.current = { startX: e.clientX, scrollLeft: el.scrollLeft, moved: false };
-        el.setPointerCapture(e.pointerId);
+
+        dragState.current = {
+            startX: e.clientX,
+            scrollLeft: el.scrollLeft,
+            hasDragged: false,
+            isMouseDown: true,
+        };
     }
 
-    function handlePointerMove(e: React.PointerEvent) {
-        if (!isDragging) return;
+    function handleMouseMove(e: React.MouseEvent) {
+        if (!dragState.current.isMouseDown) return;
         const el = trackRef.current;
         if (!el) return;
+
         const dx = e.clientX - dragState.current.startX;
-        if (Math.abs(dx) > 3) dragState.current.moved = true;
+
+        // Only start dragging after passing threshold
+        if (!dragState.current.hasDragged && Math.abs(dx) < DRAG_THRESHOLD) {
+            return; // Not a drag yet, allow normal click behavior
+        }
+
+        // Now it's a drag — prevent text selection and start scrolling
+        e.preventDefault();
+        dragState.current.hasDragged = true;
+        setIsDragging(true);
         el.scrollLeft = dragState.current.scrollLeft - dx;
     }
 
-    function handlePointerUp(e: React.PointerEvent) {
-        setIsDragging(false);
-        trackRef.current?.releasePointerCapture(e.pointerId);
+    function handleMouseUp() {
+        dragState.current.isMouseDown = false;
+        // Small delay to ensure click events check hasDragged before we reset
+        setTimeout(() => {
+            dragState.current.hasDragged = false;
+            setIsDragging(false);
+        }, 0);
     }
 
-    // Prevent click after drag
+    // Handle click — only navigate if it wasn't a drag
     function handleCardClick(moduleId: number) {
-        if (dragState.current.moved) {
-            dragState.current.moved = false;
-            return;
+        if (dragState.current.hasDragged) {
+            return; // Was a drag, don't navigate
         }
         onModuleClick(moduleId);
     }
@@ -107,14 +128,14 @@ export function ModuleGrid({ modules, onModuleClick, externalTrackRef, onScrollS
                 </button>
             )}
 
-            {/* Track */}
+            {/* Track — drag only via mouse (desktop), touch scroll is native */}
             <div
                 ref={trackRef}
                 className={`member-carousel-track ${isDragging ? "is-dragging" : ""}`}
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerLeave={handlePointerUp}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
             >
                 {sorted.map((mod, index) => (
                     <ModuleCard

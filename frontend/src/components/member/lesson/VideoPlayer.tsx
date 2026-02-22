@@ -10,6 +10,7 @@ import {
     VolumeSlider,
     Time,
     useMediaState,
+    useMediaPlayer,
     type MediaPlayerInstance,
 } from "@vidstack/react";
 import "@vidstack/react/player/styles/base.css";
@@ -18,10 +19,19 @@ interface VideoPlayerProps {
     title: string;
     src: string;
     videoType: string;
+    hasNextLesson?: boolean;
+    onNextLesson?: () => void;
     onTimeUpdate?: (currentTime: number, duration: number) => void;
 }
 
-export function VideoPlayer({ title, src, videoType, onTimeUpdate }: VideoPlayerProps) {
+export function VideoPlayer({
+    title,
+    src,
+    videoType,
+    hasNextLesson,
+    onNextLesson,
+    onTimeUpdate,
+}: VideoPlayerProps) {
     const playerRef = useRef<MediaPlayerInstance>(null);
 
     // For YouTube, convert to proper src format
@@ -53,13 +63,40 @@ export function VideoPlayer({ title, src, videoType, onTimeUpdate }: VideoPlayer
                 className="lesson-media-player"
             >
                 <MediaProvider className="lesson-media-provider" />
-                <VideoControls />
+                <ClickToPlay />
+                <VideoControls
+                    hasNextLesson={hasNextLesson}
+                    onNextLesson={onNextLesson}
+                />
             </MediaPlayer>
         </div>
     );
 }
 
-function VideoControls() {
+/** Invisible overlay — click anywhere on the video to toggle play/pause */
+function ClickToPlay() {
+    const player = useMediaPlayer();
+
+    function handleClick() {
+        if (!player) return;
+        if (player.paused) {
+            player.play();
+        } else {
+            player.pause();
+        }
+    }
+
+    return (
+        <div className="lesson-click-to-play" onClick={handleClick} />
+    );
+}
+
+interface VideoControlsProps {
+    hasNextLesson?: boolean;
+    onNextLesson?: () => void;
+}
+
+function VideoControls({ hasNextLesson, onNextLesson }: VideoControlsProps) {
     const paused = useMediaState("paused");
 
     return (
@@ -110,6 +147,17 @@ function VideoControls() {
                     </div>
 
                     <div className="lesson-controls-right">
+                        {/* Next lesson button inside player */}
+                        {hasNextLesson && onNextLesson && (
+                            <button
+                                className="lesson-player-next-btn"
+                                onClick={onNextLesson}
+                            >
+                                <span>Próxima aula</span>
+                                <i className="ri-skip-forward-fill" />
+                            </button>
+                        )}
+
                         <FullscreenButton className="lesson-ctrl-btn">
                             <FullscreenIcon />
                         </FullscreenButton>
@@ -137,12 +185,10 @@ function FullscreenIcon() {
 
 function getVideoSource(src: string, videoType: string): string {
     if (videoType === "youtube") {
-        // Extract YouTube ID from URL or return formatted
         const match = src.match(
             /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/
         );
         if (match) return `youtube/${match[1]}`;
-        // If already in vidstack format or just an ID
         if (src.startsWith("youtube/")) return src;
         return `youtube/${src}`;
     }

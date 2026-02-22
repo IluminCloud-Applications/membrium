@@ -85,6 +85,8 @@ export function LessonPlayerPage() {
                             title={currentLesson.title}
                             src={currentLesson.videoUrl}
                             videoType={currentLesson.videoType}
+                            hasNextLesson={lessons.findIndex((l) => l.id === currentLesson.id) < lessons.length - 1}
+                            onNextLesson={goToNext}
                             onTimeUpdate={handleVideoTime}
                         />
                     )}

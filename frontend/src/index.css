@@ -1540,6 +1540,41 @@
   transform: scale(1.1);
 }
 
+/* Click-to-play overlay — invisible, covers the whole video */
+.lesson-click-to-play {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  cursor: pointer;
+}
+
+/* Next lesson button inside player */
+.lesson-player-next-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: oklch(0.9 0 0);
+  background: oklch(1 0 0 / 10%);
+  border: 1px solid oklch(1 0 0 / 12%);
+  border-radius: 0.4rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.lesson-player-next-btn:hover {
+  background: oklch(1 0 0 / 18%);
+  color: white;
+}
+
+.lesson-player-next-btn i {
+  font-size: 1rem;
+}
+
 /* Controls container */
 .lesson-controls {
   position: absolute;
