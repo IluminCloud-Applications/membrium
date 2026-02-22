@@ -1199,9 +1199,16 @@
   border-color: oklch(1 0 0 / 14%);
 }
 
-.member-showcase-card-img {
+.member-showcase-card-media {
+  position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+
+.member-showcase-card-img {
+  width: 100%;
+  height: 100%;
   display: block;
   transition: transform 0.4s ease;
 }
@@ -1212,13 +1219,46 @@
 
 .member-showcase-card-placeholder {
   width: 100%;
-  aspect-ratio: 16 / 9;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 2.5rem;
   color: oklch(0.3 0 0);
   background: oklch(0.12 0 0);
+}
+
+/* Unlock overlay */
+.member-showcase-card-unlock {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  background: oklch(0 0 0 / 55%);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.member-showcase-card:hover .member-showcase-card-unlock {
+  opacity: 1;
+}
+
+.member-showcase-card-unlock i {
+  font-size: 1.6rem;
+  color: oklch(0.85 0.15 60);
+  filter: drop-shadow(0 0 6px oklch(0.65 0.15 60 / 50%));
+}
+
+.member-showcase-card-unlock span {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: oklch(0.95 0 0);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .member-showcase-card-body {
@@ -2988,12 +3028,12 @@
 .lesson-sidebar-item {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.5rem;
   width: 100%;
-  padding: 0.65rem 0.75rem;
+  padding: 0.35rem 0.6rem;
   border: none;
   background: transparent;
-  border-radius: 0.55rem;
+  border-radius: 0.4rem;
   cursor: pointer;
   text-align: left;
   transition: all 0.15s;
@@ -3010,15 +3050,15 @@
 }
 
 .lesson-sidebar-item-icon {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: oklch(1 0 0 / 6%);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   color: oklch(0.55 0 0);
   font-weight: 600;
   transition: all 0.2s;
@@ -3034,21 +3074,18 @@
   color: oklch(0.6 0.12 150);
 }
 
-.lesson-sidebar-item-info {
-  min-width: 0;
-  flex: 1;
-}
+
+
 
 .lesson-sidebar-item-title {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 500;
   color: oklch(0.7 0 0);
   overflow: hidden;
   text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
 }
 
 .lesson-sidebar-item-active .lesson-sidebar-item-title {
@@ -3058,6 +3095,165 @@
 
 .lesson-sidebar-item-completed .lesson-sidebar-item-title {
   color: oklch(0.55 0 0);
+}
+
+/* ---- Other modules section ---- */
+.lesson-sidebar-modules {
+  border-top: 1px solid oklch(1 0 0 / 6%);
+  padding: 0.5rem;
+}
+
+.lesson-sidebar-modules-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: oklch(0.45 0 0);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.25rem 0.4rem 0.5rem;
+}
+
+.lesson-sidebar-module-item {
+  margin-bottom: 0.15rem;
+}
+
+.lesson-sidebar-module-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border: none;
+  background: transparent;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  font-family: inherit;
+  color: oklch(0.6 0 0);
+  transition: all 0.15s;
+}
+
+.lesson-sidebar-module-header:hover {
+  background: oklch(1 0 0 / 5%);
+  color: oklch(0.8 0 0);
+}
+
+.lesson-sidebar-module-header i {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.lesson-sidebar-module-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.lesson-sidebar-module-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lesson-sidebar-module-count {
+  font-size: 0.65rem;
+  color: oklch(0.4 0 0);
+  flex-shrink: 0;
+}
+
+.lesson-sidebar-module-lessons {
+  padding-left: 0.5rem;
+  border-left: 2px solid oklch(1 0 0 / 6%);
+  margin-left: 0.8rem;
+  margin-top: 0.15rem;
+  margin-bottom: 0.25rem;
+}
+
+/* ---- Showcase banners in sidebar ---- */
+.lesson-sidebar-showcases {
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-top: 1px solid oklch(1 0 0 / 6%);
+}
+
+.lesson-sidebar-showcase {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  border-radius: 0.6rem;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid oklch(1 0 0 / 8%);
+  background: oklch(0.12 0 0);
+  padding: 0;
+  font-family: inherit;
+  transition: all 0.3s ease;
+}
+
+.lesson-sidebar-showcase:hover {
+  border-color: oklch(1 0 0 / 16%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px oklch(0 0 0 / 30%);
+}
+
+.lesson-sidebar-showcase-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  transition: transform 0.4s ease;
+}
+
+.lesson-sidebar-showcase:hover .lesson-sidebar-showcase-img {
+  transform: scale(1.05);
+}
+
+.lesson-sidebar-showcase-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: oklch(0.3 0 0);
+}
+
+.lesson-sidebar-showcase-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: linear-gradient(to top, oklch(0 0 0 / 70%) 0%, oklch(0 0 0 / 30%) 50%, transparent 100%);
+  transition: background 0.3s;
+}
+
+.lesson-sidebar-showcase:hover .lesson-sidebar-showcase-overlay {
+  background: oklch(0 0 0 / 50%);
+}
+
+.lesson-sidebar-showcase-overlay i {
+  font-size: 1.1rem;
+  color: oklch(0.85 0.15 60);
+  filter: drop-shadow(0 0 4px oklch(0.65 0.15 60 / 50%));
+}
+
+.lesson-sidebar-showcase-overlay span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: oklch(0.95 0 0);
+  text-shadow: 0 1px 4px oklch(0 0 0 / 40%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 70%;
 }
 
 /* ---- ERROR STATE ---- */

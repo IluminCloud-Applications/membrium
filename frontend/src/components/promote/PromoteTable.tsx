@@ -45,8 +45,8 @@ export function PromoteTable({
                         <TableHead className="font-semibold px-4">Status</TableHead>
                         <TableHead className="font-semibold px-4 text-center">Views</TableHead>
                         <TableHead className="font-semibold px-4 text-center">Cliques</TableHead>
-                        <TableHead className="font-semibold px-4 text-center">CTA</TableHead>
                         <TableHead className="font-semibold px-4 text-center">Conversão</TableHead>
+                        <TableHead className="font-semibold px-4 text-center">CTA</TableHead>
                         <TableHead className="font-semibold text-right pr-6 px-4">
                             Ações
                         </TableHead>
@@ -156,6 +156,16 @@ function PromoteRow({ item, onEdit, onDelete, onToggleActive }: PromoteRowProps)
                 {item.clicks.toLocaleString("pt-BR")}
             </TableCell>
 
+            {/* Conversion Rate */}
+            <TableCell className="text-center px-4">
+                <Badge
+                    variant="secondary"
+                    className="text-[11px] font-medium bg-emerald-500/10 text-emerald-600"
+                >
+                    {getConversionRate(item.views, item.clicks)}%
+                </Badge>
+            </TableCell>
+
             {/* CTA */}
             <TableCell className="text-center px-4">
                 {item.hasCta ? (
@@ -169,16 +179,6 @@ function PromoteRow({ item, onEdit, onDelete, onToggleActive }: PromoteRowProps)
                 ) : (
                     <span className="text-xs text-muted-foreground">—</span>
                 )}
-            </TableCell>
-
-            {/* Conversion Rate */}
-            <TableCell className="text-center px-4">
-                <Badge
-                    variant="secondary"
-                    className="text-[11px] font-medium bg-emerald-500/10 text-emerald-600"
-                >
-                    {getConversionRate(item.views, item.clicks)}%
-                </Badge>
             </TableCell>
 
             {/* Actions */}

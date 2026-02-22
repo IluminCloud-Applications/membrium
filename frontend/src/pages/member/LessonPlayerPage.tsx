@@ -1,4 +1,6 @@
+import { useState, useEffect } from "react";
 import { useLessonPage } from "@/hooks/useLessonPage";
+import { memberService } from "@/services/member";
 import { MemberHeader } from "@/components/member";
 import { ChatBubble } from "@/components/member/chatbot";
 import {
@@ -8,12 +10,15 @@ import {
     LessonNavBar,
     LessonCTA,
 } from "@/components/member/lesson";
+import type { MemberShowcaseItem } from "@/types/member";
 
 export function LessonPlayerPage() {
     const {
         loading,
         error,
         courseName,
+        courseId,
+        moduleId,
         moduleName,
         menuItems,
         lessons,
@@ -25,12 +30,19 @@ export function LessonPlayerPage() {
         studentName,
         platformName,
         initialVideoTime,
+        courseModules,
         selectLesson,
         goToPrevious,
         goToNext,
         toggleComplete,
         handleVideoTime,
     } = useLessonPage();
+
+    const [showcases, setShowcases] = useState<MemberShowcaseItem[]>([]);
+
+    useEffect(() => {
+        memberService.getShowcases().then(setShowcases).catch(() => { });
+    }, []);
 
     if (loading) return <LessonSkeleton />;
 
@@ -130,6 +142,10 @@ export function LessonPlayerPage() {
                     totalLessons={totalLessons}
                     completedLessons={completedLessons}
                     onSelectLesson={selectLesson}
+                    showcases={showcases}
+                    courseModules={courseModules}
+                    courseId={courseId}
+                    currentModuleId={moduleId}
                 />
             </main>
 

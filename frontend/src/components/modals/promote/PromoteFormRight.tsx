@@ -1,5 +1,5 @@
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import { PromoteCtaSection } from "./PromoteCtaSection";
 import type { PromoteFormData } from "./PromoteModal";
 
@@ -9,20 +9,47 @@ interface PromoteFormRightProps {
     isCtaDisabled?: boolean;
 }
 
-/** Get today's date as YYYY-MM-DD */
-function getTodayISO(): string {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, "0");
-    const d = String(now.getDate()).padStart(2, "0");
+/** Parse YYYY-MM-DD string to Date (noon to avoid timezone issues) */
+function isoToDate(iso: string): Date | undefined {
+    if (!iso) return undefined;
+    const [y, m, d] = iso.split("-").map(Number);
+    return new Date(y, m - 1, d, 12, 0, 0);
+}
+
+/** Convert a Date to YYYY-MM-DD string */
+function dateToIso(date: Date | undefined): string {
+    if (!date) return "";
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
     return `${y}-${m}-${d}`;
 }
 
-export function PromoteFormRight({ form, onChange, isCtaDisabled }: PromoteFormRightProps) {
-    const today = getTodayISO();
+/** Get start of today (midnight) */
+function getToday(): Date {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
 
-    // End date minimum: whichever is later — today or startDate
-    const endDateMin = form.startDate && form.startDate >= today ? form.startDate : today;
+export function PromoteFormRight({ form, onChange, isCtaDisabled }: PromoteFormRightProps) {
+    const today = getToday();
+    const startDate = isoToDate(form.startDate);
+    const endDate = isoToDate(form.endDate);
+
+    // End date minimum: the later of today or startDate
+    const endDateMin = startDate && startDate > today ? startDate : today;
+
+    function handleStartDateChange(date: Date | undefined) {
+        onChange("startDate", dateToIso(date));
+        // If endDate is before new startDate, reset it
+        if (date && endDate && date > endDate) {
+            onChange("endDate", "");
+        }
+    }
+
+    function handleEndDateChange(date: Date | undefined) {
+        onChange("endDate", dateToIso(date));
+    }
 
     return (
         <div className="space-y-5">
@@ -38,38 +65,28 @@ export function PromoteFormRight({ form, onChange, isCtaDisabled }: PromoteFormR
                         <Label htmlFor="promote-start-date">
                             Data Inicial <span className="text-destructive">*</span>
                         </Label>
-                        <div className="relative">
-                            <Input
-                                id="promote-start-date"
-                                type="date"
-                                min={today}
-                                value={form.startDate}
-                                onChange={(e) => {
-                                    onChange("startDate", e.target.value);
-                                    // If endDate is before new startDate, reset it
-                                    if (form.endDate && e.target.value > form.endDate) {
-                                        onChange("endDate", "");
-                                    }
-                                }}
-                                required
-                            />
-                        </div>
+                        <DatePicker
+                            id="promote-start-date"
+                            value={startDate}
+                            onChange={handleStartDateChange}
+                            minDate={today}
+                            placeholder="Selecione a data inicial"
+                            required
+                        />
                     </div>
 
                     <div className="space-y-2">
                         <Label htmlFor="promote-end-date">
                             Data Final <span className="text-destructive">*</span>
                         </Label>
-                        <div className="relative">
-                            <Input
-                                id="promote-end-date"
-                                type="date"
-                                min={endDateMin}
-                                value={form.endDate}
-                                onChange={(e) => onChange("endDate", e.target.value)}
-                                required
-                            />
-                        </div>
+                        <DatePicker
+                            id="promote-end-date"
+                            value={endDate}
+                            onChange={handleEndDateChange}
+                            minDate={endDateMin}
+                            placeholder="Selecione a data final"
+                            required
+                        />
                     </div>
                 </div>
 

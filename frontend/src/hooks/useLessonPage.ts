@@ -6,6 +6,7 @@ import type {
     MemberLessonDetail,
     MemberModuleLessonsResponse,
     MemberMenuItem,
+    MemberModuleDetail,
 } from "@/types/member";
 
 interface UseLessonPageReturn {
@@ -13,6 +14,7 @@ interface UseLessonPageReturn {
     error: string | null;
     courseName: string;
     courseId: number;
+    moduleId: number;
     moduleName: string;
     menuItems: MemberMenuItem[];
     lessons: MemberLessonDetail[];
@@ -24,6 +26,7 @@ interface UseLessonPageReturn {
     studentName: string;
     platformName: string;
     initialVideoTime: number;
+    courseModules: MemberModuleDetail[];
     selectLesson: (lessonId: number) => void;
     goToPrevious: () => void;
     goToNext: () => void;
@@ -52,6 +55,7 @@ export function useLessonPage(): UseLessonPageReturn {
     const [studentName, setStudentName] = useState("");
     const [platformName, setPlatformName] = useState("Área de Membros");
     const [initialVideoTime, setInitialVideoTime] = useState(0);
+    const [courseModules, setCourseModules] = useState<MemberModuleDetail[]>([]);
     const lastSaveRef = useRef(0);
     const currentVideoTimeRef = useRef(0);
 
@@ -65,13 +69,17 @@ export function useLessonPage(): UseLessonPageReturn {
         setCTAVisible(false);
         setCTATriggered(false);
         try {
-            const [moduleData, profile] = await Promise.all([
+            const [moduleData, profile, courseDetail] = await Promise.all([
                 memberService.getModuleLessons(courseId, moduleId),
                 memberService.getProfile(),
+                memberService.getCourseDetail(courseId).catch(() => null),
             ]);
             setData(moduleData);
             setStudentName(profile.name);
             setPlatformName(profile.platformName);
+            if (courseDetail?.modules) {
+                setCourseModules(courseDetail.modules);
+            }
 
             // Check for lesson query param to select specific lesson
             const lessonParam = searchParams.get("lesson");
@@ -203,6 +211,7 @@ export function useLessonPage(): UseLessonPageReturn {
         error,
         courseName: data?.course.name ?? "",
         courseId,
+        moduleId,
         moduleName: data?.module.name ?? "",
         menuItems: data?.course.menuItems ?? [],
         lessons: data?.lessons ?? [],
@@ -214,6 +223,7 @@ export function useLessonPage(): UseLessonPageReturn {
         studentName,
         platformName,
         initialVideoTime,
+        courseModules,
         selectLesson,
         goToPrevious,
         goToNext,
