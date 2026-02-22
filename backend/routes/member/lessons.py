@@ -78,7 +78,6 @@ def get_module_lessons(student, course_id, module_id):
         'course': {
             'id': course.id,
             'name': course.name,
-            'theme': course.theme,
             'menuItems': course.menu_items or [],
         },
         'module': {

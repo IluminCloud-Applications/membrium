@@ -1,12 +1,14 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import type { PromoteMediaType } from "@/types/promote";
 
 interface PromoteCtaSectionProps {
     hasCta: boolean;
     ctaText: string;
     ctaUrl: string;
     ctaDelay: number;
+    mediaType?: PromoteMediaType;
     isDisabled?: boolean;
     onToggleCta: (value: boolean) => void;
     onCtaTextChange: (value: string) => void;
@@ -19,12 +21,16 @@ export function PromoteCtaSection({
     ctaText,
     ctaUrl,
     ctaDelay,
+    mediaType,
     isDisabled,
     onToggleCta,
     onCtaTextChange,
     onCtaUrlChange,
     onCtaDelayChange,
 }: PromoteCtaSectionProps) {
+    // For image promotions, CTA appears instantly — no need for delay
+    const showDelay = mediaType !== "image";
+
     return (
         <div className="space-y-4">
             <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -80,20 +86,22 @@ export function PromoteCtaSection({
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="promote-cta-delay">Delay do Botão (segundos)</Label>
-                        <Input
-                            id="promote-cta-delay"
-                            type="number"
-                            min={0}
-                            value={ctaDelay}
-                            onChange={(e) => onCtaDelayChange(Number(e.target.value))}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                            Se 0, o botão será exibido imediatamente. Caso contrário, aparecerá
-                            após o tempo especificado.
-                        </p>
-                    </div>
+                    {showDelay && (
+                        <div className="space-y-2">
+                            <Label htmlFor="promote-cta-delay">Delay do Botão (segundos)</Label>
+                            <Input
+                                id="promote-cta-delay"
+                                type="number"
+                                min={0}
+                                value={ctaDelay}
+                                onChange={(e) => onCtaDelayChange(Number(e.target.value))}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Se 0, o botão será exibido imediatamente. Caso contrário, aparecerá
+                                após o tempo especificado.
+                            </p>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

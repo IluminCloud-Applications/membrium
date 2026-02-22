@@ -9,48 +9,20 @@ interface PromoteFormRightProps {
     isCtaDisabled?: boolean;
 }
 
-/** Convert ISO yyyy-mm-dd → dd/mm/yyyy for display */
-function isoToDisplay(iso: string): string {
-    if (!iso) return "";
-    const [y, m, d] = iso.split("-");
-    return `${d}/${m}/${y}`;
-}
-
-/** Convert dd/mm/yyyy → ISO yyyy-mm-dd for storage */
-function displayToIso(display: string): string {
-    const clean = display.replace(/\D/g, "");
-    if (clean.length < 8) return "";
-    const d = clean.slice(0, 2);
-    const m = clean.slice(2, 4);
-    const y = clean.slice(4, 8);
+/** Get today's date as YYYY-MM-DD */
+function getTodayISO(): string {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
     return `${y}-${m}-${d}`;
 }
 
-/** Auto-format as user types: dd/mm/yyyy */
-function formatDateInput(raw: string): string {
-    const digits = raw.replace(/\D/g, "").slice(0, 8);
-    if (digits.length <= 2) return digits;
-    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-}
-
 export function PromoteFormRight({ form, onChange, isCtaDisabled }: PromoteFormRightProps) {
-    function handleDateChange(field: "startDate" | "endDate", rawValue: string) {
-        const formatted = formatDateInput(rawValue);
-        // Store as ISO when we have a complete date (dd/mm/yyyy = 10 chars)
-        if (formatted.length === 10) {
-            onChange(field, displayToIso(formatted));
-        } else {
-            // Store raw during typing so we can convert back
-            onChange(field, formatted.length > 0 ? `__raw__${formatted}` : "");
-        }
-    }
+    const today = getTodayISO();
 
-    function getDisplayValue(isoOrRaw: string): string {
-        if (!isoOrRaw) return "";
-        if (isoOrRaw.startsWith("__raw__")) return isoOrRaw.replace("__raw__", "");
-        return isoToDisplay(isoOrRaw);
-    }
+    // End date minimum: whichever is later — today or startDate
+    const endDateMin = form.startDate && form.startDate >= today ? form.startDate : today;
 
     return (
         <div className="space-y-5">
@@ -67,16 +39,18 @@ export function PromoteFormRight({ form, onChange, isCtaDisabled }: PromoteFormR
                             Data Inicial <span className="text-destructive">*</span>
                         </Label>
                         <div className="relative">
-                            <i className="ri-calendar-line absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm" />
                             <Input
                                 id="promote-start-date"
-                                type="text"
-                                inputMode="numeric"
-                                placeholder="dd/mm/aaaa"
-                                maxLength={10}
-                                value={getDisplayValue(form.startDate)}
-                                onChange={(e) => handleDateChange("startDate", e.target.value)}
-                                className="pl-9"
+                                type="date"
+                                min={today}
+                                value={form.startDate}
+                                onChange={(e) => {
+                                    onChange("startDate", e.target.value);
+                                    // If endDate is before new startDate, reset it
+                                    if (form.endDate && e.target.value > form.endDate) {
+                                        onChange("endDate", "");
+                                    }
+                                }}
                                 required
                             />
                         </div>
@@ -87,16 +61,12 @@ export function PromoteFormRight({ form, onChange, isCtaDisabled }: PromoteFormR
                             Data Final <span className="text-destructive">*</span>
                         </Label>
                         <div className="relative">
-                            <i className="ri-calendar-line absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm" />
                             <Input
                                 id="promote-end-date"
-                                type="text"
-                                inputMode="numeric"
-                                placeholder="dd/mm/aaaa"
-                                maxLength={10}
-                                value={getDisplayValue(form.endDate)}
-                                onChange={(e) => handleDateChange("endDate", e.target.value)}
-                                className="pl-9"
+                                type="date"
+                                min={endDateMin}
+                                value={form.endDate}
+                                onChange={(e) => onChange("endDate", e.target.value)}
                                 required
                             />
                         </div>
@@ -104,7 +74,7 @@ export function PromoteFormRight({ form, onChange, isCtaDisabled }: PromoteFormR
                 </div>
 
                 <p className="text-xs text-muted-foreground">
-                    A promoção será exibida da data inicial até o dia anterior à data final.
+                    A promoção será exibida da data inicial até a data final.
                 </p>
             </div>
 
@@ -114,6 +84,7 @@ export function PromoteFormRight({ form, onChange, isCtaDisabled }: PromoteFormR
                 ctaText={form.ctaText}
                 ctaUrl={form.ctaUrl}
                 ctaDelay={form.ctaDelay}
+                mediaType={form.mediaType}
                 isDisabled={isCtaDisabled}
                 onToggleCta={(val: boolean) => onChange("hasCta", val)}
                 onCtaTextChange={(val: string) => onChange("ctaText", val)}

@@ -48,7 +48,6 @@ class Course(db.Model):
     category = db.Column(db.String(20), default='principal')  # 'principal', 'order_bump', 'upsell', 'bonus'
     is_published = db.Column(db.Boolean, default=True)
     module_format = db.Column(db.String(20), default='standard')  # 'standard' or 'netflix'
-    theme = db.Column(db.String(20), default='dark')  # dark mode only
     cover_desktop = db.Column(db.String(255))  # filename for desktop cover
     cover_mobile = db.Column(db.String(255))   # filename for mobile cover
     menu_items = db.Column(db.JSON, default=list)  # [{name, url, icon, order}]

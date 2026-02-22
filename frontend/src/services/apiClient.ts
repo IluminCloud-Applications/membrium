@@ -13,18 +13,20 @@ class ApiClient {
     ): Promise<T> {
         const url = `${this.baseUrl}${endpoint}`;
 
-        // Only set default JSON Content-Type if no custom headers are provided
-        const hasCustomHeaders = options.headers !== undefined;
-        const defaultHeaders: Record<string, string> = hasCustomHeaders
+        const customHeaders = options.headers as Record<string, string> | undefined;
+        const isEmptyHeaders = customHeaders && Object.keys(customHeaders).length === 0;
+
+        // If headers is an empty object {}, it means "don't set any default headers" (e.g., FormData)
+        // If headers has values, spread them. If no headers provided, use default JSON Content-Type.
+        const finalHeaders: Record<string, string> = isEmptyHeaders
             ? {}
-            : { "Content-Type": "application/json" };
+            : customHeaders
+                ? { ...customHeaders }
+                : { "Content-Type": "application/json" };
 
         const config: RequestInit = {
             ...options,
-            headers: {
-                ...defaultHeaders,
-                ...(hasCustomHeaders ? {} : (options.headers as Record<string, string> || {})),
-            },
+            headers: finalHeaders,
         };
 
         const response = await fetch(url, config);
@@ -54,6 +56,13 @@ class ApiClient {
     async put<T>(endpoint: string, body: unknown): Promise<T> {
         return this.request<T>(endpoint, {
             method: "PUT",
+            body: JSON.stringify(body),
+        });
+    }
+
+    async patch<T>(endpoint: string, body: unknown): Promise<T> {
+        return this.request<T>(endpoint, {
+            method: "PATCH",
             body: JSON.stringify(body),
         });
     }

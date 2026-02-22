@@ -7,6 +7,8 @@ import type {
     MemberModuleLessonsResponse,
     MemberGroupedResponse,
     SearchResult,
+    MemberShowcaseItem,
+    MemberActivePromotion,
 } from "@/types/member";
 import type { ApiResponse } from "@/types/api";
 
@@ -58,5 +60,33 @@ export const memberService = {
     /** Search content */
     search: (query: string) =>
         apiClient.get<SearchResult[]>(`/member/search?q=${encodeURIComponent(query)}`),
+
+    /* ======= SHOWCASE (Vitrine) ======= */
+
+    /** Get active showcases for the member */
+    getShowcases: () =>
+        apiClient.get<MemberShowcaseItem[]>("/member/showcase"),
+
+    /** Track showcase view */
+    trackShowcaseView: (showcaseId: number) =>
+        apiClient.post<ApiResponse>(`/member/showcase/${showcaseId}/view`, {}),
+
+    /** Track showcase click */
+    trackShowcaseClick: (showcaseId: number) =>
+        apiClient.post<ApiResponse>(`/member/showcase/${showcaseId}/click`, {}),
+
+    /* ======= PROMOTION (Promoção) ======= */
+
+    /** Get all currently active promotions */
+    getActivePromotions: () =>
+        apiClient.get<{ promotions: MemberActivePromotion[] }>("/member/promotions/active"),
+
+    /** Track promotion view */
+    trackPromotionView: (promoId: number) =>
+        apiClient.post<ApiResponse>(`/member/promotions/${promoId}/view`, {}),
+
+    /** Track promotion CTA click */
+    trackPromotionClick: (promoId: number) =>
+        apiClient.post<ApiResponse>(`/member/promotions/${promoId}/click`, {}),
 };
 

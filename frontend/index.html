@@ -1,7 +1,14 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="dark">
 
 <head>
+  <script>
+    (function () {
+      var theme = localStorage.getItem('membrium-theme') || 'dark';
+      if (theme === 'dark') document.documentElement.classList.add('dark');
+      else document.documentElement.classList.remove('dark');
+    })();
+  </script>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/webp" href="/favicon.webp" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />

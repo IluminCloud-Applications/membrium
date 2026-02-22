@@ -1,4 +1,5 @@
 import type { MemberCourseGroup } from "@/types/member";
+import { LazyImage } from "@/components/ui/LazyImage";
 
 interface GroupSelectorModalProps {
     groups: MemberCourseGroup[];
@@ -34,16 +35,20 @@ export function GroupSelectorModal({ groups, onSelect, platformName }: GroupSele
                             >
                                 <div className="group-selector-card-image">
                                     {banner ? (
-                                        <img
+                                        <LazyImage
                                             src={`/static/uploads/${banner}`}
                                             alt={group.name}
                                             className="group-selector-card-img"
+                                            rootMargin="200px"
+                                            fallbackIcon="ri-stack-line"
                                         />
                                     ) : image ? (
-                                        <img
+                                        <LazyImage
                                             src={image}
                                             alt={group.name}
                                             className="group-selector-card-img"
+                                            rootMargin="200px"
+                                            fallbackIcon="ri-stack-line"
                                         />
                                     ) : (
                                         <div className="group-selector-card-placeholder">

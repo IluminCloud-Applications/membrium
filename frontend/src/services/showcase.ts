@@ -72,13 +72,9 @@ export const showcaseService = {
 
     /** Toggle showcase item status */
     toggleStatus: (id: number, status: "active" | "inactive") =>
-        apiClient.request<{ success: boolean; status: string }>(
+        apiClient.patch<{ success: boolean; status: string }>(
             `/showcase/items/${id}/status`,
-            {
-                method: "PATCH",
-                body: JSON.stringify({ status }),
-                headers: { "Content-Type": "application/json" },
-            }
+            { status }
         ),
 
     /** Delete a showcase item */

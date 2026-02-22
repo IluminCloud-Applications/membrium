@@ -22,7 +22,6 @@ export interface MemberCourse {
     image: string | null;
     category: string;
     moduleFormat: string;
-    theme: string;
     coverDesktop: string | null;
     coverMobile: string | null;
     menuItems: MemberMenuItem[];
@@ -79,7 +78,6 @@ export interface MemberCourseDetail {
     image: string | null;
     category: string;
     moduleFormat: string;
-    theme: string;
     coverDesktop: string | null;
     coverMobile: string | null;
     menuItems: MemberMenuItem[];
@@ -147,7 +145,6 @@ export interface MemberModuleLessonsResponse {
     course: {
         id: number;
         name: string;
-        theme: string;
         menuItems: MemberMenuItem[];
     };
     module: {
@@ -160,3 +157,33 @@ export interface MemberModuleLessonsResponse {
     completedLessons: number;
 }
 
+/* ============================================
+   SHOWCASE (VITRINE) — Member area
+   ============================================ */
+
+export interface MemberShowcaseItem {
+    id: number;
+    title: string;
+    description: string;
+    imageUrl: string;
+    url: string;
+    courses: { id: number; name: string }[];
+}
+
+/* ============================================
+   PROMOTION (PROMOÇÃO) — Member modal
+   ============================================ */
+
+export interface MemberActivePromotion {
+    id: number;
+    title: string;
+    description: string;
+    mediaType: "image" | "video";
+    mediaUrl: string;
+    videoSource: string | null;
+    hasCta: boolean;
+    ctaText: string;
+    ctaUrl: string;
+    ctaDelay: number;
+    hideVideoControls: boolean;
+}

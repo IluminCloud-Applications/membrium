@@ -1,3 +1,5 @@
+import { LazyImage } from "@/components/ui/LazyImage";
+
 interface CourseBannerProps {
     coverDesktop: string | null;
     coverMobile: string | null;
@@ -14,18 +16,22 @@ export function CourseBanner({ coverDesktop, coverMobile, courseName }: CourseBa
         <div className="member-banner">
             {/* Desktop Banner */}
             {hasDesktop && (
-                <img
+                <LazyImage
                     src={`/static/uploads/${coverDesktop}`}
                     alt={`Banner de ${courseName}`}
                     className="member-banner-desktop"
+                    rootMargin="100px"
+                    fallbackIcon="ri-image-line"
                 />
             )}
             {/* Mobile Banner */}
             {hasMobile && (
-                <img
+                <LazyImage
                     src={`/static/uploads/${coverMobile}`}
                     alt={`Banner de ${courseName}`}
                     className="member-banner-mobile"
+                    rootMargin="100px"
+                    fallbackIcon="ri-image-line"
                 />
             )}
             {/* Gradient overlay */}

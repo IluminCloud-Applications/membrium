@@ -1,4 +1,5 @@
 import type { MemberModule } from "@/types/member";
+import { LazyImage } from "@/components/ui/LazyImage";
 
 interface ModuleCardProps {
     module: MemberModule;
@@ -29,12 +30,13 @@ export function ModuleCard({ module, index, onClick }: ModuleCardProps) {
         >
             <div className="member-module-image-wrap">
                 {module.image ? (
-                    <img
+                    <LazyImage
                         src={`/static/uploads/${module.image}`}
                         alt={module.name}
                         className="member-module-image"
-                        loading="lazy"
-                        draggable="false"
+                        draggable={false}
+                        rootMargin="300px"
+                        fallbackIcon="ri-folder-video-line"
                     />
                 ) : (
                     <div className="member-module-placeholder">

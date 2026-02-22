@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { memberService } from "@/services/member";
-import { MemberHeader, CourseSection, GroupSelectorModal, GroupedCourseView } from "@/components/member";
+import { MemberHeader, CourseSection, GroupSelectorModal, GroupedCourseView, ShowcaseSection } from "@/components/member";
+import { PromotionQueue } from "@/components/member/promotion";
 import { ChatBubble } from "@/components/member/chatbot";
 import { getContinueWatching } from "@/utils/continueWatching";
-import type { MemberCourse, MemberCourseGroup, MemberMenuItem } from "@/types/member";
+import type { MemberCourse, MemberCourseGroup, MemberMenuItem, MemberShowcaseItem, MemberActivePromotion } from "@/types/member";
 
 export function MemberHomePage() {
     const [courses, setCourses] = useState<MemberCourse[]>([]);
@@ -13,6 +14,8 @@ export function MemberHomePage() {
     const [loading, setLoading] = useState(true);
     const [studentName, setStudentName] = useState("");
     const [platformName, setPlatformName] = useState("Área de Membros");
+    const [showcases, setShowcases] = useState<MemberShowcaseItem[]>([]);
+    const [promotions, setPromotions] = useState<MemberActivePromotion[]>([]);
 
     useEffect(() => {
         loadData();
@@ -20,22 +23,24 @@ export function MemberHomePage() {
 
     async function loadData() {
         try {
-            const [groupedData, profile] = await Promise.all([
+            const [groupedData, profile, showcaseData, promoData] = await Promise.all([
                 memberService.getCoursesGrouped(),
                 memberService.getProfile(),
+                memberService.getShowcases().catch(() => []),
+                memberService.getActivePromotions().catch(() => ({ promotions: [] })),
             ]);
 
             setGroups(groupedData.groups);
             setUngrouped(groupedData.ungrouped);
             setStudentName(profile.name);
             setPlatformName(profile.platformName);
+            setShowcases(showcaseData);
+            setPromotions(promoData.promotions);
 
-            // Build flat course list for fallback/header
             const allCourses = [
                 ...groupedData.groups.flatMap((g) => g.courses),
                 ...groupedData.ungrouped,
             ];
-            // Dedup by ID
             const seen = new Set<number>();
             const deduped = allCourses.filter((c) => {
                 if (seen.has(c.id)) return false;
@@ -44,7 +49,6 @@ export function MemberHomePage() {
             });
             setCourses(deduped);
 
-            // Auto-select if only 1 group and no ungrouped
             if (groupedData.groups.length === 1 && groupedData.ungrouped.length === 0) {
                 setSelectedGroupId(groupedData.groups[0].id);
             }
@@ -55,7 +59,6 @@ export function MemberHomePage() {
         }
     }
 
-    // Aggregate all menu items from courses (dedup by name)
     const allMenuItems = courses.reduce<MemberMenuItem[]>((acc, course) => {
         if (course.menuItems) {
             course.menuItems.forEach((item) => {
@@ -69,17 +72,11 @@ export function MemberHomePage() {
     const hasGroups = groups.length > 0;
     const showGroupSelector = hasGroups && !selectedGroupId && groups.length > 1;
 
-    // Determine theme from selected group or primary course
-    const activeTheme = selectedGroup
-        ? selectedGroup.courses.find((c) => c.id === selectedGroup.principalCourseId)?.theme
-        : courses.find((c) => c.category === "principal")?.theme;
-
     function handleModuleClick(courseId: number, moduleId: number) {
         const course = courses.find((c) => c.id === courseId);
         const mod = course?.modules.find((m) => m.id === moduleId);
         if (!mod || mod.totalLessons === 0) return;
 
-        // Check for saved continue watching position
         const saved = getContinueWatching(courseId, moduleId);
         const url = saved
             ? `/member/${courseId}/${moduleId}?lesson=${saved.lessonId}`
@@ -93,7 +90,7 @@ export function MemberHomePage() {
 
     if (!courses.length) {
         return (
-            <div className="member-page">
+            <div className="member-page dark">
                 <MemberHeader
                     platformName={platformName}
                     studentName={studentName || "Aluno"}
@@ -109,10 +106,9 @@ export function MemberHomePage() {
         );
     }
 
-    // --- GROUP SELECTOR: multiple groups, none selected ---
     if (showGroupSelector) {
         return (
-            <div className={`member-page ${activeTheme === "dark" ? "dark" : ""}`}>
+            <div className="member-page dark">
                 <MemberHeader
                     platformName={platformName}
                     studentName={studentName}
@@ -123,15 +119,15 @@ export function MemberHomePage() {
                     onSelect={setSelectedGroupId}
                     platformName={platformName}
                 />
+                {promotions.length > 0 && <PromotionQueue promotions={promotions} />}
                 <ChatBubble />
             </div>
         );
     }
 
-    // --- GROUPED VIEW: 1 group selected or auto-selected ---
     if (selectedGroup) {
         return (
-            <div className={`member-page ${activeTheme === "dark" ? "dark" : ""}`}>
+            <div className="member-page dark">
                 <MemberHeader
                     platformName={platformName}
                     studentName={studentName}
@@ -145,7 +141,6 @@ export function MemberHomePage() {
                         showBack={groups.length > 1}
                     />
 
-                    {/* Show ungrouped courses below */}
                     {ungrouped.map((course) => (
                         <CourseSection
                             key={course.id}
@@ -153,21 +148,23 @@ export function MemberHomePage() {
                             onModuleClick={handleModuleClick}
                         />
                     ))}
+
+                    <ShowcaseSection showcases={showcases} />
                 </main>
                 <footer className="member-footer">
                     <p>{platformName} · Todos os direitos reservados</p>
                 </footer>
+                {promotions.length > 0 && <PromotionQueue promotions={promotions} />}
                 <ChatBubble />
             </div>
         );
     }
 
-    // --- NO GROUPS: Original behavior (all courses individually) ---
     const primaryCourse = courses.find((c) => c.category === "principal");
     const secondaryCourses = courses.filter((c) => c.category !== "principal");
 
     return (
-        <div className={`member-page ${primaryCourse?.theme === "dark" ? "dark" : ""}`}>
+        <div className="member-page dark">
             <MemberHeader
                 platformName={platformName}
                 studentName={studentName}
@@ -190,11 +187,14 @@ export function MemberHomePage() {
                         onModuleClick={handleModuleClick}
                     />
                 ))}
+
+                <ShowcaseSection showcases={showcases} />
             </main>
 
             <footer className="member-footer">
                 <p>{platformName} · Todos os direitos reservados</p>
             </footer>
+            {promotions.length > 0 && <PromotionQueue promotions={promotions} />}
             <ChatBubble />
         </div>
     );

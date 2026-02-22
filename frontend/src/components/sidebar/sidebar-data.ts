@@ -38,7 +38,7 @@ export const sidebarNavGroups: NavGroup[] = [
         ],
     },
     {
-        label: "Conteúdo",
+        label: "Recursos",
         items: [
             {
                 title: "Vitrine",
