@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from flask_sqlalchemy import SQLAlchemy
 
 # Initialize SQLAlchemy
@@ -11,6 +12,11 @@ def init_db(app):
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(24))
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    # Session cookie configuration — 30 days persistence
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 
     db.init_app(app)
 

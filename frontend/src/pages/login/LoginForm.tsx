@@ -30,7 +30,7 @@ export function LoginForm({ onForgotPassword }: LoginFormProps) {
                 if (response.user?.type === "admin") {
                     window.location.href = "/admin";
                 } else {
-                    window.location.href = "/dashboard";
+                    window.location.href = "/member";
                 }
             },
         });

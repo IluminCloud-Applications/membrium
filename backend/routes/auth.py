@@ -84,6 +84,7 @@ def api_login():
     # Try admin
     admin = Admin.query.filter_by(email=email).first()
     if admin and check_password_hash(admin.password, password):
+        session.permanent = True
         session['user_id'] = admin.id
         session['user_type'] = 'admin'
         return jsonify({
@@ -100,6 +101,7 @@ def api_login():
     # Try student
     student = Student.query.filter_by(email=email).first()
     if student and check_password_hash(student.password, password):
+        session.permanent = True
         session['user_id'] = student.id
         session['user_type'] = 'student'
         return jsonify({
@@ -195,7 +197,7 @@ def index():
             if session['user_type'] == 'admin':
                 return redirect(url_for('admin.admin_panel'))
             elif session['user_type'] == 'student':
-                return redirect(url_for('student.dashboard'))
+                return redirect('/member')
 
     if check_installation():
         return redirect(url_for('auth.login'))
@@ -265,7 +267,7 @@ def login():
         if student and check_password_hash(student.password, password):
             session['user_id'] = student.id
             session['user_type'] = 'student'
-            return redirect(url_for('student.dashboard'))
+            return redirect('/member')
 
     from flask import render_template, flash
     flash('Email ou senha inválidos.', 'error')
@@ -311,6 +313,8 @@ def quick_access(uuid):
         flash('Link de acesso inválido', 'error')
         return redirect(url_for('auth.login'))
 
+    session.permanent = True
     session['user_id'] = student.id
     session['user_type'] = 'student'
-    return redirect(url_for('student.dashboard'))
+    return redirect('/member')
+

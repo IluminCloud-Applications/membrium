@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { LoginPage } from "@/pages/login";
 import { SetupPage } from "@/pages/setup";
 import { AdminRoutes } from "./routes/AdminRoutes";
+import { MemberRoutes } from "./routes/MemberRoutes";
 import { authService } from "@/services/authService";
 
 type AppState = "loading" | "setup" | "ready";
@@ -70,6 +71,12 @@ export default function App() {
             <Route
               path="/admin/*"
               element={<AdminRoutes platformName={platformName} />}
+            />
+
+            {/* Student member area */}
+            <Route
+              path="/member/*"
+              element={<MemberRoutes />}
             />
 
             <Route path="/install" element={<Navigate to="/login" replace />} />

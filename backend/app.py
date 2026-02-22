@@ -24,6 +24,7 @@ from routes.faq import faq_bp
 from routes.chatbot import chatbot_bp
 from routes.transcripts import transcripts_bp
 from routes.unsubscribe import unsubscribe_bp
+from routes.member import member_bp
 from webhook import webhook_bp
 
 
@@ -57,6 +58,7 @@ def create_app():
     app.register_blueprint(chatbot_bp)
     app.register_blueprint(transcripts_bp)
     app.register_blueprint(unsubscribe_bp)
+    app.register_blueprint(member_bp)
     app.register_blueprint(webhook_bp)
 
     # Ensure upload directory exists
