@@ -1,52 +1,20 @@
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify, session, abort
+from flask import Blueprint, request, jsonify, session
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from db.database import db
 from models import Admin, Settings
-from db.utils import get_or_create_settings, check_installation
+from db.utils import get_or_create_settings
 
 general_bp = Blueprint('settings_general', __name__)
-
-
-def installation_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not check_installation() and request.endpoint != 'auth.install':
-            return redirect(url_for('auth.install'))
-        return f(*args, **kwargs)
-    return decorated_function
 
 
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session or not Admin.query.get(session['user_id']):
-            return redirect(url_for('auth.login'))
+            return jsonify({'error': 'Unauthorized'}), 401
         return f(*args, **kwargs)
     return decorated_function
-
-
-# ─── Legacy template route ───────────────────────────────────────
-
-@general_bp.route('/admin/settings')
-@admin_required
-@installation_required
-def settings_page():
-    current_user = Admin.query.get(session.get('user_id'))
-    if not current_user:
-        abort(403)
-
-    settings = Settings.query.first()
-    if not settings:
-        settings = Settings()
-        db.session.add(settings)
-        db.session.commit()
-
-    return render_template(
-        'settings.html',
-        settings=settings,
-        admin_email=current_user.email,
-    )
 
 
 # ─── GET all settings ────────────────────────────────────────────

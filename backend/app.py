@@ -6,15 +6,9 @@ from db.utils import ensure_upload_directory
 
 # Import blueprints
 from routes.auth import auth_bp
-from routes.admin import admin_bp
 from routes.students import students_bp
-from routes.course import course_bp
-from routes.module import module_bp
-from routes.lesson import lesson_bp
-from routes.student import student_bp
 from routes.files import files_bp
 from routes.settings import settings_bp
-from routes.misc import misc_bp
 from routes.dashboard import dashboard_bp
 from routes.courses import courses_bp
 from routes.course_modification import course_modification_bp
@@ -40,15 +34,9 @@ def create_app():
 
     # Register blueprints
     app.register_blueprint(auth_bp)
-    app.register_blueprint(admin_bp)
     app.register_blueprint(students_bp)
-    app.register_blueprint(course_bp)
-    app.register_blueprint(module_bp)
-    app.register_blueprint(lesson_bp)
-    app.register_blueprint(student_bp)
     app.register_blueprint(files_bp)
     app.register_blueprint(settings_bp)
-    app.register_blueprint(misc_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(courses_bp)
     app.register_blueprint(course_modification_bp)
