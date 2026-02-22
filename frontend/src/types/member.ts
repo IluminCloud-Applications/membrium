@@ -97,3 +97,53 @@ export interface SearchResult {
     moduleName?: string;
     image?: string | null;
 }
+
+/* ============================================
+   LESSON PLAYER PAGE TYPES
+   ============================================ */
+
+export interface MemberLessonDocument {
+    id: number;
+    filename: string;
+}
+
+export interface MemberLessonFAQ {
+    id: number;
+    question: string;
+    answer: string;
+    order: number;
+}
+
+export interface MemberLessonDetail {
+    id: number;
+    title: string;
+    description: string | null;
+    videoUrl: string | null;
+    videoType: string;
+    order: number;
+    hasButton: boolean;
+    buttonText: string | null;
+    buttonLink: string | null;
+    buttonDelay: number | null;
+    completed: boolean;
+    documents: MemberLessonDocument[];
+    faqs: MemberLessonFAQ[];
+}
+
+export interface MemberModuleLessonsResponse {
+    course: {
+        id: number;
+        name: string;
+        theme: string;
+        menuItems: MemberMenuItem[];
+    };
+    module: {
+        id: number;
+        name: string;
+        order: number;
+    };
+    lessons: MemberLessonDetail[];
+    totalLessons: number;
+    completedLessons: number;
+}
+

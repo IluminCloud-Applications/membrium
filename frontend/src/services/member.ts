@@ -4,6 +4,7 @@ import type {
     MemberCourseDetail,
     MemberProfile,
     MemberProgress,
+    MemberModuleLessonsResponse,
     SearchResult,
 } from "@/types/member";
 import type { ApiResponse } from "@/types/api";
@@ -16,6 +17,12 @@ export const memberService = {
     /** Get single course detail with lessons */
     getCourseDetail: (courseId: number) =>
         apiClient.get<MemberCourseDetail>(`/member/courses/${courseId}`),
+
+    /** Get all lessons in a module for the player page */
+    getModuleLessons: (courseId: number, moduleId: number) =>
+        apiClient.get<MemberModuleLessonsResponse>(
+            `/member/courses/${courseId}/modules/${moduleId}`
+        ),
 
     /** Get student profile */
     getProfile: () =>
@@ -47,3 +54,4 @@ export const memberService = {
     search: (query: string) =>
         apiClient.get<SearchResult[]>(`/member/search?q=${encodeURIComponent(query)}`),
 };
+

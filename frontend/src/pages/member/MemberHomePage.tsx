@@ -41,9 +41,8 @@ export function MemberHomePage() {
     const primaryCourse = courses.find((c) => c.category === "principal");
     const secondaryCourses = courses.filter((c) => c.category !== "principal");
 
-    function handleModuleClick(courseId: number, _moduleId: number) {
-        // For now, navigate to course detail (future: lesson player)
-        window.location.href = `/member/curso/${courseId}`;
+    function handleModuleClick(courseId: number, moduleId: number) {
+        window.location.href = `/member/${courseId}/${moduleId}`;
     }
 
     if (loading) {
