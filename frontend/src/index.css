@@ -537,7 +537,6 @@
 .member-banner {
   position: relative;
   width: 100%;
-  max-height: 420px;
   overflow: hidden;
 }
 
@@ -545,15 +544,12 @@
   display: block;
   width: 100%;
   height: auto;
-  max-height: 420px;
-  object-fit: cover;
 }
 
 .member-banner-mobile {
   display: none;
   width: 100%;
   height: auto;
-  object-fit: cover;
 }
 
 @media (max-width: 640px) {
@@ -571,8 +567,9 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 60%;
-  background: linear-gradient(to top, oklch(0.1 0 0), transparent);
+  height: 35%;
+  min-height: 80px;
+  background: linear-gradient(to top, oklch(0.1 0 0), oklch(0.1 0 0 / 60%) 40%, transparent);
   pointer-events: none;
 }
 
