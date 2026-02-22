@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { memberService } from "@/services/member";
 import { authService } from "@/services/authService";
+import { MobileBottomNav } from "./MobileBottomNav";
 import type { MemberMenuItem, SearchResult } from "@/types/member";
 
 interface MemberHeaderProps {
@@ -14,6 +15,7 @@ export function MemberHeader({ platformName, studentName, menuItems }: MemberHea
     const navigate = useNavigate();
     const [searchOpen, setSearchOpen] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -26,6 +28,15 @@ export function MemberHeader({ platformName, studentName, menuItems }: MemberHea
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    useEffect(() => {
+        function handleScroll() {
+            setScrolled(window.scrollY > 50);
+        }
+        handleScroll(); // check initial state
+        window.addEventListener("scroll", handleScroll, { passive: true });
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+
     async function handleLogout() {
         try { await authService.logout(); } catch { /* ignore */ }
         window.location.href = "/login";
@@ -33,7 +44,7 @@ export function MemberHeader({ platformName, studentName, menuItems }: MemberHea
 
     return (
         <>
-            <header className="member-header">
+            <header className={`member-header ${scrolled ? "member-header-scrolled" : ""}`}>
                 <div className="member-header-inner">
                     {/* Left: Logo + Menu */}
                     <div className="member-header-left">
@@ -104,6 +115,9 @@ export function MemberHeader({ platformName, studentName, menuItems }: MemberHea
             {searchOpen && (
                 <SearchModal onClose={() => setSearchOpen(false)} />
             )}
+
+            {/* Mobile floating bottom nav */}
+            <MobileBottomNav onSearchClick={() => setSearchOpen(true)} />
         </>
     );
 }
