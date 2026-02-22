@@ -27,8 +27,8 @@ export function GroupedCourseRow({ course, onModuleClick }: GroupedCourseRowProp
     const isLocked = course.hasAccess === false;
     const showArrows = canScrollLeft || canScrollRight;
     const categoryLabel = course.category === "bonus" ? "Bônus"
-        : course.category === "order_bump" ? "Order Bump"
-            : course.category === "upsell" ? "Upsell"
+        : course.category === "order_bump" ? "Adicional"
+            : course.category === "upsell" ? "Exclusivo"
                 : null;
 
     return (

@@ -13,6 +13,7 @@ interface CourseGroupCardProps {
     onDeleteGroup: (group: CourseGroup) => void;
     onEditCourse: (course: Course) => void;
     onWebhook: (course: Course) => void;
+    onRefetch: () => void;
 }
 
 export function CourseGroupCard({
@@ -22,6 +23,7 @@ export function CourseGroupCard({
     onDeleteGroup,
     onEditCourse,
     onWebhook,
+    onRefetch,
 }: CourseGroupCardProps) {
     const navigate = useNavigate();
     const groupCourses = group.courseIds
@@ -65,9 +67,10 @@ export function CourseGroupCard({
         setDragIndex(null);
         dragOverIndex.current = null;
 
-        // Save to backend
+        // Save to backend and refetch
         try {
             await coursesService.reorderGroup(group.id, newOrder.map((c) => c.id));
+            onRefetch();
         } catch (err) {
             console.error("Erro ao reordenar:", err);
         }

@@ -154,7 +154,7 @@ export function CoursesPage() {
                     groups={filteredGroups} courses={courses}
                     onEditGroup={handleEditGroup} onDeleteGroup={handleDeleteGroup}
                     onEditCourse={handleEdit} onWebhook={handleWebhook}
-                    onCreateGroup={handleCreateGroup}
+                    onCreateGroup={handleCreateGroup} onRefetch={refetch}
                 />
             ) : filteredCourses.length === 0 ? (
                 <CourseEmptyState hasFilters={hasActiveFilters} onCreateCourse={handleCreateOpen} />

@@ -9,6 +9,7 @@ interface GroupsViewProps {
     onEditCourse: (c: Course) => void;
     onWebhook: (c: Course) => void;
     onCreateGroup: () => void;
+    onRefetch: () => void;
 }
 
 export function GroupsView({
@@ -19,6 +20,7 @@ export function GroupsView({
     onEditCourse,
     onWebhook,
     onCreateGroup,
+    onRefetch,
 }: GroupsViewProps) {
     if (groups.length === 0) {
         return (
@@ -48,6 +50,7 @@ export function GroupsView({
                     onDeleteGroup={onDeleteGroup}
                     onEditCourse={onEditCourse}
                     onWebhook={onWebhook}
+                    onRefetch={onRefetch}
                 />
             ))}
         </div>

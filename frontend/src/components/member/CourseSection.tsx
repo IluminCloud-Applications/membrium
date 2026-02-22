@@ -46,7 +46,7 @@ export function CourseSection({ course, isPrimary = false, onModuleClick }: Cour
                         {course.name}
                         {!isPrimary && course.category !== "principal" && (
                             <span className="member-course-badge">
-                                {course.category === "bonus" ? "Bônus" : course.category === "order_bump" ? "Order Bump" : "Upsell"}
+                                {course.category === "bonus" ? "Bônus" : course.category === "order_bump" ? "Adicional" : "Exclusivo"}
                             </span>
                         )}
                     </h2>
