@@ -113,9 +113,9 @@ function MemberLoadingSkeleton() {
                 </div>
             </div>
             <div className="member-banner-skeleton" />
-            <div className="member-content" style={{ padding: "2rem" }}>
+            <div style={{ maxWidth: 1400, margin: "0 auto", padding: "2rem 1.5rem" }}>
                 <div className="skeleton-text" style={{ width: 300, height: 32, marginBottom: 24 }} />
-                <div className="member-module-grid">
+                <div style={{ display: "flex", gap: "1.1rem", overflow: "hidden" }}>
                     {Array.from({ length: 6 }).map((_, i) => (
                         <div key={i} className="member-module-skeleton" />
                     ))}

@@ -1,11 +1,82 @@
+import { useRef, useState, useCallback, useEffect } from "react";
 import type { MemberModule } from "@/types/member";
+import { ModuleCard } from "./ModuleCard";
 
-interface ModuleGridProps {
+interface ModuleCarouselProps {
     modules: MemberModule[];
     onModuleClick: (moduleId: number) => void;
 }
 
-export function ModuleGrid({ modules, onModuleClick }: ModuleGridProps) {
+export function ModuleGrid({ modules, onModuleClick }: ModuleCarouselProps) {
+    const trackRef = useRef<HTMLDivElement>(null);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
+    const dragState = useRef({ startX: 0, scrollLeft: 0, moved: false });
+
+    // Check scroll boundaries
+    const updateScrollState = useCallback(() => {
+        const el = trackRef.current;
+        if (!el) return;
+        setCanScrollLeft(el.scrollLeft > 4);
+        setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+    }, []);
+
+    useEffect(() => {
+        updateScrollState();
+        const el = trackRef.current;
+        if (!el) return;
+
+        el.addEventListener("scroll", updateScrollState, { passive: true });
+        const ro = new ResizeObserver(updateScrollState);
+        ro.observe(el);
+
+        return () => {
+            el.removeEventListener("scroll", updateScrollState);
+            ro.disconnect();
+        };
+    }, [updateScrollState, modules]);
+
+    // Arrow click scroll
+    function scrollBy(direction: "left" | "right") {
+        const el = trackRef.current;
+        if (!el) return;
+        const amount = el.clientWidth * 0.75;
+        el.scrollBy({ left: direction === "left" ? -amount : amount, behavior: "smooth" });
+    }
+
+    // Drag handlers
+    function handlePointerDown(e: React.PointerEvent) {
+        const el = trackRef.current;
+        if (!el) return;
+        setIsDragging(true);
+        dragState.current = { startX: e.clientX, scrollLeft: el.scrollLeft, moved: false };
+        el.setPointerCapture(e.pointerId);
+    }
+
+    function handlePointerMove(e: React.PointerEvent) {
+        if (!isDragging) return;
+        const el = trackRef.current;
+        if (!el) return;
+        const dx = e.clientX - dragState.current.startX;
+        if (Math.abs(dx) > 3) dragState.current.moved = true;
+        el.scrollLeft = dragState.current.scrollLeft - dx;
+    }
+
+    function handlePointerUp(e: React.PointerEvent) {
+        setIsDragging(false);
+        trackRef.current?.releasePointerCapture(e.pointerId);
+    }
+
+    // Prevent click after drag
+    function handleCardClick(moduleId: number) {
+        if (dragState.current.moved) {
+            dragState.current.moved = false;
+            return;
+        }
+        onModuleClick(moduleId);
+    }
+
     if (!modules.length) {
         return (
             <div className="member-empty-state">
@@ -15,81 +86,50 @@ export function ModuleGrid({ modules, onModuleClick }: ModuleGridProps) {
         );
     }
 
+    const sorted = [...modules].sort((a, b) => a.order - b.order);
+
     return (
-        <div className="member-module-grid">
-            {modules
-                .sort((a, b) => a.order - b.order)
-                .map((mod, index) => (
+        <div className="member-carousel">
+            {/* Left arrow */}
+            {canScrollLeft && (
+                <button
+                    className="member-carousel-arrow member-carousel-arrow-left"
+                    onClick={() => scrollBy("left")}
+                    aria-label="Anterior"
+                >
+                    <i className="ri-arrow-left-s-line" />
+                </button>
+            )}
+
+            {/* Track */}
+            <div
+                ref={trackRef}
+                className={`member-carousel-track ${isDragging ? "is-dragging" : ""}`}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerUp}
+            >
+                {sorted.map((mod, index) => (
                     <ModuleCard
                         key={mod.id}
                         module={mod}
                         index={index}
-                        onClick={() => onModuleClick(mod.id)}
+                        onClick={() => handleCardClick(mod.id)}
                     />
                 ))}
+            </div>
+
+            {/* Right arrow */}
+            {canScrollRight && (
+                <button
+                    className="member-carousel-arrow member-carousel-arrow-right"
+                    onClick={() => scrollBy("right")}
+                    aria-label="Próximo"
+                >
+                    <i className="ri-arrow-right-s-line" />
+                </button>
+            )}
         </div>
-    );
-}
-
-
-interface ModuleCardProps {
-    module: MemberModule;
-    index: number;
-    onClick: () => void;
-}
-
-function ModuleCard({ module, index, onClick }: ModuleCardProps) {
-    const progress = module.totalLessons > 0
-        ? Math.round((module.completedLessons / module.totalLessons) * 100)
-        : 0;
-
-    const isCompleted = progress === 100;
-
-    return (
-        <button
-            className="member-module-card"
-            onClick={onClick}
-            style={{ animationDelay: `${index * 0.05}s` }}
-        >
-            <div className="member-module-image-wrap">
-                {module.image ? (
-                    <img
-                        src={`/static/uploads/${module.image}`}
-                        alt={module.name}
-                        className="member-module-image"
-                        loading="lazy"
-                    />
-                ) : (
-                    <div className="member-module-placeholder">
-                        <i className="ri-folder-video-line" />
-                    </div>
-                )}
-
-                {/* Progress overlay */}
-                {module.totalLessons > 0 && (
-                    <div className="member-module-progress-bar">
-                        <div
-                            className="member-module-progress-fill"
-                            style={{ width: `${progress}%` }}
-                        />
-                    </div>
-                )}
-
-                {/* Completed badge */}
-                {isCompleted && (
-                    <div className="member-module-completed-badge">
-                        <i className="ri-check-line" />
-                    </div>
-                )}
-            </div>
-
-            <div className="member-module-info">
-                <h3 className="member-module-name">{module.name}</h3>
-                <p className="member-module-meta">
-                    {module.completedLessons}/{module.totalLessons} aulas
-                    {progress > 0 && !isCompleted && ` · ${progress}%`}
-                </p>
-            </div>
-        </button>
     );
 }
