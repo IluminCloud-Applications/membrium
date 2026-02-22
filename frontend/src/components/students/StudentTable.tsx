@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { formatBrazilianDate } from "@/utils/formatDate";
 import {
     Table,
     TableBody,
@@ -49,6 +50,7 @@ export function StudentTable({
                         <TableHead className="font-semibold pl-6 px-4">Nome</TableHead>
                         <TableHead className="font-semibold px-4">Email</TableHead>
                         <TableHead className="font-semibold px-4">Cursos</TableHead>
+                        <TableHead className="font-semibold px-4">Cadastro</TableHead>
                         <TableHead className="font-semibold px-4">Status</TableHead>
                         <TableHead className="font-semibold text-right pr-6 px-4">
                             Ações
@@ -163,6 +165,13 @@ function StudentRow({
                         </>
                     )}
                 </div>
+            </TableCell>
+
+            {/* Created At */}
+            <TableCell className="px-4">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                    {formatBrazilianDate(student.createdAt)}
+                </span>
             </TableCell>
 
             {/* Status */}

@@ -82,7 +82,7 @@ def _serialize(s: Student) -> dict:
         'phone': s.phone or '',
         'status': 'active' if has_courses else 'inactive',
         'courses': [{'id': c.id, 'name': c.name} for c in s.courses],
-        'createdAt': None,
+        'createdAt': s.created_at.isoformat() if s.created_at else None,
         'quickAccessToken': s.uuid,
     }
 

@@ -99,6 +99,7 @@ class Student(db.Model):
     phone = db.Column(db.String(20), nullable=True)
     extra_data = db.Column(db.JSON, default=dict)  # Dados extras da plataforma de pagamento
     uuid = db.Column(db.String(36), unique=True, nullable=False, default=lambda: str(uuid4()))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     courses = db.relationship('Course', secondary=student_courses, backref=db.backref('students', lazy='dynamic'))
     completed_lessons = db.relationship('Lesson', secondary=student_lessons, backref=db.backref('completed_by', lazy='dynamic'))
 

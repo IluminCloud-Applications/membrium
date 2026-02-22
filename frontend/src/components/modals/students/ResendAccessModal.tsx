@@ -29,7 +29,7 @@ export function ResendAccessModal({
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <i className="ri-mail-send-line text-primary" />
+                        <i className="ri-send-plane-line text-primary" />
                         Reenviar Acesso
                     </DialogTitle>
                 </DialogHeader>
@@ -49,12 +49,20 @@ export function ResendAccessModal({
                     </div>
 
                     <p className="text-sm text-muted-foreground">
-                        Um email será enviado para{" "}
+                        Os dados de acesso serão reenviados para{" "}
                         <strong className="text-foreground">
                             {student.email}
                         </strong>{" "}
-                        com os dados de acesso à plataforma.
+                        através das integrações configuradas (Email e/ou WhatsApp).
+                        Uma nova senha temporária será gerada.
                     </p>
+
+                    <div className="flex items-center gap-3 p-2.5 rounded-lg border bg-amber-500/5 border-amber-500/20">
+                        <i className="ri-information-line text-amber-500 text-lg shrink-0" />
+                        <p className="text-xs text-muted-foreground">
+                            A senha atual do aluno será substituída por uma nova senha temporária.
+                        </p>
+                    </div>
 
                     {/* Actions */}
                     <div className="flex gap-2">
@@ -77,8 +85,8 @@ export function ResendAccessModal({
                                 </span>
                             ) : (
                                 <span className="flex items-center gap-2">
-                                    <i className="ri-mail-send-line" />
-                                    Enviar Email
+                                    <i className="ri-send-plane-line" />
+                                    Reenviar Acesso
                                 </span>
                             )}
                         </Button>

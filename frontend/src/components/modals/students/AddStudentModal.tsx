@@ -38,6 +38,7 @@ export function AddStudentModal({
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([]);
     const [courseToAdd, setCourseToAdd] = useState<string>("");
 
@@ -181,14 +182,24 @@ export function AddStudentModal({
                         <Label htmlFor="student-password" className="text-sm font-medium">
                             Senha
                         </Label>
-                        <Input
-                            id="student-password"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Senha de acesso"
-                            required
-                        />
+                        <div className="relative">
+                            <Input
+                                id="student-password"
+                                type={showPassword ? "text" : "password"}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Senha de acesso"
+                                required
+                                className="pr-10"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                <i className={showPassword ? "ri-eye-off-line" : "ri-eye-line"} />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Courses — multi-select */}

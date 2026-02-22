@@ -64,6 +64,7 @@ def create_student():
                 'email': new_student.email,
                 'status': 'active' if new_student.courses else 'inactive',
                 'courses': [{'id': c.id, 'name': c.name} for c in new_student.courses],
+                'createdAt': new_student.created_at.isoformat() if new_student.created_at else None,
                 'quickAccessToken': new_student.uuid,
             }
         })

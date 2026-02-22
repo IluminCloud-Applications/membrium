@@ -59,29 +59,31 @@ export function TemplateEditor({
                     {format === "email" ? "Template de Email" : "Template de Mensagem"}
                 </h4>
                 <div className="flex items-center gap-2">
-                    {/* Template mode toggle */}
-                    <div className="flex rounded-lg border overflow-hidden text-xs">
-                        <button
-                            type="button"
-                            onClick={() => onTemplateModeChange("simple")}
-                            className={`px-3 py-1 transition-colors cursor-pointer ${templateMode === "simple"
-                                ? "bg-primary text-primary-foreground"
-                                : "hover:bg-muted"
-                                }`}
-                        >
-                            Simples
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => onTemplateModeChange("html")}
-                            className={`px-3 py-1 transition-colors cursor-pointer ${templateMode === "html"
-                                ? "bg-primary text-primary-foreground"
-                                : "hover:bg-muted"
-                                }`}
-                        >
-                            HTML
-                        </button>
-                    </div>
+                    {/* Template mode toggle — HTML only available for email */}
+                    {format === "email" && (
+                        <div className="flex rounded-lg border overflow-hidden text-xs">
+                            <button
+                                type="button"
+                                onClick={() => onTemplateModeChange("simple")}
+                                className={`px-3 py-1 transition-colors cursor-pointer ${templateMode === "simple"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "hover:bg-muted"
+                                    }`}
+                            >
+                                Simples
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => onTemplateModeChange("html")}
+                                className={`px-3 py-1 transition-colors cursor-pointer ${templateMode === "html"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "hover:bg-muted"
+                                    }`}
+                            >
+                                HTML
+                            </button>
+                        </div>
+                    )}
 
                     {/* Preview toggle */}
                     <Button
