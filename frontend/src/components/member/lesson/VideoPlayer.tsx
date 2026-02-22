@@ -18,7 +18,7 @@ interface VideoPlayerProps {
     title: string;
     src: string;
     videoType: string;
-    onTimeUpdate?: (currentTime: number) => void;
+    onTimeUpdate?: (currentTime: number, duration: number) => void;
 }
 
 export function VideoPlayer({ title, src, videoType, onTimeUpdate }: VideoPlayerProps) {
@@ -29,8 +29,8 @@ export function VideoPlayer({ title, src, videoType, onTimeUpdate }: VideoPlayer
 
     useEffect(() => {
         if (!playerRef.current || !onTimeUpdate) return;
-        return playerRef.current.subscribe(({ currentTime }) => {
-            onTimeUpdate(currentTime);
+        return playerRef.current.subscribe(({ currentTime, duration }) => {
+            onTimeUpdate(currentTime, duration);
         });
     }, [onTimeUpdate]);
 
@@ -82,7 +82,6 @@ function VideoControls() {
                             <TimeSlider.Progress className="lesson-slider-progress" />
                             <TimeSlider.TrackFill className="lesson-slider-fill" />
                         </TimeSlider.Track>
-                        <TimeSlider.Thumb className="lesson-slider-thumb" />
                     </TimeSlider.Root>
                 </Controls.Group>
 
@@ -101,7 +100,6 @@ function VideoControls() {
                             <VolumeSlider.Track className="lesson-volume-track">
                                 <VolumeSlider.TrackFill className="lesson-volume-fill" />
                             </VolumeSlider.Track>
-                            <VolumeSlider.Thumb className="lesson-volume-thumb" />
                         </VolumeSlider.Root>
 
                         <div className="lesson-time-display">

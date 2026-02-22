@@ -1605,26 +1605,6 @@
   will-change: width;
 }
 
-.lesson-slider-thumb {
-  position: absolute;
-  left: var(--slider-fill);
-  top: 50%;
-  width: 14px;
-  height: 14px;
-  background: white;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 1px 4px oklch(0 0 0 / 40%);
-  opacity: 0;
-  transition: opacity 0.15s;
-  will-change: left;
-}
-
-.lesson-time-slider:hover .lesson-slider-thumb,
-.lesson-time-slider[data-dragging] .lesson-slider-thumb {
-  opacity: 1;
-}
-
 /* Controls bar */
 .lesson-controls-bar {
   display: flex;
@@ -1686,24 +1666,6 @@
   background: white;
   width: var(--slider-fill);
   will-change: width;
-}
-
-.lesson-volume-thumb {
-  position: absolute;
-  left: var(--slider-fill);
-  top: 50%;
-  width: 12px;
-  height: 12px;
-  background: white;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  opacity: 0;
-  transition: opacity 0.15s;
-  will-change: left;
-}
-
-.lesson-volume-slider:hover .lesson-volume-thumb {
-  opacity: 1;
 }
 
 /* Time display */

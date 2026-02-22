@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { memberService } from "@/services/member";
 import type {
@@ -26,7 +26,7 @@ interface UseLessonPageReturn {
     goToPrevious: () => void;
     goToNext: () => void;
     toggleComplete: () => void;
-    handleVideoTime: (time: number) => void;
+    handleVideoTime: (time: number, duration: number) => void;
 }
 
 export function useLessonPage(): UseLessonPageReturn {
@@ -45,6 +45,7 @@ export function useLessonPage(): UseLessonPageReturn {
     const [completing, setCompleting] = useState(false);
     const [ctaVisible, setCTAVisible] = useState(false);
     const [ctaTriggered, setCTATriggered] = useState(false);
+    const autoCompletedRef = useRef(false);
     const [studentName, setStudentName] = useState("");
     const [platformName, setPlatformName] = useState("Área de Membros");
 
@@ -84,6 +85,7 @@ export function useLessonPage(): UseLessonPageReturn {
         setCurrentLessonId(lessonId);
         setCTAVisible(false);
         setCTATriggered(false);
+        autoCompletedRef.current = false;
         window.scrollTo({ top: 0, behavior: "smooth" });
     }, []);
 
@@ -99,40 +101,39 @@ export function useLessonPage(): UseLessonPageReturn {
         if (idx < data.lessons.length - 1) selectLesson(data.lessons[idx + 1].id);
     }, [data, currentLesson, selectLesson]);
 
-    const toggleComplete = useCallback(async () => {
-        if (!currentLesson || !data) return;
+    /** Mark/unmark the current lesson as complete (updates local + API). */
+    const markLessonComplete = useCallback(async (lessonId: number, markComplete: boolean) => {
         setCompleting(true);
         try {
-            if (currentLesson.completed) {
-                await memberService.uncompleteLesson(currentLesson.id);
+            if (markComplete) {
+                await memberService.completeLesson(lessonId);
             } else {
-                await memberService.completeLesson(currentLesson.id);
+                await memberService.uncompleteLesson(lessonId);
             }
 
-            // Update local state
             setData((prev) => {
                 if (!prev) return prev;
                 const updatedLessons = prev.lessons.map((l) =>
-                    l.id === currentLesson.id
-                        ? { ...l, completed: !l.completed }
-                        : l
+                    l.id === lessonId ? { ...l, completed: markComplete } : l
                 );
                 const completedCount = updatedLessons.filter((l) => l.completed).length;
-                return {
-                    ...prev,
-                    lessons: updatedLessons,
-                    completedLessons: completedCount,
-                };
+                return { ...prev, lessons: updatedLessons, completedLessons: completedCount };
             });
         } catch (err) {
             console.error("Erro ao atualizar progresso:", err);
         } finally {
             setCompleting(false);
         }
-    }, [currentLesson, data]);
+    }, []);
+
+    const toggleComplete = useCallback(async () => {
+        if (!currentLesson) return;
+        await markLessonComplete(currentLesson.id, !currentLesson.completed);
+    }, [currentLesson, markLessonComplete]);
 
     const handleVideoTime = useCallback(
-        (time: number) => {
+        (time: number, duration: number) => {
+            // CTA trigger
             if (
                 !ctaTriggered &&
                 currentLesson?.hasButton &&
@@ -142,8 +143,20 @@ export function useLessonPage(): UseLessonPageReturn {
                 setCTAVisible(true);
                 setCTATriggered(true);
             }
+
+            // Auto-complete at 90%
+            if (
+                duration > 0 &&
+                time / duration >= 0.9 &&
+                currentLesson &&
+                !currentLesson.completed &&
+                !autoCompletedRef.current
+            ) {
+                autoCompletedRef.current = true;
+                markLessonComplete(currentLesson.id, true);
+            }
         },
-        [currentLesson, ctaTriggered]
+        [currentLesson, ctaTriggered, markLessonComplete]
     );
 
     return {
