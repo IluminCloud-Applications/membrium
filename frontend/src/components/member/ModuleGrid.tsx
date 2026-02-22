@@ -5,10 +5,12 @@ import { ModuleCard } from "./ModuleCard";
 interface ModuleCarouselProps {
     modules: MemberModule[];
     onModuleClick: (moduleId: number) => void;
+    externalTrackRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-export function ModuleGrid({ modules, onModuleClick }: ModuleCarouselProps) {
-    const trackRef = useRef<HTMLDivElement>(null);
+export function ModuleGrid({ modules, onModuleClick, externalTrackRef }: ModuleCarouselProps) {
+    const internalRef = useRef<HTMLDivElement>(null);
+    const trackRef = externalTrackRef || internalRef;
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
     const [isDragging, setIsDragging] = useState(false);

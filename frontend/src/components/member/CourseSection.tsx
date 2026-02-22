@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import type { MemberCourse } from "@/types/member";
 import { CourseBanner } from "./CourseBanner";
 import { ModuleGrid } from "./ModuleGrid";
@@ -9,6 +10,15 @@ interface CourseSectionProps {
 }
 
 export function CourseSection({ course, isPrimary = false, onModuleClick }: CourseSectionProps) {
+    const trackRef = useRef<HTMLDivElement>(null);
+
+    function scrollModules(direction: "left" | "right") {
+        const el = trackRef.current;
+        if (!el) return;
+        const amount = el.clientWidth * 0.75;
+        el.scrollBy({ left: direction === "left" ? -amount : amount, behavior: "smooth" });
+    }
+
     return (
         <section className="member-course-section">
             {/* Banner — show if course has covers */}
@@ -20,26 +30,49 @@ export function CourseSection({ course, isPrimary = false, onModuleClick }: Cour
                 />
             )}
 
-            {/* Course title */}
+            {/* Course title with navigation arrows */}
             <div className={`member-course-header ${isPrimary ? "member-course-header-primary" : ""}`}>
-                <h2 className={`member-course-title ${isPrimary ? "member-course-title-primary" : ""}`}>
-                    {course.name}
-                    {!isPrimary && course.category !== "principal" && (
-                        <span className="member-course-badge">
-                            {course.category === "bonus" ? "Bônus" : course.category === "order_bump" ? "Order Bump" : "Upsell"}
-                        </span>
+                <div className="member-course-header-row">
+                    <h2 className={`member-course-title ${isPrimary ? "member-course-title-primary" : ""}`}>
+                        {course.name}
+                        {!isPrimary && course.category !== "principal" && (
+                            <span className="member-course-badge">
+                                {course.category === "bonus" ? "Bônus" : course.category === "order_bump" ? "Order Bump" : "Upsell"}
+                            </span>
+                        )}
+                    </h2>
+
+                    {course.modules.length > 0 && (
+                        <div className="member-course-nav-arrows">
+                            <button
+                                className="member-course-nav-btn"
+                                onClick={() => scrollModules("left")}
+                                aria-label="Anterior"
+                            >
+                                <i className="ri-arrow-left-s-line" />
+                            </button>
+                            <button
+                                className="member-course-nav-btn"
+                                onClick={() => scrollModules("right")}
+                                aria-label="Próximo"
+                            >
+                                <i className="ri-arrow-right-s-line" />
+                            </button>
+                        </div>
                     )}
-                </h2>
+                </div>
+
                 {isPrimary && course.description && (
                     <p className="member-course-description">{course.description}</p>
                 )}
             </div>
 
-            {/* Modules grid */}
+            {/* Modules carousel */}
             <div className="member-course-modules">
                 <ModuleGrid
                     modules={course.modules}
                     onModuleClick={(moduleId) => onModuleClick(course.id, moduleId)}
+                    externalTrackRef={trackRef}
                 />
             </div>
         </section>

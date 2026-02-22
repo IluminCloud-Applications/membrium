@@ -374,8 +374,6 @@
 }
 
 .member-header-inner {
-  max-width: 1400px;
-  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -538,6 +536,7 @@
   position: relative;
   width: 100%;
   overflow: hidden;
+  margin-top: -64px;
 }
 
 .member-banner-desktop {
@@ -584,8 +583,6 @@
 }
 
 .member-course-header {
-  max-width: 1400px;
-  margin: 0 auto;
   padding: 2rem 1.5rem 0.5rem;
 }
 
@@ -593,6 +590,13 @@
   margin-top: -3rem;
   position: relative;
   z-index: 2;
+}
+
+.member-course-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .member-course-title {
@@ -607,6 +611,35 @@
 
 .member-course-title-primary {
   font-size: 1.85rem;
+}
+
+/* Navigation arrows next to title */
+.member-course-nav-arrows {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.member-course-nav-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid oklch(1 0 0 / 12%);
+  background: oklch(1 0 0 / 5%);
+  color: oklch(0.7 0 0);
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.2s;
+}
+
+.member-course-nav-btn:hover {
+  background: oklch(1 0 0 / 12%);
+  color: oklch(0.95 0 0);
+  border-color: oklch(1 0 0 / 20%);
 }
 
 .member-course-badge {
@@ -628,8 +661,6 @@
 }
 
 .member-course-modules {
-  max-width: 1400px;
-  margin: 0 auto;
   padding: 1rem 1.5rem 1.5rem;
 }
 
@@ -1048,8 +1079,6 @@
 
 /* ---- FOOTER ---- */
 .member-footer {
-  max-width: 1400px;
-  margin: 0 auto;
   padding: 2rem 1.5rem;
   text-align: center;
   font-size: 0.8rem;
