@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { aiService } from "@/services/ai";
+import { MarkdownContent } from "@/components/shared/MarkdownContent";
 
 interface ChatbotTestDrawerProps {
     open: boolean;
@@ -252,9 +253,9 @@ function MessageBubble({ message, botName }: { message: ChatMessage; botName: st
                 {isUser ? (
                     <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
                 ) : (
-                    <div
-                        className="text-sm whitespace-pre-wrap leading-relaxed chatbot-message-content"
-                        dangerouslySetInnerHTML={{ __html: message.content }}
+                    <MarkdownContent
+                        content={message.content}
+                        className="text-sm leading-relaxed chatbot-message-content"
                     />
                 )}
                 <p
