@@ -33,4 +33,8 @@ export const authService = {
     /** Reset student password */
     resetPassword: (data: ResetPasswordRequest) =>
         apiClient.post<ApiResponse>("/auth/reset-password", data),
+
+    /** Quick access — authenticate student by UUID token */
+    quickAccess: (uuid: string) =>
+        apiClient.post<LoginResponse>(`/auth/quick-access/${uuid}`, {}),
 };

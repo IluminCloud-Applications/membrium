@@ -37,11 +37,6 @@ export function SetupPage({ onSetupComplete }: SetupPageProps) {
             <div className="auth-card">
                 {/* Logo + Title — outside the card */}
                 <div className="text-center mb-6">
-                    <img
-                        src="/logo.webp"
-                        alt="Membrium"
-                        className="h-10 w-auto mx-auto mb-4"
-                    />
                     <h1 className="text-2xl font-bold tracking-tight">
                         Configuração Inicial
                     </h1>

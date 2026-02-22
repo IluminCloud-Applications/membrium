@@ -8,8 +8,11 @@ import {
 import { Toaster } from "@/components/ui/sonner";
 import { LoginPage } from "@/pages/login";
 import { SetupPage } from "@/pages/setup";
+import { QuickAccessPage } from "@/pages/quick-access";
 import { AdminRoutes } from "./routes/AdminRoutes";
 import { MemberRoutes } from "./routes/MemberRoutes";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { AuthRedirect } from "@/components/auth/AuthRedirect";
 import { authService } from "@/services/authService";
 
 type AppState = "loading" | "setup" | "ready";
@@ -67,20 +70,35 @@ export default function App() {
               element={<LoginPage platformName={platformName} />}
             />
 
-            {/* Admin routes with sidebar layout */}
+            {/* Quick access — auto-auth by UUID */}
             <Route
-              path="/admin/*"
-              element={<AdminRoutes platformName={platformName} />}
+              path="/quick-access/:uuid"
+              element={<QuickAccessPage />}
             />
 
-            {/* Student member area */}
+            {/* Admin routes — protected, admin only */}
+            <Route
+              path="/admin/*"
+              element={
+                <ProtectedRoute allowedType="admin">
+                  <AdminRoutes platformName={platformName} />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Student member area — protected, student only */}
             <Route
               path="/member/*"
-              element={<MemberRoutes />}
+              element={
+                <ProtectedRoute allowedType="student">
+                  <MemberRoutes />
+                </ProtectedRoute>
+              }
             />
 
             <Route path="/install" element={<Navigate to="/login" replace />} />
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            {/* Root redirect — checks auth and sends to correct area */}
+            <Route path="/" element={<AuthRedirect />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
           </>
         )}
