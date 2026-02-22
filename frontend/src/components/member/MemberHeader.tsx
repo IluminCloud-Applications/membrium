@@ -117,7 +117,10 @@ export function MemberHeader({ platformName, studentName, menuItems }: MemberHea
             )}
 
             {/* Mobile floating bottom nav */}
-            <MobileBottomNav onSearchClick={() => setSearchOpen(true)} />
+            <MobileBottomNav
+                onSearchClick={() => setSearchOpen(true)}
+                menuItems={menuItems}
+            />
         </>
     );
 }

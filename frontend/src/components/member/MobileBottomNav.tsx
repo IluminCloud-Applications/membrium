@@ -1,50 +1,57 @@
 import { useLocation } from "react-router-dom";
+import type { MemberMenuItem } from "@/types/member";
 
 interface MobileBottomNavProps {
     onSearchClick: () => void;
+    menuItems: MemberMenuItem[];
 }
 
-export function MobileBottomNav({ onSearchClick }: MobileBottomNavProps) {
+export function MobileBottomNav({ onSearchClick, menuItems }: MobileBottomNavProps) {
     const location = useLocation();
     const currentPath = location.pathname;
 
-    const items = [
-        { icon: "ri-home-4-line", iconActive: "ri-home-4-fill", label: "Início", href: "/member", match: "/member" },
-        { icon: "ri-search-line", iconActive: "ri-search-fill", label: "Buscar", action: onSearchClick },
-        { icon: "ri-user-line", iconActive: "ri-user-fill", label: "Perfil", href: "/member/perfil", match: "/member/perfil" },
-    ];
-
     return (
         <nav className="member-bottom-nav">
-            {items.map((item) => {
-                const isActive = item.match
-                    ? currentPath === item.match || (item.match === "/member" && currentPath === "/member")
-                    : false;
+            {/* Início */}
+            <a
+                href="/member"
+                className={`member-bottom-nav-item ${currentPath === "/member" ? "member-bottom-nav-active" : ""}`}
+            >
+                <i className={currentPath === "/member" ? "ri-home-4-fill" : "ri-home-4-line"} />
+                <span>Início</span>
+            </a>
 
-                if (item.action) {
-                    return (
-                        <button
-                            key={item.label}
-                            className="member-bottom-nav-item"
-                            onClick={item.action}
-                        >
-                            <i className={item.icon} />
-                            <span>{item.label}</span>
-                        </button>
-                    );
-                }
+            {/* Dynamic menu items from API */}
+            {menuItems.map((item, i) => (
+                <a
+                    key={i}
+                    href={item.url}
+                    target={item.url.startsWith("http") ? "_blank" : undefined}
+                    rel={item.url.startsWith("http") ? "noopener noreferrer" : undefined}
+                    className="member-bottom-nav-item"
+                >
+                    <i className={item.icon || "ri-links-line"} />
+                    <span>{item.name}</span>
+                </a>
+            ))}
 
-                return (
-                    <a
-                        key={item.label}
-                        href={item.href}
-                        className={`member-bottom-nav-item ${isActive ? "member-bottom-nav-active" : ""}`}
-                    >
-                        <i className={isActive ? item.iconActive : item.icon} />
-                        <span>{item.label}</span>
-                    </a>
-                );
-            })}
+            {/* Buscar */}
+            <button
+                className="member-bottom-nav-item"
+                onClick={onSearchClick}
+            >
+                <i className="ri-search-line" />
+                <span>Buscar</span>
+            </button>
+
+            {/* Perfil */}
+            <a
+                href="/member/perfil"
+                className={`member-bottom-nav-item ${currentPath === "/member/perfil" ? "member-bottom-nav-active" : ""}`}
+            >
+                <i className={currentPath === "/member/perfil" ? "ri-user-fill" : "ri-user-line"} />
+                <span>Perfil</span>
+            </a>
         </nav>
     );
 }
