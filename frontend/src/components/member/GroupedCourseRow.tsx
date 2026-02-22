@@ -32,7 +32,7 @@ export function GroupedCourseRow({ course, onModuleClick }: GroupedCourseRowProp
                 : null;
 
     return (
-        <div className={`grouped-course-row ${isLocked ? "grouped-course-row-locked" : ""}`}>
+        <div className="grouped-course-row">
             {/* Course title bar */}
             <div className="grouped-course-row-header">
                 <div className="grouped-course-row-title-wrap">
@@ -50,7 +50,7 @@ export function GroupedCourseRow({ course, onModuleClick }: GroupedCourseRowProp
                     )}
                 </div>
 
-                {showArrows && !isLocked && (
+                {showArrows && (
                     <div className="member-course-nav-arrows">
                         {canScrollLeft && (
                             <button
@@ -74,22 +74,17 @@ export function GroupedCourseRow({ course, onModuleClick }: GroupedCourseRowProp
                 )}
             </div>
 
-            {/* Modules carousel */}
-            {isLocked ? (
-                <div className="grouped-course-locked-content">
-                    <i className="ri-lock-line" />
-                    <p>Adquira acesso para desbloquear este conteúdo</p>
-                </div>
-            ) : (
-                <div className="grouped-course-row-modules">
-                    <ModuleGrid
-                        modules={course.modules}
-                        onModuleClick={(moduleId) => onModuleClick(course.id, moduleId)}
-                        externalTrackRef={trackRef}
-                        onScrollStateChange={handleScrollState}
-                    />
-                </div>
-            )}
+            {/* Modules carousel — shows locked modules with locked style */}
+            <div className="grouped-course-row-modules">
+                <ModuleGrid
+                    modules={course.modules}
+                    onModuleClick={(moduleId) => {
+                        if (!isLocked) onModuleClick(course.id, moduleId);
+                    }}
+                    externalTrackRef={trackRef}
+                    onScrollStateChange={handleScrollState}
+                />
+            </div>
         </div>
     );
 }

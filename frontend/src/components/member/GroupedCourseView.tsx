@@ -32,26 +32,20 @@ export function GroupedCourseView({
                 />
             )}
 
-            {/* Group header */}
-            <div className="grouped-view-header">
-                <div className="grouped-view-header-row">
-                    {showBack && onBackToSelector && (
-                        <button
-                            className="grouped-view-back-btn"
-                            onClick={onBackToSelector}
-                            title="Voltar à seleção"
-                        >
-                            <i className="ri-arrow-left-s-line" />
-                        </button>
-                    )}
-                    <h2 className="grouped-view-title">{group.name}</h2>
+            {/* Back button (when user can go back to group selector) */}
+            {showBack && onBackToSelector && (
+                <div className="grouped-view-back-row">
+                    <button
+                        className="grouped-view-back-btn"
+                        onClick={onBackToSelector}
+                        title="Voltar à seleção"
+                    >
+                        <i className="ri-arrow-left-s-line" />
+                    </button>
                 </div>
-                {bannerCourse?.description && (
-                    <p className="grouped-view-description">{bannerCourse.description}</p>
-                )}
-            </div>
+            )}
 
-            {/* Courses listed vertically (Netflix style) */}
+            {/* Courses listed vertically (Netflix style) — no group name */}
             <div className="grouped-view-courses">
                 {/* Principal course first */}
                 {principal && principal.hasAccess !== false && (

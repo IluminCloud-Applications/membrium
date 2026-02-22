@@ -25,7 +25,7 @@ export function ModuleCard({ module, index, onClick }: ModuleCardProps) {
             className={`member-module-card ${isLocked ? "member-module-locked" : ""}`}
             onClick={handleClick}
             style={{ animationDelay: `${index * 0.05}s` }}
-            title={isLocked ? `Libera em ${daysRemaining} dia${daysRemaining !== 1 ? "s" : ""}` : module.name}
+            title={isLocked ? (daysRemaining > 0 ? `Libera em ${daysRemaining} dia${daysRemaining !== 1 ? "s" : ""}` : "Adquira para liberar") : module.name}
         >
             <div className="member-module-image-wrap">
                 {module.image ? (
@@ -72,7 +72,11 @@ export function ModuleCard({ module, index, onClick }: ModuleCardProps) {
                 <p className="member-module-meta">
                     {isLocked ? (
                         <span className="member-module-lock-text">
-                            <i className="ri-lock-line" /> Libera em {daysRemaining} dia{daysRemaining !== 1 ? "s" : ""}
+                            <i className="ri-lock-line" />
+                            {daysRemaining > 0
+                                ? `Libera em ${daysRemaining} dia${daysRemaining !== 1 ? "s" : ""}`
+                                : "Adquira para liberar"
+                            }
                         </span>
                     ) : (
                         <>

@@ -144,7 +144,20 @@ def get_student_courses_grouped(student):
             if has_access:
                 course_data = _build_course_data(course, student)
             else:
-                # No access — send limited data (locked)
+                # No access — send modules but all locked
+                locked_modules = []
+                for module in course.modules:
+                    locked_modules.append({
+                        'id': module.id,
+                        'name': module.name,
+                        'image': module.image,
+                        'order': module.order,
+                        'totalLessons': len(module.lessons),
+                        'completedLessons': 0,
+                        'unlockAfterDays': 0,
+                        'isLocked': True,
+                        'unlockDaysRemaining': 0,
+                    })
                 course_data = {
                     'id': course.id,
                     'uuid': course.uuid,
@@ -157,7 +170,7 @@ def get_student_courses_grouped(student):
                     'coverDesktop': course.cover_desktop,
                     'coverMobile': course.cover_mobile,
                     'menuItems': [],
-                    'modules': [],
+                    'modules': locked_modules,
                 }
             course_data['hasAccess'] = has_access
             group_courses.append(course_data)
