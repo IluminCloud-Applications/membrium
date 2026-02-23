@@ -7,10 +7,15 @@ Flow:
 3. Google redirects back with auth code → we exchange for tokens
 4. We store refresh_token in Settings for persistent access
 """
+import os
 import logging
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
+
+# Google may return additional sub-scopes (upload, readonly) when requesting
+# the broad 'youtube' scope. This tells oauthlib to accept expanded scopes.
+os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 
 logger = logging.getLogger("integrations.youtube.connection")
 

@@ -7,11 +7,11 @@ Você já deve estar logado no GHCR (`echo $CR_PAT | docker login ghcr.io -u USE
 
 ### Build
 ```bash
-docker build -t ghcr.io/iluminapp/membrium:latest -t ghcr.io/iluminapp/membrium:v2.0.6 .
+docker build -t ghcr.io/iluminapp/membrium:latest -t ghcr.io/iluminapp/membrium:v2.1.1 .
 ```
 
 ### Push
 ```bash
 docker push ghcr.io/iluminapp/membrium:latest
-docker push ghcr.io/iluminapp/membrium:v2.0.6
+docker push ghcr.io/iluminapp/membrium:v2.1.1
 ```

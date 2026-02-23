@@ -173,17 +173,17 @@ def upload_bulk():
     # Get or create YouTube playlist with the module name
     playlist_id = None
     try:
-        course_name = module.course.title if module.course else ""
-        playlist_description = f"Aulas do módulo \"{module.title}\""
+        course_name = module.course.name if module.course else ""
+        playlist_description = f"Aulas do módulo \"{module.name}\""
         if course_name:
             playlist_description += f" — Curso: {course_name}"
 
         playlist_id = get_or_create_playlist(
             youtube_service=service,
-            title=module.title,
+            title=module.name,
             description=playlist_description,
         )
-        logger.info(f"Playlist para módulo '{module.title}': {playlist_id}")
+        logger.info(f"Playlist para módulo '{module.name}': {playlist_id}")
     except Exception as e:
         logger.warning(f"Não foi possível criar/encontrar playlist: {e}")
         # Continue without playlist — uploads still work
