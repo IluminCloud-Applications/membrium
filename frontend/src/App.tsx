@@ -14,6 +14,7 @@ import { AdminRoutes } from "./routes/AdminRoutes";
 import { MemberRoutes } from "./routes/MemberRoutes";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AuthRedirect } from "@/components/auth/AuthRedirect";
+import { YouTubeCallbackPage } from "@/pages/settings/YouTubeCallbackPage";
 import { authService } from "@/services/authService";
 
 type AppState = "loading" | "setup" | "maintenance" | "ready";
@@ -110,6 +111,12 @@ export default function App() {
             <Route
               path="/quick-access/:uuid"
               element={<QuickAccessPage />}
+            />
+
+            {/* YouTube OAuth callback (popup, no auth needed) */}
+            <Route
+              path="/auth/youtube/callback"
+              element={<YouTubeCallbackPage />}
             />
 
             {/* Admin routes — protected, admin only */}

@@ -21,6 +21,8 @@ interface CourseTabsProps {
     onAddMenuItem: () => void;
     onEditMenuItem: (item: CourseMenuItem) => void;
     onDeleteMenuItem: (item: CourseMenuItem) => void;
+    onBulkUpload?: (moduleId: number) => void;
+    youtubeConnected?: boolean;
 }
 
 export function CourseTabs({
@@ -40,6 +42,8 @@ export function CourseTabs({
     onAddMenuItem,
     onEditMenuItem,
     onDeleteMenuItem,
+    onBulkUpload,
+    youtubeConnected,
 }: CourseTabsProps) {
     return (
         <Tabs defaultValue="modules" className="w-full">
@@ -69,6 +73,8 @@ export function CourseTabs({
                     onDeleteLesson={onDeleteLesson}
                     onReorderModules={onReorderModules}
                     onReorderLessons={onReorderLessons}
+                    onBulkUpload={onBulkUpload}
+                    youtubeConnected={youtubeConnected}
                 />
             </TabsContent>
 

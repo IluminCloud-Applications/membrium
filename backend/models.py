@@ -154,6 +154,9 @@ class Settings(db.Model):
     youtube_enabled = db.Column(db.Boolean, default=False)
     youtube_client_id = db.Column(db.String(255), nullable=True)
     youtube_client_secret = db.Column(db.String(255), nullable=True)
+    youtube_refresh_token = db.Column(db.Text, nullable=True)
+    youtube_channel_name = db.Column(db.String(255), nullable=True)
+    youtube_channel_id = db.Column(db.String(255), nullable=True)
     
     # Gemini AI Integration
     gemini_api_enabled = db.Column(db.Boolean, default=False)

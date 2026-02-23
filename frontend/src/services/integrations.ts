@@ -28,6 +28,9 @@ export interface YouTubeSettings {
     enabled: boolean;
     client_id: string;
     client_secret: string;
+    connected: boolean;
+    channel_name: string;
+    channel_id: string;
 }
 
 export interface IntegrationsData {
@@ -59,6 +62,25 @@ interface FetchInstancesResponse {
     message?: string;
 }
 
+interface YouTubeAuthUrlResponse {
+    success: boolean;
+    auth_url?: string;
+    message?: string;
+}
+
+interface YouTubeCallbackResponse {
+    success: boolean;
+    message: string;
+    channel_name?: string;
+    channel_id?: string;
+}
+
+interface YouTubeStatusResponse {
+    connected: boolean;
+    channel_name: string;
+    channel_id: string;
+}
+
 /* ============================================
    INTEGRATIONS SERVICE
    ============================================ */
@@ -87,4 +109,20 @@ export const integrationsService = {
     /** Update YouTube settings */
     updateYouTube: (data: Partial<YouTubeSettings>) =>
         apiClient.post<ApiResponse>("/settings/youtube", data),
+
+    /** Get YouTube OAuth URL */
+    getYouTubeAuthUrl: (redirect_uri: string) =>
+        apiClient.post<YouTubeAuthUrlResponse>("/youtube/auth-url", { redirect_uri }),
+
+    /** Exchange YouTube auth code for tokens */
+    youTubeCallback: (code: string, redirect_uri: string) =>
+        apiClient.post<YouTubeCallbackResponse>("/youtube/callback", { code, redirect_uri }),
+
+    /** Get YouTube connection status */
+    getYouTubeStatus: () =>
+        apiClient.get<YouTubeStatusResponse>("/youtube/status"),
+
+    /** Disconnect YouTube channel */
+    disconnectYouTube: () =>
+        apiClient.post<ApiResponse>("/youtube/disconnect", {}),
 };

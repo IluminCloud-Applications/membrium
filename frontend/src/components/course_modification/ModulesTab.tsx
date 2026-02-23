@@ -13,6 +13,8 @@ interface ModulesTabProps {
     onDeleteLesson: (moduleId: number, lessonId: number) => void;
     onReorderModules?: (orderedIds: number[]) => void;
     onReorderLessons?: (moduleId: number, orderedIds: number[]) => void;
+    onBulkUpload?: (moduleId: number) => void;
+    youtubeConnected?: boolean;
 }
 
 export function ModulesTab({
@@ -25,6 +27,8 @@ export function ModulesTab({
     onDeleteLesson,
     onReorderModules,
     onReorderLessons,
+    onBulkUpload,
+    youtubeConnected,
 }: ModulesTabProps) {
     const [dragOverId, setDragOverId] = useState<number | null>(null);
     const dragItemRef = useRef<number | null>(null);
@@ -111,6 +115,8 @@ export function ModulesTab({
                             onEditLesson={(lessonId) => onEditLesson(mod.id, lessonId)}
                             onDeleteLesson={(lessonId) => onDeleteLesson(mod.id, lessonId)}
                             onReorderLessons={onReorderLessons ? (ids) => onReorderLessons(mod.id, ids) : undefined}
+                            onBulkUpload={onBulkUpload ? () => onBulkUpload(mod.id) : undefined}
+                            youtubeConnected={youtubeConnected}
                         />
                     </div>
                 ))}

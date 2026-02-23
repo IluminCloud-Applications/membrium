@@ -25,6 +25,8 @@ interface ModuleCardProps {
     onEditLesson: (lessonId: number) => void;
     onDeleteLesson: (lessonId: number) => void;
     onReorderLessons?: (orderedIds: number[]) => void;
+    onBulkUpload?: () => void;
+    youtubeConnected?: boolean;
 }
 
 export function ModuleCard({
@@ -36,6 +38,8 @@ export function ModuleCard({
     onEditLesson,
     onDeleteLesson,
     onReorderLessons,
+    onBulkUpload,
+    youtubeConnected,
 }: ModuleCardProps) {
     const [isOpen, setIsOpen] = useState(false);
     const lessonsCount = module.lessons.length;
@@ -128,6 +132,18 @@ export function ModuleCard({
                                 <DropdownMenuItem onClick={onAddLesson} className="rounded-lg cursor-pointer">
                                     <i className="ri-add-line mr-2 text-base" /> Adicionar Aula
                                 </DropdownMenuItem>
+
+                                {/* Bulk upload - Only show when YouTube is connected */}
+                                {youtubeConnected && onBulkUpload && (
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={onBulkUpload} className="rounded-lg cursor-pointer">
+                                            <i className="ri-youtube-fill mr-2 text-base text-red-500" />
+                                            Upload em Massa
+                                        </DropdownMenuItem>
+                                    </>
+                                )}
+
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={onDelete} className="rounded-lg cursor-pointer text-destructive focus:text-destructive">
                                     <i className="ri-delete-bin-line mr-2 text-base" /> Excluir Módulo
@@ -150,9 +166,16 @@ export function ModuleCard({
                             <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
                                 <i className="ri-play-circle-line text-3xl mb-2" />
                                 <p className="text-sm font-medium">Nenhuma aula neste módulo</p>
-                                <Button variant="outline" size="sm" onClick={onAddLesson} className="mt-3 gap-1.5">
-                                    <i className="ri-add-line" /> Adicionar Primeira Aula
-                                </Button>
+                                <div className="flex gap-2 mt-3">
+                                    <Button variant="outline" size="sm" onClick={onAddLesson} className="gap-1.5">
+                                        <i className="ri-add-line" /> Adicionar Aula
+                                    </Button>
+                                    {youtubeConnected && onBulkUpload && (
+                                        <Button variant="outline" size="sm" onClick={onBulkUpload} className="gap-1.5">
+                                            <i className="ri-youtube-fill text-red-500" /> Upload em Massa
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                         ) : (
                             module.lessons.map((lesson, lessonIndex) => (

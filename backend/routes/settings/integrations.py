@@ -53,6 +53,9 @@ def get_integrations():
             'enabled': settings.youtube_enabled,
             'client_id': settings.youtube_client_id or '',
             'client_secret': settings.youtube_client_secret or '',
+            'connected': bool(settings.youtube_refresh_token),
+            'channel_name': settings.youtube_channel_name or '',
+            'channel_id': settings.youtube_channel_id or '',
         }
     })
 

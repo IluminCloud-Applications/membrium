@@ -20,6 +20,7 @@ from routes.transcripts import transcripts_bp
 from routes.unsubscribe import unsubscribe_bp
 from routes.member import member_bp
 from webhook import webhook_bp
+from routes.youtube import youtube_bp
 
 
 def create_app():
@@ -48,6 +49,7 @@ def create_app():
     app.register_blueprint(unsubscribe_bp)
     app.register_blueprint(member_bp)
     app.register_blueprint(webhook_bp)
+    app.register_blueprint(youtube_bp)
 
     # Ensure upload directory exists
     with app.app_context():

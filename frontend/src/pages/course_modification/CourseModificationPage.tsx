@@ -1,15 +1,17 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { CourseHeader, CourseTabs } from "@/components/course_modification";
 import { ModuleModal } from "@/components/modals/course_modification/ModuleModal";
 import { LessonModal } from "@/components/modals/course_modification/LessonModal";
 import { MenuItemModal } from "@/components/modals/course_modification/MenuItemModal";
+import { BulkUploadModal } from "@/components/modals/course_modification/BulkUploadModal";
 import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModal";
 import type {
     CourseModule, CourseMenuItem, Lesson,
     ModuleFormData, LessonFormData, MenuItemFormData,
 } from "@/types/course-modification";
 import { courseModificationService } from "@/services/courseModification";
+import { integrationsService } from "@/services/integrations";
 import { useCourseModification } from "./useCourseModification";
 import { toast } from "sonner";
 
@@ -33,6 +35,24 @@ export function CourseModificationPage() {
         lessonId?: number;
         menuItemId?: number;
     } | null>(null);
+
+    // YouTube state
+    const [youtubeConnected, setYoutubeConnected] = useState(false);
+    const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
+    const [bulkUploadModuleId, setBulkUploadModuleId] = useState<number | null>(null);
+
+    // Check YouTube connection status
+    useEffect(() => {
+        async function checkYouTube() {
+            try {
+                const res = await integrationsService.getYouTubeStatus();
+                setYoutubeConnected(res.connected);
+            } catch {
+                setYoutubeConnected(false);
+            }
+        }
+        checkYouTube();
+    }, []);
 
     const totalLessons = useMemo(
         () => course?.modules.reduce((sum, m) => sum + m.lessons.length, 0) ?? 0,
@@ -162,6 +182,17 @@ export function CourseModificationPage() {
         setEditingMenuItem(null);
     }
 
+    /* ---- Bulk Upload ---- */
+    function handleBulkUpload(moduleId: number) {
+        setBulkUploadModuleId(moduleId);
+        setBulkUploadOpen(true);
+    }
+
+    function handleBulkUploadComplete() {
+        refetch();
+        toast.success("Upload em massa concluído!");
+    }
+
     /* ---- Delete confirm ---- */
     async function handleConfirmDelete() {
         if (!deleteTarget || !courseId) return;
@@ -191,6 +222,11 @@ export function CourseModificationPage() {
     if (loading) return <div className="flex items-center justify-center py-20"><i className="ri-loader-4-line animate-spin text-2xl text-primary" /></div>;
     if (error || !course) return <div className="flex items-center justify-center py-20 text-destructive">{error || "Curso não encontrado"}</div>;
 
+    // Get module name for bulk upload modal
+    const bulkUploadModuleName = bulkUploadModuleId
+        ? course.modules.find(m => m.id === bulkUploadModuleId)?.name ?? "Módulo"
+        : "Módulo";
+
     return (
         <div className="space-y-6 animate-fade-in">
             <CourseHeader courseName={course.name} courseId={courseId} modulesCount={course.modules.length} lessonsCount={totalLessons} />
@@ -201,12 +237,25 @@ export function CourseModificationPage() {
                 onReorderModules={handleReorderModules} onReorderLessons={handleReorderLessons}
                 onCoverChange={handleCoverChange} onCoverDelete={handleCoverDelete}
                 onAddMenuItem={handleAddMenuItem} onEditMenuItem={handleEditMenuItem} onDeleteMenuItem={handleDeleteMenuItem}
+                onBulkUpload={handleBulkUpload}
+                youtubeConnected={youtubeConnected}
             />
             <ModuleModal open={moduleModalOpen} onOpenChange={setModuleModalOpen} editModule={editingModule} onSubmit={handleModuleSubmit} />
             <LessonModal open={lessonModalOpen} onOpenChange={setLessonModalOpen} editLesson={editingLesson} onSubmit={handleLessonSubmit} />
             <MenuItemModal open={menuModalOpen} onOpenChange={setMenuModalOpen} editItem={editingMenuItem} onSubmit={handleMenuItemSubmit} />
             <DeleteConfirmModal open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)} onConfirm={handleConfirmDelete}
                 title={currentDelete?.title} description={currentDelete?.description} confirmLabel={currentDelete?.label} />
+
+            {/* Bulk Upload Modal */}
+            {bulkUploadModuleId && (
+                <BulkUploadModal
+                    open={bulkUploadOpen}
+                    onOpenChange={setBulkUploadOpen}
+                    moduleId={bulkUploadModuleId}
+                    moduleName={bulkUploadModuleName}
+                    onComplete={handleBulkUploadComplete}
+                />
+            )}
         </div>
     );
 }
