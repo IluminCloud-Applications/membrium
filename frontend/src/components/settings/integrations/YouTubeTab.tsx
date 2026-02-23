@@ -76,6 +76,13 @@ export function YouTubeTab() {
         callbackProcessedRef.current = false;
         setConnecting(true);
         try {
+            // Auto-save credentials before connecting
+            await integrationsService.updateYouTube({
+                enabled,
+                client_id: clientId,
+                client_secret: clientSecret,
+            });
+
             const redirectUri = `${window.location.origin}/auth/youtube/callback`;
             const res = await integrationsService.getYouTubeAuthUrl(redirectUri);
 
