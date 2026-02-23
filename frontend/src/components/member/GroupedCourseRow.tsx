@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback } from "react";
 import type { MemberCourse } from "@/types/member";
 import { ModuleGrid } from "./ModuleGrid";
+import { LazySection } from "@/components/ui/LazySectionContext";
 
 interface GroupedCourseRowProps {
     course: MemberCourse;
@@ -32,7 +33,7 @@ export function GroupedCourseRow({ course, onModuleClick }: GroupedCourseRowProp
                 : null;
 
     return (
-        <div className="grouped-course-row">
+        <LazySection className="grouped-course-row" rootMargin="400px">
             {/* Course title bar */}
             <div className="grouped-course-row-header">
                 <div className="grouped-course-row-title-wrap">
@@ -85,6 +86,6 @@ export function GroupedCourseRow({ course, onModuleClick }: GroupedCourseRowProp
                     onScrollStateChange={handleScrollState}
                 />
             </div>
-        </div>
+        </LazySection>
     );
 }

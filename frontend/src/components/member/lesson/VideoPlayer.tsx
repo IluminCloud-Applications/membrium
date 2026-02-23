@@ -120,7 +120,7 @@ function VideoControls({ hasNextLesson, onNextLesson }: VideoControlsProps) {
             )}
 
             {/* Bottom controls bar */}
-            <Controls.Root className="lesson-controls">
+            <Controls.Root className="lesson-controls" hideDelay={2500} hideOnMouseLeave>
                 {/* Progress bar */}
                 <Controls.Group className="lesson-controls-progress">
                     <TimeSlider.Root className="lesson-time-slider">

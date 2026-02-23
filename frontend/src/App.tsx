@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -8,6 +8,7 @@ import {
 import { Toaster } from "@/components/ui/sonner";
 import { LoginPage } from "@/pages/login";
 import { SetupPage } from "@/pages/setup";
+import { MaintenancePage } from "@/pages/maintenance";
 import { QuickAccessPage } from "@/pages/quick-access";
 import { AdminRoutes } from "./routes/AdminRoutes";
 import { MemberRoutes } from "./routes/MemberRoutes";
@@ -15,41 +16,76 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AuthRedirect } from "@/components/auth/AuthRedirect";
 import { authService } from "@/services/authService";
 
-type AppState = "loading" | "setup" | "ready";
+type AppState = "loading" | "setup" | "maintenance" | "ready";
 
 export default function App() {
   const [appState, setAppState] = useState<AppState>("loading");
   const [platformName, setPlatformName] = useState("Área de Membros");
 
-  useEffect(() => {
-    checkInstallation();
-  }, []);
-
-  useEffect(() => {
-    document.title = platformName;
-  }, [platformName]);
-
-  async function checkInstallation() {
+  const checkInstallation = useCallback(async () => {
     try {
       const response = await authService.checkInstall();
       if (response.installed) {
         setPlatformName(response.platform_name || "Área de Membros");
         setAppState("ready");
       } else {
+        // Server explicitly responded with installed=false — safe to show setup
         setAppState("setup");
       }
     } catch {
-      setAppState("setup");
+      // Any error (network error, proxy 502, server 500, etc.)
+      // means we can't confirm install status → show maintenance.
+      // Setup is ONLY shown when the server explicitly says installed=false.
+      setAppState("maintenance");
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    checkInstallation();
+  }, [checkInstallation]);
+
+  useEffect(() => {
+    document.title = platformName;
+  }, [platformName]);
+
+  /** Called by MaintenancePage — returns true if backend is back online */
+  const checkConnection = useCallback(async (): Promise<boolean> => {
+    try {
+      const response = await authService.checkInstall();
+      if (response.installed) {
+        setPlatformName(response.platform_name || "Área de Membros");
+        return true;
+      }
+      // Server is up and says not installed — go to setup
+      setAppState("setup");
+      return true;
+    } catch {
+      // Still offline
+      return false;
+    }
+  }, []);
 
   function handleSetupComplete() {
     setAppState("loading");
     checkInstallation();
   }
 
+  function handleReconnected() {
+    setAppState("loading");
+    checkInstallation();
+  }
+
   if (appState === "loading") {
     return <LoadingScreen />;
+  }
+
+  if (appState === "maintenance") {
+    return (
+      <MaintenancePage
+        onReconnected={handleReconnected}
+        checkConnection={checkConnection}
+      />
+    );
   }
 
   return (

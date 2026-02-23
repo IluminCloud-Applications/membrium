@@ -1,0 +1,29 @@
+# Dependencies
+frontend/node_modules
+backend/__pycache__
+backend/**/__pycache__
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docs
+*.md
+!frontend/README.md
+
+# Dev files
+frontend/.env.local
+backend/.env
+
+# Build artifacts
+frontend/dist

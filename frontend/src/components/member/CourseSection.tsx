@@ -2,14 +2,17 @@ import { useRef, useState, useCallback } from "react";
 import type { MemberCourse } from "@/types/member";
 import { CourseBanner } from "./CourseBanner";
 import { ModuleGrid } from "./ModuleGrid";
+import { LazySection } from "@/components/ui/LazySectionContext";
 
 interface CourseSectionProps {
     course: MemberCourse;
     isPrimary?: boolean;
     onModuleClick: (courseId: number, moduleId: number) => void;
+    /** Ref forwarded to the course header element (below the banner) */
+    courseHeaderRef?: React.Ref<HTMLDivElement>;
 }
 
-export function CourseSection({ course, isPrimary = false, onModuleClick }: CourseSectionProps) {
+export function CourseSection({ course, isPrimary = false, onModuleClick, courseHeaderRef }: CourseSectionProps) {
     const trackRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
@@ -29,7 +32,7 @@ export function CourseSection({ course, isPrimary = false, onModuleClick }: Cour
     const showArrows = canScrollLeft || canScrollRight;
 
     return (
-        <section className="member-course-section">
+        <LazySection as="section" className="member-course-section" rootMargin="400px">
             {/* Banner — show if course has covers */}
             {(course.coverDesktop || course.coverMobile) && (
                 <CourseBanner
@@ -40,7 +43,7 @@ export function CourseSection({ course, isPrimary = false, onModuleClick }: Cour
             )}
 
             {/* Course title with navigation arrows */}
-            <div className={`member-course-header ${isPrimary ? "member-course-header-primary" : ""}`}>
+            <div ref={courseHeaderRef} className={`member-course-header ${isPrimary ? "member-course-header-primary" : ""}`}>
                 <div className="member-course-header-row">
                     <h2 className={`member-course-title ${isPrimary ? "member-course-title-primary" : ""}`}>
                         {course.name}
@@ -89,6 +92,6 @@ export function CourseSection({ course, isPrimary = false, onModuleClick }: Cour
                     onScrollStateChange={handleScrollState}
                 />
             </div>
-        </section>
+        </LazySection>
     );
 }

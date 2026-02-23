@@ -1,0 +1,45 @@
+services:
+  membrium:
+    image: ghcr.io/iluminapp/membrium:${APP_VERSION}
+    depends_on:
+      - postgres
+    environment:
+      - DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@postgres:5432/membriumwl
+      - FLASK_APP=app.py
+      - FLASK_ENV=production
+      - SECRET_KEY=${SECRET_KEY:-super-secret-key-change-me}
+    volumes:
+      - uploads_data:/app/backend/static/uploads
+    networks:
+      - traefik
+      - internal
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik
+      - traefik.http.routers.membrium.rule=Host(`${BASE_DOMAIN}`)${CUSTOM_DOMAIN:+ || Host(`${CUSTOM_DOMAIN}`)}
+      - traefik.http.routers.membrium.entrypoints=websecure
+      - traefik.http.routers.membrium.tls=true
+      - traefik.http.routers.membrium.tls.certresolver=letsencrypt
+      - traefik.http.services.membrium.loadbalancer.server.port=80
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:14
+    environment:
+      - POSTGRES_DB=membriumwl
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - membrium_data:/var/lib/postgresql/data
+    networks:
+      - internal
+    restart: unless-stopped
+
+volumes:
+  membrium_data:
+  uploads_data:
+
+networks:
+  traefik:
+    external: true
+  internal:

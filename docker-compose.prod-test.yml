@@ -1,15 +1,14 @@
 # ==============================================================
-# Membrium — Docker Compose (Imagem Unificada)
+# Membrium — Docker Compose (Teste com Imagem de Produção)
 # ==============================================================
-# Uma única imagem com Frontend (Nginx) + Backend (Gunicorn).
-# O PostgreSQL continua como serviço separado.
+# Usa a imagem real do GHCR (ghcr.io/iluminapp/membrium)
+# para testar localmente como se fosse produção.
+# docker compose -f docker-compose.prod-test.yml up --build
 # ==============================================================
 
 services:
   membrium:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/iluminapp/membrium:latest
     ports:
       - "80:80"
     environment:

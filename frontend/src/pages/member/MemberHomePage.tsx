@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { memberService } from "@/services/member";
 import { MemberHeader, CourseSection, GroupSelectorModal, GroupedCourseView, ShowcaseSection } from "@/components/member";
 import { PromotionQueue } from "@/components/member/promotion";
@@ -6,6 +6,7 @@ import { ChatBubble } from "@/components/member/chatbot";
 import { getContinueWatching } from "@/utils/continueWatching";
 import { usePreview } from "@/contexts/PreviewContext";
 import { PreviewBanner } from "@/components/member/PreviewBanner";
+import { useAutoScrollPastBanner } from "@/hooks/useAutoScrollPastBanner";
 import type { MemberCourse, MemberCourseGroup, MemberMenuItem, MemberShowcaseItem, MemberActivePromotion } from "@/types/member";
 
 export function MemberHomePage() {
@@ -74,6 +75,13 @@ export function MemberHomePage() {
     const selectedGroup = groups.find((g) => g.id === selectedGroupId);
     const hasGroups = groups.length > 0;
     const showGroupSelector = hasGroups && !selectedGroupId && groups.length > 1;
+
+    // Auto-scroll on mobile when banner covers the full screen
+    const courseHeaderRef = useRef<HTMLDivElement>(null);
+    const primaryCourseForScroll = courses.find((c) => c.category === "principal");
+    useAutoScrollPastBanner(courseHeaderRef, {
+        hasMobileCover: !!primaryCourseForScroll?.coverMobile,
+    });
 
     function handleModuleClick(courseId: number, moduleId: number) {
         const course = courses.find((c) => c.id === courseId);
@@ -186,6 +194,7 @@ export function MemberHomePage() {
                         course={primaryCourse}
                         isPrimary
                         onModuleClick={handleModuleClick}
+                        courseHeaderRef={courseHeaderRef}
                     />
                 )}
 

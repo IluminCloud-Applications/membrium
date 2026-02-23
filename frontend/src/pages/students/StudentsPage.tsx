@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+
 import {
     StudentFilters,
     StudentTable,
@@ -22,7 +22,7 @@ import { studentsService, type ImportProgress, type ImportResult } from "@/servi
 const DEBOUNCE_MS = 400;
 
 export function StudentsPage() {
-    const navigate = useNavigate();
+
     const {
         students, courses, stats, adminEmail, loading, actionLoading,
         page, totalPages, totalStudents,

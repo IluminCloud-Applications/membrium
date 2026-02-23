@@ -85,7 +85,7 @@ export function LessonPlayerPage() {
             <div className="lesson-breadcrumb-bar">
                 <a href="/member" className="lesson-breadcrumb-link">
                     <i className="ri-arrow-left-s-line" />
-                    Voltar para Módulos
+                    Voltar para Cursos
                 </a>
                 <div className="lesson-breadcrumb-trail">
                     <span>{courseName}</span>

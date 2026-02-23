@@ -46,8 +46,9 @@ export function WebhookModal({ open, onOpenChange, course }: WebhookModalProps) 
         }
     }, [open]);
 
+    const httpsBaseUrl = baseUrl.replace(/^http:\/\//, "https://");
     const webhookUrl = selectedPlatform && course
-        ? `${baseUrl}/webhook/${selectedPlatform.id}/${course.uuid}`
+        ? `${httpsBaseUrl}/webhook/${selectedPlatform.id}/${course.uuid}`
         : "";
 
     return (

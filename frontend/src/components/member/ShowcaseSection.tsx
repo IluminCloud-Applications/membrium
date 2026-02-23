@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { MemberShowcaseItem } from "@/types/member";
 import { memberService } from "@/services/member";
 import { LazyImage } from "@/components/ui/LazyImage";
+import { LazySection } from "@/components/ui/LazySectionContext";
 
 interface ShowcaseSectionProps {
     showcases: MemberShowcaseItem[];
@@ -48,7 +49,7 @@ export function ShowcaseSection({ showcases }: ShowcaseSectionProps) {
     if (!showcases.length) return null;
 
     return (
-        <section className="member-showcase-section">
+        <LazySection as="section" className="member-showcase-section" rootMargin="400px">
             <div className="member-showcase-header">
                 <h3 className="member-showcase-title">
                     <i className="ri-gift-2-line" />
@@ -79,7 +80,7 @@ export function ShowcaseSection({ showcases }: ShowcaseSectionProps) {
                     <ShowcaseCard key={item.id} item={item} onClick={handleClick} />
                 ))}
             </div>
-        </section>
+        </LazySection>
     );
 }
 

@@ -1769,7 +1769,8 @@
 
   /* Hide desktop search, avatar, and logo on mobile */
   .member-header-right,
-  .member-logo {
+  .member-logo,
+  .member-header-inner {
     display: none;
   }
 
@@ -2581,7 +2582,7 @@
 }
 
 [data-paused] .lesson-controls,
-.lesson-media-player:hover .lesson-controls,
+[data-controls] .lesson-controls,
 .lesson-controls:focus-within {
   opacity: 1;
 }
