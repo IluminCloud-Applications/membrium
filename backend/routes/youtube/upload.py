@@ -136,6 +136,7 @@ def upload_bulk():
     """
     Upload multiple videos to YouTube in sequence.
     Creates lessons automatically in the specified module.
+    Adds all uploaded videos to a YouTube playlist named after the module.
 
     Expects multipart form data:
     - videos: File[] (multiple video files)
@@ -144,6 +145,7 @@ def upload_bulk():
     """
     import json
     from integrations.youtube.insert_video import upload_video_to_youtube
+    from integrations.youtube.playlist import get_or_create_playlist, add_video_to_playlist
 
     service, error = _get_youtube_service()
     if error:
@@ -168,10 +170,27 @@ def upload_bulk():
     if not videos:
         return jsonify({'success': False, 'message': 'Nenhum vídeo enviado.'}), 400
 
+    # Get or create YouTube playlist with the module name
+    playlist_id = None
+    try:
+        course_name = module.course.title if module.course else ""
+        playlist_description = f"Aulas do módulo \"{module.title}\""
+        if course_name:
+            playlist_description += f" — Curso: {course_name}"
+
+        playlist_id = get_or_create_playlist(
+            youtube_service=service,
+            title=module.title,
+            description=playlist_description,
+        )
+        logger.info(f"Playlist para módulo '{module.title}': {playlist_id}")
+    except Exception as e:
+        logger.warning(f"Não foi possível criar/encontrar playlist: {e}")
+        # Continue without playlist — uploads still work
+
     # Ensure titles list matches videos length
     while len(titles) < len(videos):
         idx = len(titles)
-        # Use filename without extension as fallback title
         fallback = videos[idx].filename or f"Aula {idx + 1}"
         fallback = os.path.splitext(fallback)[0]
         titles.append(fallback)
@@ -196,6 +215,18 @@ def upload_bulk():
                 )
 
                 if upload_result.get('success'):
+                    # Add video to playlist
+                    playlist_status = None
+                    if playlist_id:
+                        try:
+                            pl_result = add_video_to_playlist(
+                                service, playlist_id, upload_result['video_id']
+                            )
+                            playlist_status = "added" if pl_result.get("success") else "failed"
+                        except Exception as pl_err:
+                            logger.warning(f"Erro ao add vídeo na playlist: {pl_err}")
+                            playlist_status = "failed"
+
                     # Create lesson with YouTube URL
                     new_lesson = Lesson(
                         title=title,
@@ -214,6 +245,7 @@ def upload_bulk():
                         'video_id': upload_result['video_id'],
                         'video_url': upload_result['video_url'],
                         'lesson_id': new_lesson.id,
+                        'playlist_status': playlist_status,
                     })
                     current_order += 1
                 else:
@@ -248,6 +280,7 @@ def upload_bulk():
             'success': True,
             'message': f'{success_count}/{total_count} vídeos enviados com sucesso.',
             'results': results,
+            'playlist_id': playlist_id,
         })
 
     except Exception as e:

@@ -15,8 +15,7 @@ from googleapiclient.discovery import build
 logger = logging.getLogger("integrations.youtube.connection")
 
 SCOPES = [
-    'https://www.googleapis.com/auth/youtube.upload',
-    'https://www.googleapis.com/auth/youtube.readonly',
+    'https://www.googleapis.com/auth/youtube',
 ]
 API_SERVICE_NAME = 'youtube'
 API_VERSION = 'v3'
