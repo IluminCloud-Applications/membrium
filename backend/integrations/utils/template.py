@@ -75,7 +75,10 @@ def text_to_html(text: str, data: dict) -> str:
             result = result.replace(f'[[{key}]]', str(value))
 
     # Converte URLs soltas em links clicáveis
-    url_pattern = r'(?<!href=")(https?://\S+)(?!")'
+    # (?<!href=") evita URLs já no atributo href
+    # (?<!>) evita URLs que já são texto de um <a> tag
+    # [^\s<>"] evita capturar tags HTML como parte da URL
+    url_pattern = r'(?<!href=")(?<!>)(https?://[^\s<>"]+)(?!")'
     result = re.sub(
         url_pattern,
         lambda m: f'<a href="{m.group(0)}" target="_blank">{m.group(0)}</a>',
