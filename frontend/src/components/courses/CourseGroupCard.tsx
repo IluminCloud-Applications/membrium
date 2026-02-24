@@ -237,7 +237,7 @@ function CourseRowItem({
                 className="flex gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity"
                 onClick={(e) => e.stopPropagation()}
             >
-                <ActionButton icon="ri-settings-3-line" label="Personalizar" onClick={() => onGoToCourse(course.id)} />
+                <ActionButton icon="ri-layout-5-line" label="Personalizar" onClick={() => onGoToCourse(course.id)} />
                 <ActionButton icon="ri-webhook-line" label="Webhook" onClick={() => onWebhook(course)} />
                 <ActionButton icon="ri-pencil-line" label="Editar" onClick={() => onEditCourse(course)} />
             </div>

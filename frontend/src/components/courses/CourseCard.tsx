@@ -73,7 +73,7 @@ export function CourseCard({ course, onEdit, onDelete, onWebhook }: CourseCardPr
             {/* Actions overlay */}
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-200 flex items-end justify-end p-3 opacity-0 group-hover:opacity-100 pointer-events-none">
                 <div className="flex gap-1 pointer-events-auto">
-                    <ActionButton icon="ri-settings-3-line" label="Personalizar" onClick={handleNavigate} />
+                    <ActionButton icon="ri-layout-5-line" label="Personalizar" onClick={handleNavigate} />
                     <ActionButton icon="ri-webhook-line" label="Webhook" onClick={() => onWebhook(course)} />
                     <ActionButton icon="ri-pencil-line" label="Editar" onClick={() => onEdit(course)} />
                     <ActionButton icon="ri-delete-bin-line" label="Excluir" onClick={() => onDelete(course)} variant="danger" />

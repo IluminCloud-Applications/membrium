@@ -176,8 +176,8 @@ export function LessonFormLeft({ form, onChange }: LessonFormLeftProps) {
                             </Button>
                             {uploadFeedback && (
                                 <p className={`text-xs animate-fade-in ${uploadFeedback.startsWith("✓")
-                                        ? "text-green-600 dark:text-green-400"
-                                        : "text-red-500"
+                                    ? "text-green-600 dark:text-green-400"
+                                    : "text-red-500"
                                     }`}>
                                     {uploadFeedback}
                                 </p>

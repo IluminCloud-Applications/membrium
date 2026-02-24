@@ -75,7 +75,7 @@ export function CourseListItem({ course, onEdit, onDelete, onWebhook }: CourseLi
 
             {/* Actions */}
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                <ActionButton icon="ri-settings-3-line" label="Personalizar" onClick={handleNavigate} />
+                <ActionButton icon="ri-layout-5-line" label="Personalizar" onClick={handleNavigate} />
                 <ActionButton icon="ri-webhook-line" label="Webhook" onClick={() => onWebhook(course)} />
                 <ActionButton icon="ri-pencil-line" label="Editar" onClick={() => onEdit(course)} />
                 <ActionButton icon="ri-delete-bin-line" label="Excluir" onClick={() => onDelete(course)} variant="danger" />

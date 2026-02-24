@@ -32,7 +32,7 @@ interface BulkUploadResponse {
    ============================================ */
 
 export const youtubeUploadService = {
-    /** Upload a single video to YouTube */
+    /** Upload a single video to YouTube via server proxy */
     uploadSingle: (video: File, title: string, lessonId?: number) => {
         const formData = new FormData();
         formData.append("video", video);
@@ -46,7 +46,7 @@ export const youtubeUploadService = {
         });
     },
 
-    /** Upload multiple videos in bulk */
+    /** Upload multiple videos in bulk via server proxy */
     uploadBulk: (videos: File[], titles: string[], moduleId: number) => {
         const formData = new FormData();
         for (const video of videos) {

@@ -87,17 +87,22 @@ export function LessonSidebar({
             {/* All modules as accordion */}
             <div className="lesson-sidebar-list">
                 {sortedModules.length > 0 ? (
-                    sortedModules.map((mod) => (
-                        <ModuleAccordionItem
-                            key={mod.id}
-                            module={mod}
-                            courseId={courseId}
-                            isCurrent={mod.id === currentModuleId}
-                            currentLessonId={currentLessonId}
-                            currentModuleLessons={mod.id === currentModuleId ? lessons : undefined}
-                            onSelectLesson={onSelectLesson}
-                        />
-                    ))
+                    sortedModules.map((mod, idx) => {
+                        const currentIdx = sortedModules.findIndex((m) => m.id === currentModuleId);
+                        const isBeforeCurrent = currentIdx >= 0 && idx < currentIdx;
+                        return (
+                            <ModuleAccordionItem
+                                key={mod.id}
+                                module={mod}
+                                courseId={courseId}
+                                isCurrent={mod.id === currentModuleId}
+                                currentLessonId={currentLessonId}
+                                currentModuleLessons={mod.id === currentModuleId ? lessons : undefined}
+                                onSelectLesson={onSelectLesson}
+                                defaultExpanded={!isBeforeCurrent}
+                            />
+                        );
+                    })
                 ) : (
                     /* Fallback: no modules loaded, show lessons directly */
                     lessons.map((lesson) => (
@@ -171,6 +176,7 @@ interface ModuleAccordionItemProps {
     currentLessonId: number;
     currentModuleLessons?: MemberLessonDetail[];
     onSelectLesson: (lessonId: number) => void;
+    defaultExpanded?: boolean;
 }
 
 function ModuleAccordionItem({
@@ -180,8 +186,9 @@ function ModuleAccordionItem({
     currentLessonId,
     currentModuleLessons,
     onSelectLesson,
+    defaultExpanded = true,
 }: ModuleAccordionItemProps) {
-    const [expanded, setExpanded] = useState(isCurrent);
+    const [expanded, setExpanded] = useState(defaultExpanded);
     const navigate = useNavigate();
 
     // Use currentModuleLessons (with real-time completion state) for the active module
