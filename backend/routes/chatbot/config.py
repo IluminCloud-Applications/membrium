@@ -115,9 +115,8 @@ def upload_chatbot_avatar():
     file.save(file_path)
 
     # Atualizar avatar no config do chatbot
-    _, config = get_integration('chatbot')
+    enabled, config = get_integration('chatbot')
     config['avatar'] = f"/static/uploads/{filename}"
-    enabled, _ = get_integration('chatbot')
     set_integration('chatbot', enabled, config)
 
     return jsonify({
