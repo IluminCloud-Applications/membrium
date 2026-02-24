@@ -6,17 +6,25 @@ import { IntegrationToggle } from "../IntegrationToggle";
 import { TemplateEditor } from "./TemplateEditor";
 import { integrationsService, type BrevoSettings } from "@/services/integrations";
 
-const DEFAULT_BODY = `Olá [[name]],\n\nParabéns! Você agora tem acesso ao nosso curso.\n\nAqui estão suas credenciais de acesso:\n\nEmail: [[email]]\nSenha: [[password]]\nLink de acesso comum: [[link]]\nLink de acesso rápido: [[fast_link]]\n\nQualquer dúvida, entre em contato conosco.\n\nAtenciosamente,\nEquipe de Suporte`;
+type EmailTab = "registration" | "forgot";
+
+const DEFAULT_REGISTRATION_BODY = `Olá [[name]],\n\nParabéns! Você agora tem acesso ao nosso curso.\n\nAqui estão suas credenciais de acesso:\n\nEmail: [[email]]\nSenha: [[password]]\nLink de acesso comum: [[link]]\nLink de acesso rápido: [[fast_link]]\n\nQualquer dúvida, entre em contato conosco.\n\nAtenciosamente,\nEquipe de Suporte`;
+
+const DEFAULT_FORGOT_BODY = `Olá [[name]],\n\nRecebemos uma solicitação para redefinir sua senha.\n\nClique no link abaixo para criar uma nova senha:\n[[recovery_link]]\n\nSe você não solicitou essa alteração, ignore este e-mail.\n\nAtenciosamente,\nEquipe de Suporte`;
 
 export function BrevoTab() {
+    const [activeTab, setActiveTab] = useState<EmailTab>("registration");
     const [data, setData] = useState<BrevoSettings>({
         enabled: false,
         api_key: "",
         sender_name: "",
         sender_email: "",
         email_subject: "Bem-vindo ao seu curso [[first_name]]!",
-        email_template: DEFAULT_BODY,
+        email_template: DEFAULT_REGISTRATION_BODY,
         template_mode: "simple",
+        forgot_email_subject: "Recuperação de senha",
+        forgot_email_template: DEFAULT_FORGOT_BODY,
+        forgot_template_mode: "simple",
     });
     const [showApiKey, setShowApiKey] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -35,6 +43,8 @@ export function BrevoTab() {
                     ...res.brevo,
                     email_template: res.brevo.email_template || prev.email_template,
                     email_subject: res.brevo.email_subject || prev.email_subject,
+                    forgot_email_template: res.brevo.forgot_email_template || prev.forgot_email_template,
+                    forgot_email_subject: res.brevo.forgot_email_subject || prev.forgot_email_subject,
                 }));
             }
         } catch { /* keep defaults */ }
@@ -122,16 +132,32 @@ export function BrevoTab() {
                 </p>
             </div>
 
-            {/* Template editor with 70/30 preview */}
-            <TemplateEditor
-                format="email"
-                subject={data.email_subject}
-                onSubjectChange={(v) => update({ email_subject: v })}
-                body={data.email_template}
-                onBodyChange={(v) => update({ email_template: v })}
-                templateMode={data.template_mode}
-                onTemplateModeChange={(v) => update({ template_mode: v })}
-            />
+            {/* Email type toggle: Cadastro / Esqueci a Senha */}
+            <EmailTabSelector activeTab={activeTab} onChange={setActiveTab} />
+
+            {/* Template editors */}
+            {activeTab === "registration" ? (
+                <TemplateEditor
+                    format="email"
+                    subject={data.email_subject}
+                    onSubjectChange={(v) => update({ email_subject: v })}
+                    body={data.email_template}
+                    onBodyChange={(v) => update({ email_template: v })}
+                    templateMode={data.template_mode}
+                    onTemplateModeChange={(v) => update({ template_mode: v })}
+                />
+            ) : (
+                <TemplateEditor
+                    format="email"
+                    emailType="forgot"
+                    subject={data.forgot_email_subject}
+                    onSubjectChange={(v) => update({ forgot_email_subject: v })}
+                    body={data.forgot_email_template}
+                    onBodyChange={(v) => update({ forgot_email_template: v })}
+                    templateMode={data.forgot_template_mode}
+                    onTemplateModeChange={(v) => update({ forgot_template_mode: v })}
+                />
+            )}
 
             <div className="flex items-center justify-end gap-3">
                 {feedback && (
@@ -153,5 +179,42 @@ export function BrevoTab() {
                 </Button>
             </div>
         </IntegrationToggle>
+    );
+}
+
+/* ─── Email Tab Selector ──────────────────────────────────────── */
+
+function EmailTabSelector({
+    activeTab,
+    onChange,
+}: {
+    activeTab: EmailTab;
+    onChange: (tab: EmailTab) => void;
+}) {
+    return (
+        <div className="flex rounded-lg border overflow-hidden text-sm w-fit">
+            <button
+                type="button"
+                onClick={() => onChange("registration")}
+                className={`px-4 py-2 transition-colors cursor-pointer flex items-center gap-2 ${activeTab === "registration"
+                        ? "bg-primary text-primary-foreground"
+                        : "hover:bg-muted"
+                    }`}
+            >
+                <i className="ri-user-add-line" />
+                Cadastro
+            </button>
+            <button
+                type="button"
+                onClick={() => onChange("forgot")}
+                className={`px-4 py-2 transition-colors cursor-pointer flex items-center gap-2 ${activeTab === "forgot"
+                        ? "bg-primary text-primary-foreground"
+                        : "hover:bg-muted"
+                    }`}
+            >
+                <i className="ri-lock-unlock-line" />
+                Esqueci a Senha
+            </button>
+        </div>
     );
 }

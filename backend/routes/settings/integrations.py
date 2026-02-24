@@ -39,6 +39,9 @@ def get_integrations():
             'email_subject': settings.brevo_email_subject or '',
             'email_template': settings.brevo_email_template or '',
             'template_mode': settings.brevo_template_mode or 'simple',
+            'forgot_email_subject': settings.brevo_forgot_email_subject or '',
+            'forgot_email_template': settings.brevo_forgot_email_template or '',
+            'forgot_template_mode': settings.brevo_forgot_template_mode or 'simple',
         },
         'evolution': {
             'enabled': settings.evolution_enabled,
@@ -83,6 +86,9 @@ def update_brevo():
         settings.brevo_email_subject = data.get('email_subject')
         settings.brevo_email_template = data.get('email_template')
         settings.brevo_template_mode = data.get('template_mode', 'simple')
+        settings.brevo_forgot_email_subject = data.get('forgot_email_subject')
+        settings.brevo_forgot_email_template = data.get('forgot_email_template')
+        settings.brevo_forgot_template_mode = data.get('forgot_template_mode', 'simple')
     else:
         settings.brevo_api_key = None
 

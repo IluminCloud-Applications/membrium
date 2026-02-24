@@ -150,7 +150,7 @@
    ============================================ */
 @layer components {
   .auth-layout {
-    @apply min-h-screen flex items-center justify-center p-4 bg-background;
+    @apply min-h-screen flex items-center justify-center p-4 bg-background relative overflow-hidden;
   }
 
   .auth-card {

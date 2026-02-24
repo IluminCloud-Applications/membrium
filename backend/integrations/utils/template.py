@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 SUPPORTED_VARIABLES = [
     'name', 'first_name', 'email', 'password',
     'link', 'fast_link', 'curso', 'unsubscribe_link',
+    'recovery_link',
 ]
 
 
@@ -65,7 +66,7 @@ def text_to_html(text: str, data: dict) -> str:
     # Primeiro substitui as variáveis (exceto link, que vira <a>)
     result = text
     for key, value in data.items():
-        if key in ('link', 'fast_link', 'unsubscribe_link'):
+        if key in ('link', 'fast_link', 'unsubscribe_link', 'recovery_link'):
             result = result.replace(
                 f'[[{key}]]',
                 f'<a href="{value}">{value}</a>'

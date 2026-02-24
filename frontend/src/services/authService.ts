@@ -7,6 +7,7 @@ import type {
     CheckInstallResponse,
     CheckMeResponse,
     ResetPasswordRequest,
+    ChangePasswordRequest,
     ApiResponse,
 } from "@/types/api";
 
@@ -30,9 +31,17 @@ export const authService = {
     /** Logout current user */
     logout: () => apiClient.post<ApiResponse>("/auth/logout", {}),
 
-    /** Reset student password */
+    /** Reset student password (direct — from login modal) */
     resetPassword: (data: ResetPasswordRequest) =>
         apiClient.post<ApiResponse>("/auth/reset-password", data),
+
+    /** Forgot password — sends recovery email */
+    forgotPassword: (email: string) =>
+        apiClient.post<ApiResponse>("/auth/forgot-password", { email }),
+
+    /** Change password by UUID (from recovery link) */
+    changePassword: (data: ChangePasswordRequest) =>
+        apiClient.post<ApiResponse>("/auth/change-password", data),
 
     /** Quick access — authenticate student by UUID token */
     quickAccess: (uuid: string) =>

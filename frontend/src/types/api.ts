@@ -41,6 +41,11 @@ export interface ResetPasswordRequest {
     newPassword: string;
 }
 
+export interface ChangePasswordRequest {
+    uuid: string;
+    newPassword: string;
+}
+
 export interface ApiResponse {
     success: boolean;
     message: string;

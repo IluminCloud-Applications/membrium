@@ -12,6 +12,9 @@ export interface BrevoSettings {
     email_subject: string;
     email_template: string;
     template_mode: "simple" | "html";
+    forgot_email_subject: string;
+    forgot_email_template: string;
+    forgot_template_mode: "simple" | "html";
 }
 
 export interface EvolutionSettings {

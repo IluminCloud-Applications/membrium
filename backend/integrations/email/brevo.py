@@ -29,7 +29,7 @@ class BrevoClient:
 
     def send_email(self, student_data: dict) -> tuple[bool, str]:
         """
-        Envia email para o aluno usando o template configurado.
+        Envia email de cadastro para o aluno usando o template configurado.
 
         Args:
             student_data: Dicionário com dados do aluno (name, email, password, etc.)
@@ -40,22 +40,53 @@ class BrevoClient:
         if not self.is_configured():
             return False, "Brevo não está configurada ou habilitada"
 
+        template = self.settings.get('brevo_email_template')
+        if not template:
+            return False, "Template de email não configurado"
+
+        subject = self.settings.get('brevo_email_subject', 'Bem-vindo ao seu curso')
+        template_mode = self.settings.get('brevo_template_mode', 'simple')
+
+        return self._build_and_send(template, subject, template_mode, student_data)
+
+    def send_forgot_password_email(self, student_data: dict) -> tuple[bool, str]:
+        """
+        Envia email de recuperação de senha usando o template de forgot password.
+
+        Args:
+            student_data: Dicionário com dados do aluno + recovery_link
+
+        Returns:
+            Tupla (success, message)
+        """
+        if not self.is_configured():
+            return False, "Brevo não está configurada ou habilitada"
+
+        template = self.settings.get('brevo_forgot_email_template')
+        if not template:
+            return False, "Template de email de recuperação não configurado"
+
+        subject = self.settings.get('brevo_forgot_email_subject', 'Recuperação de senha')
+        template_mode = self.settings.get('brevo_forgot_template_mode', 'simple')
+
+        return self._build_and_send(template, subject, template_mode, student_data)
+
+    def _build_and_send(
+        self,
+        template: str,
+        subject: str,
+        template_mode: str,
+        student_data: dict,
+    ) -> tuple[bool, str]:
+        """Monta o HTML do email e envia via API."""
         sender_name = self.settings.get('sender_name') or 'Suporte'
         sender_email = self.settings.get('sender_email') or self.settings.get('support_email')
 
         if not sender_email:
             return False, "Email do remetente não configurado"
 
-        template = self.settings.get('brevo_email_template')
-        if not template:
-            return False, "Template de email não configurado"
-
-        # Substituir variáveis no assunto
-        subject = self.settings.get('brevo_email_subject', 'Bem-vindo ao seu curso')
         subject = replace_template_variables(subject, student_data)
 
-        # Gerar HTML do corpo
-        template_mode = self.settings.get('brevo_template_mode', 'simple')
         if template_mode == 'html':
             html_content = replace_template_variables(template, student_data)
         else:
@@ -125,15 +156,12 @@ class BrevoClient:
 
 
 def send_brevo_email(settings_dict: dict, student_data: dict) -> tuple[bool, str]:
-    """
-    Função wrapper para envio de email via Brevo.
-
-    Args:
-        settings_dict: Configurações do sistema
-        student_data: Dados do aluno com variáveis para o template
-
-    Returns:
-        Tupla (success, message)
-    """
+    """Wrapper para envio de email de cadastro via Brevo."""
     client = BrevoClient(settings_dict)
     return client.send_email(student_data)
+
+
+def send_brevo_forgot_email(settings_dict: dict, student_data: dict) -> tuple[bool, str]:
+    """Wrapper para envio de email de recuperação de senha via Brevo."""
+    client = BrevoClient(settings_dict)
+    return client.send_forgot_password_email(student_data)

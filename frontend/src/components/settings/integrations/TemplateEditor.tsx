@@ -8,6 +8,8 @@ import { TemplateVariableBadges, TemplatePreview } from "./TemplateVariables";
 interface TemplateEditorProps {
     /** "brevo" or "evolution" — controls preview formatting */
     format: "email" | "whatsapp";
+    /** Email type: registration or forgot password */
+    emailType?: "registration" | "forgot";
     /** Subject line (only for email) */
     subject?: string;
     onSubjectChange?: (value: string) => void;
@@ -21,6 +23,7 @@ interface TemplateEditorProps {
 
 export function TemplateEditor({
     format,
+    emailType,
     subject,
     onSubjectChange,
     body,
@@ -98,7 +101,7 @@ export function TemplateEditor({
                 </div>
             </div>
 
-            <TemplateVariableBadges onInsert={handleInsertTag} format={format} />
+            <TemplateVariableBadges onInsert={handleInsertTag} format={format} emailType={emailType} />
 
             <div className={`grid gap-4 items-start ${showPreview ? "grid-cols-[1fr_0.43fr]" : "grid-cols-1"}`}>
                 {/* Editor side */}
@@ -169,6 +172,7 @@ function replaceVariablesForHtmlPreview(html: string): string {
         "[[curso]]": '<span style="color: var(--primary); font-weight: 600;">Curso Exemplo</span>',
         "[[link]]": '<span style="color: var(--primary); font-weight: 600;">https://app.com/curso</span>',
         "[[fast_link]]": '<span style="color: var(--primary); font-weight: 600;">https://app.com/fast/xyz</span>',
+        "[[recovery_link]]": '<span style="color: var(--primary); font-weight: 600;">https://app.com/change-password?id=abc123</span>',
         "[[unsubscribe_link]]": '<span style="color: var(--primary); font-weight: 600;">https://app.com/unsubscribe/abc</span>',
     };
 

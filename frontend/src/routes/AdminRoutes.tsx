@@ -10,6 +10,7 @@ import { FilesPage } from "@/pages/files";
 import { TranscriptsPage } from "@/pages/transcripts";
 import { FAQPage } from "@/pages/faq";
 import { SettingsGeneralPage, IntegrationsPage, AIPage } from "@/pages/settings";
+import { CustomizationPage } from "@/pages/customization";
 import { CourseModificationPage } from "@/pages/course_modification";
 import { dashboardService, type UserInfo } from "@/services/dashboard";
 
@@ -64,6 +65,7 @@ export function AdminRoutes({ platformName }: AdminRoutesProps) {
 
                 {/* Settings */}
                 <Route path="configuracoes" element={<SettingsGeneralPage />} />
+                <Route path="configuracoes/personalizacao" element={<CustomizationPage />} />
                 <Route path="configuracoes/integracoes" element={<IntegrationsPage />} />
                 <Route path="configuracoes/ia" element={<AIPage />} />
             </Route>

@@ -141,6 +141,11 @@ class Settings(db.Model):
     brevo_email_template = db.Column(db.Text, nullable=True)
     brevo_template_mode = db.Column(db.String(10), default='simple')  # 'simple' or 'html'
     
+    # Brevo - Forgot Password Email
+    brevo_forgot_email_subject = db.Column(db.String(255), nullable=True)
+    brevo_forgot_email_template = db.Column(db.Text, nullable=True)
+    brevo_forgot_template_mode = db.Column(db.String(10), default='simple')
+    
     # Evolution API Integration
     evolution_enabled = db.Column(db.Boolean, default=False)
     evolution_url = db.Column(db.String(255), nullable=True)
@@ -174,6 +179,13 @@ class Settings(db.Model):
     chatbot_avatar = db.Column(db.String(255), nullable=True)  # caminho para a imagem do avatar
     chatbot_welcome_message = db.Column(db.Text, nullable=True)  # mensagem de boas-vindas
     chatbot_use_internal_knowledge = db.Column(db.Boolean, default=False)  # permite que o chatbot use seu conhecimento interno
+
+class Customization(db.Model):
+    """Platform customization — JSONB columns per area for flexibility."""
+    id = db.Column(db.Integer, primary_key=True)
+    login_page = db.Column(db.JSON, nullable=True, default=dict)   # Login page customization
+    member_area = db.Column(db.JSON, nullable=True, default=dict)  # Future: member area customization
+
 
 class Promotion(db.Model):
     id = db.Column(db.Integer, primary_key=True)

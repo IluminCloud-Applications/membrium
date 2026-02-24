@@ -12,16 +12,19 @@ export interface TemplateVariable {
     description: string;
     /** If set, this variable only appears for this format */
     format?: "email" | "whatsapp";
+    /** If set, this variable only appears for this email type */
+    emailType?: "registration" | "forgot";
 }
 
 export const TEMPLATE_VARIABLES: TemplateVariable[] = [
     { tag: "[[name]]", label: "Nome Completo", description: "Nome completo do aluno" },
     { tag: "[[first_name]]", label: "Primeiro Nome", description: "Primeiro nome do aluno" },
     { tag: "[[email]]", label: "Email", description: "Email do aluno" },
-    { tag: "[[password]]", label: "Senha", description: "Senha criada para o aluno" },
-    { tag: "[[curso]]", label: "Curso", description: "Nome do curso matriculado" },
+    { tag: "[[password]]", label: "Senha", description: "Senha criada para o aluno", emailType: "registration" },
+    { tag: "[[curso]]", label: "Curso", description: "Nome do curso matriculado", emailType: "registration" },
     { tag: "[[link]]", label: "Link de Acesso", description: "Link de acesso ao curso" },
-    { tag: "[[fast_link]]", label: "Acesso Rápido", description: "Link de acesso rápido (sem email/senha)" },
+    { tag: "[[fast_link]]", label: "Acesso Rápido", description: "Link de acesso rápido (sem email/senha)", emailType: "registration" },
+    { tag: "[[recovery_link]]", label: "Link de Recuperação", description: "Link para redefinir a senha", format: "email", emailType: "forgot" },
     { tag: "[[unsubscribe_link]]", label: "Descadastrar", description: "Link para o aluno sair da lista de emails", format: "email" },
 ];
 
@@ -34,11 +37,16 @@ const VARIABLE_LABELS: Record<string, string> = Object.fromEntries(
 interface TemplateVariableBadgesProps {
     onInsert: (tag: string) => void;
     format?: "email" | "whatsapp";
+    emailType?: "registration" | "forgot";
 }
 
-export function TemplateVariableBadges({ onInsert, format }: TemplateVariableBadgesProps) {
+export function TemplateVariableBadges({ onInsert, format, emailType }: TemplateVariableBadgesProps) {
     const filteredVars = TEMPLATE_VARIABLES.filter(
-        (v) => !v.format || v.format === format
+        (v) => {
+            if (v.format && v.format !== format) return false;
+            if (v.emailType && emailType && v.emailType !== emailType) return false;
+            return true;
+        }
     );
     return (
         <TooltipProvider>

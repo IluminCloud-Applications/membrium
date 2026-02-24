@@ -81,6 +81,11 @@ export const sidebarNavGroups: NavGroup[] = [
                 icon: "ri-settings-3-line",
             },
             {
+                title: "Personalização",
+                url: "/admin/configuracoes/personalizacao",
+                icon: "ri-palette-line",
+            },
+            {
                 title: "Integrações",
                 url: "/admin/configuracoes/integracoes",
                 icon: "ri-puzzle-line",

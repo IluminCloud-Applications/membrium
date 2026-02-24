@@ -10,6 +10,7 @@ import { LoginPage } from "@/pages/login";
 import { SetupPage } from "@/pages/setup";
 import { MaintenancePage } from "@/pages/maintenance";
 import { QuickAccessPage } from "@/pages/quick-access";
+import { ChangePasswordPage } from "@/pages/change-password";
 import { AdminRoutes } from "./routes/AdminRoutes";
 import { MemberRoutes } from "./routes/MemberRoutes";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -117,6 +118,12 @@ export default function App() {
             <Route
               path="/auth/youtube/callback"
               element={<YouTubeCallbackPage />}
+            />
+
+            {/* Change password via recovery link (no auth needed) */}
+            <Route
+              path="/change-password"
+              element={<ChangePasswordPage />}
             />
 
             {/* Admin routes — protected, admin only */}

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PasswordInput } from "@/components/auth/PasswordInput";
 import { FormAlert } from "@/components/auth/FormAlert";
 import {
     Dialog,
@@ -19,14 +18,11 @@ interface ForgotPasswordModalProps {
     onOpenChange: (open: boolean) => void;
 }
 
-type Step = "email" | "reset" | "success";
+type Step = "email" | "success";
 
 type ForgotPasswordValues = {
     email: string;
-    newPassword: string;
-    confirmPassword: string;
 };
-
 
 export function ForgotPasswordModal({
     open,
@@ -34,45 +30,26 @@ export function ForgotPasswordModal({
 }: ForgotPasswordModalProps) {
     const [step, setStep] = useState<Step>("email");
 
-    const { values, isLoading, error, setError, handleChange, handleSubmit, reset } =
+    const { values, isLoading, error, handleChange, handleSubmit, reset } =
         useForm<ForgotPasswordValues>({
-            initialValues: { email: "", newPassword: "", confirmPassword: "" },
+            initialValues: { email: "" },
             onSubmit: async (formValues) => {
-                if (step === "email") {
-                    // Validate email exists (in the original flow, this went directly to reset)
-                    if (!formValues.email) {
-                        throw new Error("Informe seu e-mail");
-                    }
-                    setStep("reset");
-                    return;
+                if (!formValues.email) {
+                    throw new Error("Informe seu e-mail");
                 }
 
-                if (step === "reset") {
-                    if (formValues.newPassword !== formValues.confirmPassword) {
-                        throw new Error("As senhas não coincidem");
-                    }
+                const response = await authService.forgotPassword(formValues.email);
 
-                    if (formValues.newPassword.length < 6) {
-                        throw new Error("A senha deve ter pelo menos 6 caracteres");
-                    }
-
-                    const response = await authService.resetPassword({
-                        email: formValues.email,
-                        newPassword: formValues.newPassword,
-                    });
-
-                    if (!response.success) {
-                        throw new Error(response.message);
-                    }
-
-                    setStep("success");
+                if (!response.success) {
+                    throw new Error(response.message);
                 }
+
+                setStep("success");
             },
         });
 
     const handleClose = () => {
         onOpenChange(false);
-        // Reset after animation
         setTimeout(() => {
             setStep("email");
             reset();
@@ -83,79 +60,37 @@ export function ForgotPasswordModal({
         <Dialog open={open} onOpenChange={handleClose}>
             <DialogContent className="sm:max-w-md">
                 {step === "success" ? (
-                    <SuccessView onClose={handleClose} />
+                    <SuccessView email={values.email} onClose={handleClose} />
                 ) : (
                     <>
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
                                 <i className="ri-lock-unlock-line text-primary" />
-                                {step === "email"
-                                    ? "Recuperar senha"
-                                    : "Definir nova senha"}
+                                Recuperar senha
                             </DialogTitle>
                             <DialogDescription>
-                                {step === "email"
-                                    ? "Informe seu e-mail cadastrado para redefinir a senha."
-                                    : "Crie uma nova senha segura para sua conta."}
+                                Informe seu e-mail cadastrado. Enviaremos um link para
+                                você criar uma nova senha.
                             </DialogDescription>
                         </DialogHeader>
 
                         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
                             <FormAlert message={error} type="error" />
 
-                            {step === "email" && (
-                                <div className="form-group animate-fade-in">
-                                    <Label htmlFor="forgot-email" className="form-label">
-                                        E-mail
-                                    </Label>
-                                    <Input
-                                        id="forgot-email"
-                                        type="email"
-                                        value={values.email}
-                                        onChange={handleChange("email")}
-                                        placeholder="seu@email.com"
-                                        required
-                                        autoFocus
-                                    />
-                                </div>
-                            )}
-
-                            {step === "reset" && (
-                                <div className="space-y-4 animate-fade-in">
-                                    <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
-                                        <i className="ri-mail-line text-primary" />
-                                        <span>{values.email}</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setStep("email");
-                                                setError(null);
-                                            }}
-                                            className="ml-auto auth-link text-xs"
-                                        >
-                                            Alterar
-                                        </button>
-                                    </div>
-
-                                    <PasswordInput
-                                        id="forgot-new-password"
-                                        label="Nova senha"
-                                        value={values.newPassword}
-                                        onChange={handleChange("newPassword")}
-                                        placeholder="Mínimo 6 caracteres"
-                                        autoComplete="new-password"
-                                    />
-
-                                    <PasswordInput
-                                        id="forgot-confirm-password"
-                                        label="Confirmar senha"
-                                        value={values.confirmPassword}
-                                        onChange={handleChange("confirmPassword")}
-                                        placeholder="Repita a nova senha"
-                                        autoComplete="new-password"
-                                    />
-                                </div>
-                            )}
+                            <div className="form-group animate-fade-in">
+                                <Label htmlFor="forgot-email" className="form-label">
+                                    E-mail
+                                </Label>
+                                <Input
+                                    id="forgot-email"
+                                    type="email"
+                                    value={values.email}
+                                    onChange={handleChange("email")}
+                                    placeholder="seu@email.com"
+                                    required
+                                    autoFocus
+                                />
+                            </div>
 
                             <div className="flex gap-3 pt-2">
                                 <Button
@@ -173,10 +108,8 @@ export function ForgotPasswordModal({
                                 >
                                     {isLoading ? (
                                         <i className="ri-loader-4-line animate-spin" />
-                                    ) : step === "email" ? (
-                                        "Continuar"
                                     ) : (
-                                        "Redefinir senha"
+                                        "Enviar link"
                                     )}
                                 </Button>
                             </div>
@@ -188,19 +121,22 @@ export function ForgotPasswordModal({
     );
 }
 
-function SuccessView({ onClose }: { onClose: () => void }) {
+function SuccessView({ email, onClose }: { email: string; onClose: () => void }) {
     return (
         <div className="text-center py-4 animate-scale-in">
             <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
-                <i className="ri-checkbox-circle-fill text-3xl text-emerald-500" />
+                <i className="ri-mail-send-fill text-3xl text-emerald-500" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Senha redefinida!</h3>
-            <p className="text-sm text-muted-foreground mb-6">
-                Sua senha foi alterada com sucesso. Você já pode fazer login com a nova
-                senha.
+            <h3 className="text-lg font-semibold mb-2">E-mail enviado!</h3>
+            <p className="text-sm text-muted-foreground mb-2">
+                Se o e-mail <strong>{email}</strong> estiver cadastrado, você receberá
+                um link para redefinir sua senha.
+            </p>
+            <p className="text-xs text-muted-foreground mb-6">
+                Verifique também a pasta de spam.
             </p>
             <Button onClick={onClose} className="btn-brand w-full">
-                Ir para o Login
+                Entendi
             </Button>
         </div>
     );
