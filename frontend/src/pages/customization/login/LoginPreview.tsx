@@ -129,7 +129,7 @@ function ModernPreview({ bgImage, bgc, tc, bc, btc, logoUrl, platformName, subti
                 {bgImage ? <BgLayer src={bgImage} overlay={overlay} /> : <div className="absolute inset-0" style={{ backgroundColor: bgc }} />}
                 <div className="relative z-10 w-full h-full flex items-center justify-center p-3">
                     <div className="w-full max-w-[85%] space-y-1.5 text-center" style={{ color: tc }}>
-                        <BrandBadge logoUrl={logoUrl} name={platformName} />
+                        <BrandBadge logoUrl={logoUrl} name={platformName} centered />
                         <GradientTitle />
                         <p className="text-[5px] truncate opacity-70">{subtitle}</p>
                         <FormSkeleton h="14px" tc={tc} bc={bc} btc={btc} />
@@ -183,10 +183,10 @@ function LogoOrName({ logoUrl, name, size, logoH }: { logoUrl: string | null; na
     );
 }
 
-function BrandBadge({ logoUrl, name }: { logoUrl: string | null; name: string }) {
-    if (logoUrl) return <img src={logoUrl} alt="Logo" className="h-3.5 object-contain" />;
+function BrandBadge({ logoUrl, name, centered }: { logoUrl: string | null; name: string; centered?: boolean }) {
+    if (logoUrl) return <img src={logoUrl} alt="Logo" className={`h-3.5 object-contain ${centered ? "mx-auto" : ""}`} />;
     return (
-        <div className="flex items-center gap-1">
+        <div className={`flex items-center gap-1 ${centered ? "justify-center" : ""}`}>
             <div className="w-3 h-3 rounded bg-gradient-to-br from-red-500 to-orange-500 shrink-0" />
             <span className="text-[6px] font-semibold truncate">{name}</span>
         </div>
