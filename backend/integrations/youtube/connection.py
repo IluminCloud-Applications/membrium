@@ -2,10 +2,10 @@
 YouTube OAuth2 Connection - Handles the OAuth2 flow for YouTube Data API v3.
 
 Flow:
-1. Admin saves client_id + client_secret in Settings
+1. Admin saves client_id + client_secret in IntegrationConfig (provider='youtube')
 2. Admin clicks "Conectar YouTube" → redirected to Google consent screen
 3. Google redirects back with auth code → we exchange for tokens
-4. We store refresh_token in Settings for persistent access
+4. We store refresh_token in IntegrationConfig for persistent access
 """
 import os
 import logging

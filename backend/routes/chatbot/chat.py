@@ -13,8 +13,9 @@ from flask import Blueprint, request, jsonify, session
 from functools import wraps
 from sqlalchemy import text
 
-from models import Admin, Settings, LessonTranscript
+from models import Admin, LessonTranscript
 from db.database import db
+from db.integration_helpers import get_integration, get_ai_api_key
 from ai.models.chatbot import ChatbotAI
 
 logger = logging.getLogger("routes.chatbot.chat")
@@ -38,25 +39,26 @@ def chat_with_bot():
     data = request.json
     query = data.get('message')
     student_id = session.get('user_id')
-    
+
     if not query:
         return jsonify({"error": "Mensagem não fornecida"}), 400
-    
-    settings = Settings.query.first()
-    if not settings or not settings.chatbot_enabled:
+
+    chatbot_enabled, chatbot_config = get_integration('chatbot')
+    if not chatbot_enabled:
         return jsonify({"error": "Chatbot não está configurado ou ativado"}), 400
-    
+
     # Verificar provider e API key
-    provider = settings.chatbot_provider
-    api_key = _get_api_key(settings, provider)
+    provider = chatbot_config.get('provider')
+    api_key = get_ai_api_key(provider)
     if not api_key:
         return jsonify({"error": f"{provider} não está configurada"}), 400
-    
-    # Buscar transcrições relevantes (se não for casual ou se o conhecimento interno está desativado)
+
+    # Buscar transcrições relevantes
+    use_internal = chatbot_config.get('use_internal_knowledge', False)
     relevant_transcripts = None
-    if not ChatbotAI.is_casual_message(query) or not settings.chatbot_use_internal_knowledge:
+    if not ChatbotAI.is_casual_message(query) or not use_internal:
         relevant_transcripts = _search_relevant_lessons(query)
-    
+
     # Gerar resposta
     base_url = request.url_root.rstrip('/')
     response = ChatbotAI.generate_response(
@@ -64,12 +66,12 @@ def chat_with_bot():
         student_id=student_id,
         provider=provider,
         api_key=api_key,
-        model=settings.chatbot_model,
-        use_internal_knowledge=settings.chatbot_use_internal_knowledge,
+        model=chatbot_config.get('model'),
+        use_internal_knowledge=use_internal,
         relevant_transcripts=relevant_transcripts,
         base_url=base_url,
     )
-    
+
     return jsonify({"response": response})
 
 
@@ -106,22 +108,23 @@ def test_chatbot():
     if not query:
         return jsonify({"error": "Mensagem não fornecida"}), 400
 
-    settings = Settings.query.first()
-    if not settings:
+    chatbot_enabled, chatbot_config = get_integration('chatbot')
+    if not chatbot_enabled:
         return jsonify({"error": "Configurações não encontradas"}), 400
 
     # Verificar provider e API key
-    provider = settings.chatbot_provider
-    api_key = _get_api_key(settings, provider)
+    provider = chatbot_config.get('provider')
+    api_key = get_ai_api_key(provider)
     if not api_key:
         return jsonify({"error": f"{provider} não está configurada"}), 400
 
-    # Usar ID negativo para separar histórico de teste do de alunos reais
+    # Usar ID negativo para separar histórico de teste
     test_student_id = -(admin_id)
+    use_internal = chatbot_config.get('use_internal_knowledge', False)
 
     # Buscar transcrições relevantes
     relevant_transcripts = None
-    if not ChatbotAI.is_casual_message(query) or not settings.chatbot_use_internal_knowledge:
+    if not ChatbotAI.is_casual_message(query) or not use_internal:
         relevant_transcripts = _search_relevant_lessons(query)
 
     base_url = request.url_root.rstrip('/')
@@ -130,8 +133,8 @@ def test_chatbot():
         student_id=test_student_id,
         provider=provider,
         api_key=api_key,
-        model=settings.chatbot_model,
-        use_internal_knowledge=settings.chatbot_use_internal_knowledge,
+        model=chatbot_config.get('model'),
+        use_internal_knowledge=use_internal,
         relevant_transcripts=relevant_transcripts,
         base_url=base_url,
     )
@@ -148,29 +151,20 @@ def clear_test_history():
     return jsonify({"success": True, "message": "Histórico de teste limpo."})
 
 
-def _get_api_key(settings: Settings, provider: str) -> str | None:
-    """Retorna a API key do provider configurado."""
-    if provider == 'openai' and settings.openai_api_enabled:
-        return settings.openai_api
-    if provider == 'gemini' and settings.gemini_api_enabled:
-        return settings.gemini_api_key
-    return None
-
-
 def _search_relevant_lessons(query: str, limit: int = 3) -> list:
     """Busca lições relevantes para a consulta usando busca textual."""
     like_query = f"%{query}%"
     query_words = [w.strip() for w in query.lower().split() if len(w.strip()) > 3]
-    
+
     if not query_words:
         return []
-    
+
     # Busca por palavras-chave + vetores + títulos
     word_conditions = []
     for word in query_words:
         word_conditions.append(f"searchable_keywords ILIKE '%{word}%'")
         word_conditions.append(f"transcript_vector ILIKE '%{word}%'")
-    
+
     search_sql = text(f"""
         SELECT DISTINCT lt.id,
             CASE 
@@ -191,14 +185,14 @@ def _search_relevant_lessons(query: str, limit: int = 3) -> list:
         ORDER BY relevance_score DESC
         LIMIT :limit
     """)
-    
+
     results = db.session.execute(
         search_sql,
         {"like_query": like_query, "limit": limit}
     ).fetchall()
-    
+
     transcript_ids = [row.id for row in results]
     if not transcript_ids:
         return []
-    
+
     return LessonTranscript.query.filter(LessonTranscript.id.in_(transcript_ids)).all()

@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify, session, redirect, url_for
 from functools import wraps
 from db.database import db
-from models import Admin, Settings
+from models import Admin
+from db.integration_helpers import get_integration, set_integration
 
 integrations_bp = Blueprint('settings_integrations', __name__)
 
@@ -15,51 +16,46 @@ def admin_required(f):
     return decorated_function
 
 
-def _get_or_create_settings():
-    settings = Settings.query.first()
-    if not settings:
-        settings = Settings()
-        db.session.add(settings)
-    return settings
-
-
 # ─── GET integrations ─────────────────────────────────────────────
 
 @integrations_bp.route('/api/settings/integrations', methods=['GET'])
 @admin_required
 def get_integrations():
-    settings = _get_or_create_settings()
+    brevo_enabled, brevo = get_integration('brevo')
+    evolution_enabled, evolution = get_integration('evolution')
+    youtube_enabled, youtube = get_integration('youtube')
+    _, support = get_integration('support')
 
     return jsonify({
         'brevo': {
-            'enabled': settings.brevo_enabled,
-            'api_key': settings.brevo_api_key or '',
-            'sender_name': settings.sender_name or '',
-            'sender_email': settings.sender_email or '',
-            'email_subject': settings.brevo_email_subject or '',
-            'email_template': settings.brevo_email_template or '',
-            'template_mode': settings.brevo_template_mode or 'simple',
-            'forgot_email_subject': settings.brevo_forgot_email_subject or '',
-            'forgot_email_template': settings.brevo_forgot_email_template or '',
-            'forgot_template_mode': settings.brevo_forgot_template_mode or 'simple',
+            'enabled': brevo_enabled,
+            'api_key': brevo.get('api_key', ''),
+            'sender_name': support.get('sender_name', ''),
+            'sender_email': support.get('sender_email', ''),
+            'email_subject': brevo.get('email_subject', ''),
+            'email_template': brevo.get('email_template', ''),
+            'template_mode': brevo.get('template_mode', 'simple'),
+            'forgot_email_subject': brevo.get('forgot_email_subject', ''),
+            'forgot_email_template': brevo.get('forgot_email_template', ''),
+            'forgot_template_mode': brevo.get('forgot_template_mode', 'simple'),
         },
         'evolution': {
-            'enabled': settings.evolution_enabled,
-            'url': settings.evolution_url or '',
-            'api_key': settings.evolution_api_key or '',
-            'version': settings.evolution_version or '',
-            'instance': settings.evolution_instance or '',
-            'message_template': settings.evolution_message_template or '',
-            'template_mode': settings.evolution_template_mode or 'simple',
+            'enabled': evolution_enabled,
+            'url': evolution.get('url', ''),
+            'api_key': evolution.get('api_key', ''),
+            'version': evolution.get('version', ''),
+            'instance': evolution.get('instance', ''),
+            'message_template': evolution.get('message_template', ''),
+            'template_mode': evolution.get('template_mode', 'simple'),
         },
         'youtube': {
-            'enabled': settings.youtube_enabled,
-            'client_id': settings.youtube_client_id or '',
-            'client_secret': settings.youtube_client_secret or '',
-            'connected': bool(settings.youtube_refresh_token),
-            'channel_name': settings.youtube_channel_name or '',
-            'channel_id': settings.youtube_channel_id or '',
-        }
+            'enabled': youtube_enabled,
+            'client_id': youtube.get('client_id', ''),
+            'client_secret': youtube.get('client_secret', ''),
+            'connected': bool(youtube.get('refresh_token')),
+            'channel_name': youtube.get('channel_name', ''),
+            'channel_id': youtube.get('channel_id', ''),
+        },
     })
 
 
@@ -73,26 +69,33 @@ def update_brevo():
     if isinstance(enabled, str):
         enabled = enabled.lower() == 'true'
 
-    settings = _get_or_create_settings()
-    settings.brevo_enabled = enabled
-
+    config = {}
     if enabled:
         api_key = data.get('api_key')
         if not api_key:
             return jsonify({'success': False, 'message': 'API Key é obrigatória quando Brevo está habilitado'}), 400
-        settings.brevo_api_key = api_key
-        settings.sender_name = data.get('sender_name')
-        settings.sender_email = data.get('sender_email')
-        settings.brevo_email_subject = data.get('email_subject')
-        settings.brevo_email_template = data.get('email_template')
-        settings.brevo_template_mode = data.get('template_mode', 'simple')
-        settings.brevo_forgot_email_subject = data.get('forgot_email_subject')
-        settings.brevo_forgot_email_template = data.get('forgot_email_template')
-        settings.brevo_forgot_template_mode = data.get('forgot_template_mode', 'simple')
-    else:
-        settings.brevo_api_key = None
+        config = {
+            'api_key': api_key,
+            'email_subject': data.get('email_subject'),
+            'email_template': data.get('email_template'),
+            'template_mode': data.get('template_mode', 'simple'),
+            'forgot_email_subject': data.get('forgot_email_subject'),
+            'forgot_email_template': data.get('forgot_email_template'),
+            'forgot_template_mode': data.get('forgot_template_mode', 'simple'),
+        }
 
-    db.session.commit()
+        # Sender info goes to support provider
+        _, support = get_integration('support')
+        support['sender_name'] = data.get('sender_name', support.get('sender_name', ''))
+        support['sender_email'] = data.get('sender_email', support.get('sender_email', ''))
+        set_integration('support', True, support)
+    else:
+        # Keep existing config but clear api_key
+        _, existing = get_integration('brevo')
+        config = existing
+        config['api_key'] = None
+
+    set_integration('brevo', enabled, config)
     return jsonify({'success': True, 'message': 'Configurações da Brevo atualizadas com sucesso'})
 
 
@@ -106,9 +109,7 @@ def update_evolution():
     if isinstance(enabled, str):
         enabled = enabled.lower() == 'true'
 
-    settings = _get_or_create_settings()
-    settings.evolution_enabled = enabled
-
+    config = {}
     if enabled:
         url = data.get('url')
         api_key = data.get('api_key')
@@ -124,16 +125,20 @@ def update_evolution():
         if not instance:
             return jsonify({'success': False, 'message': 'Instância do WhatsApp é obrigatória'}), 400
 
-        settings.evolution_url = url
-        settings.evolution_api_key = api_key
-        settings.evolution_version = version
-        settings.evolution_instance = instance
-        settings.evolution_message_template = data.get('message_template')
-        settings.evolution_template_mode = data.get('template_mode', 'simple')
+        config = {
+            'url': url,
+            'api_key': api_key,
+            'version': version,
+            'instance': instance,
+            'message_template': data.get('message_template'),
+            'template_mode': data.get('template_mode', 'simple'),
+        }
     else:
-        settings.evolution_api_key = None
+        _, existing = get_integration('evolution')
+        config = existing
+        config['api_key'] = None
 
-    db.session.commit()
+    set_integration('evolution', enabled, config)
     return jsonify({'success': True, 'message': 'Configurações da Evolution API atualizadas com sucesso'})
 
 
@@ -215,12 +220,10 @@ def fetch_evolution_instances():
                 if not isinstance(item, dict):
                     continue
 
-                # v2 format: name, connectionStatus, ownerJid at root level
                 name = item.get('name', '')
                 status = item.get('connectionStatus', 'unknown')
                 owner_jid = item.get('ownerJid', '')
 
-                # Extract phone number from JID (remove @s.whatsapp.net)
                 phone = ''
                 if owner_jid and '@' in owner_jid:
                     phone = owner_jid.split('@')[0]
@@ -252,8 +255,8 @@ def update_youtube():
     if isinstance(enabled, str):
         enabled = enabled.lower() == 'true'
 
-    settings = _get_or_create_settings()
-    settings.youtube_enabled = enabled
+    _, existing = get_integration('youtube')
+    config = existing.copy()
 
     if enabled:
         client_id = data.get('client_id')
@@ -264,11 +267,11 @@ def update_youtube():
         if not client_secret:
             return jsonify({'success': False, 'message': 'Client Secret é obrigatório'}), 400
 
-        settings.youtube_client_id = client_id
-        settings.youtube_client_secret = client_secret
+        config['client_id'] = client_id
+        config['client_secret'] = client_secret
     else:
-        settings.youtube_client_id = None
-        settings.youtube_client_secret = None
+        config['client_id'] = None
+        config['client_secret'] = None
 
-    db.session.commit()
+    set_integration('youtube', enabled, config)
     return jsonify({'success': True, 'message': 'Configurações do YouTube atualizadas com sucesso'})

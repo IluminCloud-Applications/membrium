@@ -6,7 +6,7 @@ Endpoints:
   POST /unsubscribe            -> Confirma o unsubscribe (adiciona à blacklist)
 """
 from flask import Blueprint, request, jsonify
-from models import db, EmailBlacklist, Settings
+from models import db, EmailBlacklist
 import logging
 
 logger = logging.getLogger(__name__)
@@ -18,13 +18,9 @@ unsubscribe_bp = Blueprint('unsubscribe', __name__)
 def unsubscribe_page():
     """Exibe página HTML simples de confirmação de unsubscribe."""
     email = request.args.get('email', '')
-    settings = Settings.query.first()
-    platform_name = 'Plataforma'
-    if settings:
-        from models import Admin
-        admin = Admin.query.first()
-        if admin:
-            platform_name = admin.platform_name or 'Plataforma'
+    from models import Admin
+    admin = Admin.query.first()
+    platform_name = admin.platform_name if admin else 'Plataforma'
 
     return _render_unsubscribe_html(email, platform_name)
 

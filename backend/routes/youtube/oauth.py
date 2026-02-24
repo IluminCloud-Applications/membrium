@@ -9,8 +9,8 @@ Endpoints:
 """
 from flask import Blueprint, request, jsonify, session
 from functools import wraps
-from db.database import db
-from models import Admin, Settings
+from models import Admin
+from db.integration_helpers import get_integration, set_integration
 import logging
 
 logger = logging.getLogger("routes.youtube.oauth")
@@ -29,23 +29,15 @@ def admin_required(f):
     return decorated_function
 
 
-def _get_settings():
-    settings = Settings.query.first()
-    if not settings:
-        settings = Settings()
-        db.session.add(settings)
-    return settings
-
-
 @youtube_oauth_bp.route('/auth-url', methods=['POST'])
 @admin_required
 def get_auth_url():
     """Generate the Google OAuth2 consent URL."""
     from integrations.youtube.connection import build_auth_url
 
-    settings = _get_settings()
+    _, youtube = get_integration('youtube')
 
-    if not settings.youtube_client_id or not settings.youtube_client_secret:
+    if not youtube.get('client_id') or not youtube.get('client_secret'):
         return jsonify({
             'success': False,
             'message': 'Salve o Client ID e Client Secret antes de conectar.',
@@ -62,8 +54,8 @@ def get_auth_url():
 
     try:
         auth_url = build_auth_url(
-            client_id=settings.youtube_client_id,
-            client_secret=settings.youtube_client_secret,
+            client_id=youtube['client_id'],
+            client_secret=youtube['client_secret'],
             redirect_uri=redirect_uri,
         )
 
@@ -82,12 +74,12 @@ def get_auth_url():
 @youtube_oauth_bp.route('/callback', methods=['POST'])
 @admin_required
 def handle_callback():
-    """Exchange the auth code for tokens and save to Settings."""
+    """Exchange the auth code for tokens and save to IntegrationConfig."""
     from integrations.youtube.connection import exchange_code
 
-    settings = _get_settings()
+    enabled, youtube = get_integration('youtube')
 
-    if not settings.youtube_client_id or not settings.youtube_client_secret:
+    if not youtube.get('client_id') or not youtube.get('client_secret'):
         return jsonify({
             'success': False,
             'message': 'Credenciais YouTube não configuradas.',
@@ -105,16 +97,16 @@ def handle_callback():
 
     try:
         result = exchange_code(
-            client_id=settings.youtube_client_id,
-            client_secret=settings.youtube_client_secret,
+            client_id=youtube['client_id'],
+            client_secret=youtube['client_secret'],
             code=code,
             redirect_uri=redirect_uri,
         )
 
-        settings.youtube_refresh_token = result['refresh_token']
-        settings.youtube_channel_name = result['channel_name']
-        settings.youtube_channel_id = result['channel_id']
-        db.session.commit()
+        youtube['refresh_token'] = result['refresh_token']
+        youtube['channel_name'] = result['channel_name']
+        youtube['channel_id'] = result['channel_id']
+        set_integration('youtube', enabled, youtube)
 
         return jsonify({
             'success': True,
@@ -141,18 +133,18 @@ def handle_callback():
 @admin_required
 def get_status():
     """Check if YouTube is connected and return channel info."""
-    settings = _get_settings()
+    _, youtube = get_integration('youtube')
 
     connected = bool(
-        settings.youtube_client_id
-        and settings.youtube_client_secret
-        and settings.youtube_refresh_token
+        youtube.get('client_id')
+        and youtube.get('client_secret')
+        and youtube.get('refresh_token')
     )
 
     return jsonify({
         'connected': connected,
-        'channel_name': settings.youtube_channel_name or '',
-        'channel_id': settings.youtube_channel_id or '',
+        'channel_name': youtube.get('channel_name', ''),
+        'channel_id': youtube.get('channel_id', ''),
     })
 
 
@@ -160,12 +152,12 @@ def get_status():
 @admin_required
 def disconnect():
     """Disconnect the YouTube channel by removing refresh token."""
-    settings = _get_settings()
+    enabled, youtube = get_integration('youtube')
 
-    settings.youtube_refresh_token = None
-    settings.youtube_channel_name = None
-    settings.youtube_channel_id = None
-    db.session.commit()
+    youtube['refresh_token'] = None
+    youtube['channel_name'] = None
+    youtube['channel_id'] = None
+    set_integration('youtube', enabled, youtube)
 
     return jsonify({
         'success': True,

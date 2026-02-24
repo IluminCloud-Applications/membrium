@@ -1,7 +1,6 @@
 import os
 import re
-from db.database import db
-from models import Settings
+
 
 def format_description(description):
     """Format description text with HTML tags for URLs and line breaks"""
@@ -21,14 +20,6 @@ def format_description(description):
     
     return description
 
-def get_or_create_settings():
-    """Get existing settings or create new ones if they don't exist"""
-    settings = Settings.query.first()
-    if not settings:
-        settings = Settings()
-        db.session.add(settings)
-        db.session.commit()
-    return settings
 
 def ensure_upload_directory():
     """Ensure that the uploads directory exists"""
@@ -37,6 +28,7 @@ def ensure_upload_directory():
         os.makedirs(uploads_dir)
         print(f"Diretório {uploads_dir} criado")
     return uploads_dir
+
 
 def check_installation():
     """Check if the application has been installed"""

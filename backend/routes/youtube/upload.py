@@ -19,7 +19,8 @@ import requests as http_requests
 from flask import Blueprint, request, jsonify, session as flask_session
 from functools import wraps
 from db.database import db
-from models import Admin, Settings, Lesson, Module
+from models import Admin, Lesson, Module
+from db.integration_helpers import get_integration
 
 logger = logging.getLogger("routes.youtube.upload")
 
@@ -39,17 +40,18 @@ def admin_required(f):
 
 def _get_youtube_credentials():
     """Get stored YouTube OAuth credentials."""
-    settings = Settings.query.first()
-    if not settings or not settings.youtube_refresh_token:
+    _, youtube = get_integration('youtube')
+
+    if not youtube.get('refresh_token'):
         return None, "YouTube não está conectado."
 
-    if not settings.youtube_client_id or not settings.youtube_client_secret:
+    if not youtube.get('client_id') or not youtube.get('client_secret'):
         return None, "Credenciais YouTube não configuradas."
 
     return {
-        "client_id": settings.youtube_client_id,
-        "client_secret": settings.youtube_client_secret,
-        "refresh_token": settings.youtube_refresh_token,
+        "client_id": youtube['client_id'],
+        "client_secret": youtube['client_secret'],
+        "refresh_token": youtube['refresh_token'],
     }, None
 
 

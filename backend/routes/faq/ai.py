@@ -9,8 +9,9 @@ import logging
 from flask import Blueprint, request, jsonify, session
 from functools import wraps
 
-from models import Admin, Settings, LessonTranscript, Lesson, Module, Course
+from models import Admin, LessonTranscript, Lesson, Module, Course
 from db.database import db
+from db.integration_helpers import get_ai_api_key
 from ai.models.faq import FaqAI
 from ai.tools.youtube_transcript import YouTubeTranscriptTool
 
@@ -55,11 +56,7 @@ def generate_faq():
         }), 400
 
     # Verificar se o provider está configurado
-    settings = Settings.query.first()
-    if not settings:
-        return jsonify({'success': False, 'message': 'Configurações não encontradas'}), 404
-
-    api_key = _get_api_key(settings, provider)
+    api_key = get_ai_api_key(provider)
     if not api_key:
         return jsonify({
             'success': False,
@@ -111,13 +108,7 @@ def generate_faq():
         return jsonify({'success': False, 'message': 'Erro interno ao gerar FAQ'}), 500
 
 
-def _get_api_key(settings: Settings, provider: str) -> str | None:
-    """Retorna a API key do provider configurado."""
-    if provider == 'openai' and settings.openai_api_enabled:
-        return settings.openai_api
-    if provider == 'gemini' and settings.gemini_api_enabled:
-        return settings.gemini_api_key
-    return None
+
 
 
 def _get_or_fetch_transcript(lesson: Lesson, module: Module, course: Course) -> str:

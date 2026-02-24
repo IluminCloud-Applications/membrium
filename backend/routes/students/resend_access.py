@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify, session, request
 from functools import wraps
 from werkzeug.security import generate_password_hash
-from models import Admin, Student, Settings
+from models import Admin, Student
+from db.integration_helpers import get_integration
 from integrations import dispatch_notifications
 import secrets
 import logging
@@ -24,28 +25,28 @@ def admin_required(f):
 
 def _get_settings_dict():
     """Retorna as configurações como dicionário."""
-    settings = Settings.query.first()
-    if not settings:
-        return {}
+    brevo_enabled, brevo = get_integration('brevo')
+    evolution_enabled, evolution = get_integration('evolution')
+    _, support = get_integration('support')
 
     return {
-        'brevo_enabled': settings.brevo_enabled,
-        'brevo_api_key': settings.brevo_api_key,
-        'brevo_email_subject': settings.brevo_email_subject,
-        'brevo_email_template': settings.brevo_email_template,
-        'brevo_template_mode': settings.brevo_template_mode,
-        'brevo_forgot_email_subject': settings.brevo_forgot_email_subject,
-        'brevo_forgot_email_template': settings.brevo_forgot_email_template,
-        'brevo_forgot_template_mode': settings.brevo_forgot_template_mode,
-        'sender_name': settings.sender_name,
-        'sender_email': settings.sender_email,
-        'support_email': settings.support_email,
-        'evolution_enabled': settings.evolution_enabled,
-        'evolution_url': settings.evolution_url,
-        'evolution_api_key': settings.evolution_api_key,
-        'evolution_message_template': settings.evolution_message_template,
-        'evolution_version': settings.evolution_version,
-        'evolution_instance': settings.evolution_instance,
+        'brevo_enabled': brevo_enabled,
+        'brevo_api_key': brevo.get('api_key'),
+        'brevo_email_subject': brevo.get('email_subject'),
+        'brevo_email_template': brevo.get('email_template'),
+        'brevo_template_mode': brevo.get('template_mode'),
+        'brevo_forgot_email_subject': brevo.get('forgot_email_subject'),
+        'brevo_forgot_email_template': brevo.get('forgot_email_template'),
+        'brevo_forgot_template_mode': brevo.get('forgot_template_mode'),
+        'sender_name': support.get('sender_name'),
+        'sender_email': support.get('sender_email'),
+        'support_email': support.get('email'),
+        'evolution_enabled': evolution_enabled,
+        'evolution_url': evolution.get('url'),
+        'evolution_api_key': evolution.get('api_key'),
+        'evolution_message_template': evolution.get('message_template'),
+        'evolution_version': evolution.get('version'),
+        'evolution_instance': evolution.get('instance'),
     }
 
 

@@ -126,59 +126,19 @@ class CourseGroup(db.Model):
     principal_course = db.relationship('Course', foreign_keys=[principal_course_id])
     courses = db.relationship('Course', secondary=course_group_courses, backref=db.backref('groups', lazy='dynamic'))
 
-class Settings(db.Model):
+class IntegrationConfig(db.Model):
+    """Configurações flexíveis por integração — uma linha por provider.
+    
+    Providers: 'support', 'brevo', 'evolution', 'youtube', 'gemini', 'openai', 'chatbot'
+    
+    Cada provider armazena seus dados específicos no campo JSONB `config`.
+    O campo `enabled` é separado para facilitar queries de integrações ativas.
+    """
     id = db.Column(db.Integer, primary_key=True)
-    # Support
-    support_email = db.Column(db.String(120), nullable=True)
-    support_whatsapp = db.Column(db.String(20), nullable=True)
-    sender_name = db.Column(db.String(255))
-    sender_email = db.Column(db.String(255))
-    
-    # Brevo Integration
-    brevo_enabled = db.Column(db.Boolean, default=False)
-    brevo_api_key = db.Column(db.String(255), nullable=True)
-    brevo_email_subject = db.Column(db.String(255), nullable=True)
-    brevo_email_template = db.Column(db.Text, nullable=True)
-    brevo_template_mode = db.Column(db.String(10), default='simple')  # 'simple' or 'html'
-    
-    # Brevo - Forgot Password Email
-    brevo_forgot_email_subject = db.Column(db.String(255), nullable=True)
-    brevo_forgot_email_template = db.Column(db.Text, nullable=True)
-    brevo_forgot_template_mode = db.Column(db.String(10), default='simple')
-    
-    # Evolution API Integration
-    evolution_enabled = db.Column(db.Boolean, default=False)
-    evolution_url = db.Column(db.String(255), nullable=True)
-    evolution_api_key = db.Column(db.String(255), nullable=True)
-    evolution_message_template = db.Column(db.Text, nullable=True)
-    evolution_template_mode = db.Column(db.String(10), default='simple')  # 'simple' or 'html'
-    evolution_version = db.Column(db.String(10), nullable=True)
-    evolution_instance = db.Column(db.String(255), nullable=True)
-    
-    # YouTube Integration
-    youtube_enabled = db.Column(db.Boolean, default=False)
-    youtube_client_id = db.Column(db.String(255), nullable=True)
-    youtube_client_secret = db.Column(db.String(255), nullable=True)
-    youtube_refresh_token = db.Column(db.Text, nullable=True)
-    youtube_channel_name = db.Column(db.String(255), nullable=True)
-    youtube_channel_id = db.Column(db.String(255), nullable=True)
-    
-    # Gemini AI Integration
-    gemini_api_enabled = db.Column(db.Boolean, default=False)
-    gemini_api_key = db.Column(db.String(255), nullable=True)
-
-    # OpenAI Integration
-    openai_api_enabled = db.Column(db.Boolean, default=False)
-    openai_api = db.Column(db.String(255), nullable=True)
-    
-    # Chatbot Integration
-    chatbot_enabled = db.Column(db.Boolean, default=False)
-    chatbot_provider = db.Column(db.String(20), nullable=True)  # 'gemini' or 'openai'
-    chatbot_model = db.Column(db.String(50), nullable=True)  # modelo específico a ser usado
-    chatbot_name = db.Column(db.String(100), nullable=True)  # nome do chatbot
-    chatbot_avatar = db.Column(db.String(255), nullable=True)  # caminho para a imagem do avatar
-    chatbot_welcome_message = db.Column(db.Text, nullable=True)  # mensagem de boas-vindas
-    chatbot_use_internal_knowledge = db.Column(db.Boolean, default=False)  # permite que o chatbot use seu conhecimento interno
+    provider = db.Column(db.String(50), unique=True, nullable=False)
+    enabled = db.Column(db.Boolean, default=False)
+    config = db.Column(db.JSON, default=dict)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class Customization(db.Model):
     """Platform customization — JSONB columns per area for flexibility."""

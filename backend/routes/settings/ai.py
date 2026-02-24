@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, session, redirect, url_for
 from functools import wraps
-from db.database import db
-from models import Admin, Settings
+from models import Admin
+from db.integration_helpers import get_integration, set_integration
 import requests as http_requests
 
 ai_bp = Blueprint('settings_ai', __name__)
@@ -16,38 +16,32 @@ def admin_required(f):
     return decorated_function
 
 
-def _get_or_create_settings():
-    settings = Settings.query.first()
-    if not settings:
-        settings = Settings()
-        db.session.add(settings)
-    return settings
-
-
 # ─── GET AI settings ──────────────────────────────────────────────
 
 @ai_bp.route('/api/settings/ai', methods=['GET'])
 @admin_required
 def get_ai_settings():
-    settings = _get_or_create_settings()
+    gemini_enabled, gemini = get_integration('gemini')
+    openai_enabled, openai = get_integration('openai')
+    chatbot_enabled, chatbot = get_integration('chatbot')
 
     return jsonify({
         'gemini': {
-            'enabled': settings.gemini_api_enabled,
-            'api_key': settings.gemini_api_key or '',
+            'enabled': gemini_enabled,
+            'api_key': gemini.get('api_key', ''),
         },
         'openai': {
-            'enabled': settings.openai_api_enabled,
-            'api_key': settings.openai_api or '',
+            'enabled': openai_enabled,
+            'api_key': openai.get('api_key', ''),
         },
         'chatbot': {
-            'enabled': settings.chatbot_enabled,
-            'name': settings.chatbot_name or '',
-            'provider': settings.chatbot_provider or '',
-            'model': settings.chatbot_model or '',
-            'welcome_message': settings.chatbot_welcome_message or '',
-            'use_internal_knowledge': settings.chatbot_use_internal_knowledge,
-        }
+            'enabled': chatbot_enabled,
+            'name': chatbot.get('name', ''),
+            'provider': chatbot.get('provider', ''),
+            'model': chatbot.get('model', ''),
+            'welcome_message': chatbot.get('welcome_message', ''),
+            'use_internal_knowledge': chatbot.get('use_internal_knowledge', False),
+        },
     })
 
 
@@ -61,18 +55,16 @@ def update_gemini():
     if isinstance(enabled, str):
         enabled = enabled.lower() == 'true'
 
-    settings = _get_or_create_settings()
-    settings.gemini_api_enabled = enabled
-
+    config = {}
     if enabled:
         api_key = data.get('api_key')
         if not api_key:
             return jsonify({'success': False, 'message': 'API Key é obrigatória'}), 400
-        settings.gemini_api_key = api_key
+        config['api_key'] = api_key
     else:
-        settings.gemini_api_key = None
+        config['api_key'] = None
 
-    db.session.commit()
+    set_integration('gemini', enabled, config)
     return jsonify({'success': True, 'message': 'Configurações do Gemini atualizadas com sucesso'})
 
 
@@ -86,18 +78,16 @@ def update_openai():
     if isinstance(enabled, str):
         enabled = enabled.lower() == 'true'
 
-    settings = _get_or_create_settings()
-    settings.openai_api_enabled = enabled
-
+    config = {}
     if enabled:
         api_key = data.get('api_key')
         if not api_key:
             return jsonify({'success': False, 'message': 'API Key é obrigatória'}), 400
-        settings.openai_api = api_key
+        config['api_key'] = api_key
     else:
-        settings.openai_api = None
+        config['api_key'] = None
 
-    db.session.commit()
+    set_integration('openai', enabled, config)
     return jsonify({'success': True, 'message': 'Configurações da OpenAI atualizadas com sucesso'})
 
 
@@ -111,17 +101,17 @@ def update_chatbot():
     if isinstance(enabled, str):
         enabled = enabled.lower() == 'true'
 
-    settings = _get_or_create_settings()
-    settings.chatbot_enabled = enabled
+    _, existing = get_integration('chatbot')
+    config = existing.copy()
 
     if enabled:
-        settings.chatbot_name = data.get('name', '')
-        settings.chatbot_provider = data.get('provider', '')
-        settings.chatbot_model = data.get('model', '')
-        settings.chatbot_welcome_message = data.get('welcome_message', '')
-        settings.chatbot_use_internal_knowledge = bool(data.get('use_internal_knowledge', False))
+        config['name'] = data.get('name', '')
+        config['provider'] = data.get('provider', '')
+        config['model'] = data.get('model', '')
+        config['welcome_message'] = data.get('welcome_message', '')
+        config['use_internal_knowledge'] = bool(data.get('use_internal_knowledge', False))
 
-    db.session.commit()
+    set_integration('chatbot', enabled, config)
     return jsonify({'success': True, 'message': 'Configurações do Chatbot atualizadas com sucesso'})
 
 

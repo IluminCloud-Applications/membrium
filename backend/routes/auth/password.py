@@ -4,7 +4,8 @@ Password routes: reset, forgot password, and change password by UUID.
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash
 from db.database import db
-from models import Student, Settings
+from models import Student
+from db.integration_helpers import get_integration
 from integrations.email.brevo import send_brevo_forgot_email
 import logging
 
@@ -15,19 +16,18 @@ password_bp = Blueprint('password', __name__)
 
 def _get_settings_dict():
     """Retorna as configurações como dicionário para envio de email."""
-    settings = Settings.query.first()
-    if not settings:
-        return {}
+    brevo_enabled, brevo = get_integration('brevo')
+    _, support = get_integration('support')
 
     return {
-        'brevo_enabled': settings.brevo_enabled,
-        'brevo_api_key': settings.brevo_api_key,
-        'brevo_forgot_email_subject': settings.brevo_forgot_email_subject,
-        'brevo_forgot_email_template': settings.brevo_forgot_email_template,
-        'brevo_forgot_template_mode': settings.brevo_forgot_template_mode,
-        'sender_name': settings.sender_name,
-        'sender_email': settings.sender_email,
-        'support_email': settings.support_email,
+        'brevo_enabled': brevo_enabled,
+        'brevo_api_key': brevo.get('api_key'),
+        'brevo_forgot_email_subject': brevo.get('forgot_email_subject'),
+        'brevo_forgot_email_template': brevo.get('forgot_email_template'),
+        'brevo_forgot_template_mode': brevo.get('forgot_template_mode'),
+        'sender_name': support.get('sender_name'),
+        'sender_email': support.get('sender_email'),
+        'support_email': support.get('email'),
     }
 
 

@@ -12,8 +12,9 @@ import logging
 from flask import Blueprint, request, jsonify, session
 from functools import wraps
 
-from models import Admin, Settings, LessonTranscript, Lesson, Module, Course
+from models import Admin, LessonTranscript, Lesson, Module, Course
 from db.database import db
+from db.integration_helpers import get_ai_api_key
 from ai.models.transcript_metadata import TranscriptMetadataAI
 from ai.tools.youtube_transcript import YouTubeTranscriptTool
 
@@ -33,13 +34,7 @@ def admin_required(f):
     return decorated_function
 
 
-def _get_api_key(settings: Settings, provider: str) -> str | None:
-    """Retorna a API key do provider configurado."""
-    if provider == 'openai' and settings.openai_api_enabled:
-        return settings.openai_api
-    if provider == 'gemini' and settings.gemini_api_enabled:
-        return settings.gemini_api_key
-    return None
+
 
 
 @ai_bp.route('/pending-lessons', methods=['GET'])
@@ -105,11 +100,8 @@ def generate_metadata():
                 'message': 'Texto da transcrição não fornecido'
             }), 400
 
-        settings = Settings.query.first()
-        if not settings:
-            return jsonify({'success': False, 'message': 'Configurações não encontradas'}), 404
 
-        api_key = _get_api_key(settings, provider)
+        api_key = get_ai_api_key(provider)
         if not api_key:
             return jsonify({
                 'success': False,
@@ -154,11 +146,7 @@ def auto_generate():
         if not lesson_id:
             return jsonify({'success': False, 'message': 'lessonId obrigatório'}), 400
 
-        settings = Settings.query.first()
-        if not settings:
-            return jsonify({'success': False, 'message': 'Configurações não encontradas'}), 404
-
-        api_key = _get_api_key(settings, provider)
+        api_key = get_ai_api_key(provider)
         if not api_key:
             return jsonify({
                 'success': False,

@@ -1,18 +1,19 @@
 from flask import Blueprint, jsonify, session, request
 from werkzeug.security import generate_password_hash
 from db.database import db
-from models import Student, Admin, Settings
+from models import Student, Admin
+from db.integration_helpers import get_integration
 from .auth_helpers import student_required, member_or_preview
 
 member_profile_bp = Blueprint('member_profile', __name__)
 
 
 def _get_support_info():
-    """Returns support contact info from Settings."""
-    settings = Settings.query.first()
+    """Returns support contact info from IntegrationConfig."""
+    _, support = get_integration('support')
     return {
-        'supportEmail': (settings.support_email or '') if settings else '',
-        'supportWhatsapp': (settings.support_whatsapp or '') if settings else '',
+        'supportEmail': support.get('email', ''),
+        'supportWhatsapp': support.get('whatsapp', ''),
     }
 
 
