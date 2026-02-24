@@ -121,4 +121,25 @@ export const courseModificationService = {
 
     deleteLessonFile: (lessonId: number, fileId: number) =>
         apiClient.delete<{ success: boolean }>(`${BASE}/lessons/${lessonId}/files/${fileId}`),
+
+    /* ---------- Export / Import ---------- */
+
+    /** Export course as ZIP download */
+    exportCourse: (courseId: number, courseName: string) => {
+        const safeName = courseName.replace(/\s+/g, '_').toLowerCase().slice(0, 30);
+        return apiClient.downloadBlob(
+            `${BASE}/${courseId}/export`,
+            `curso_${safeName}.zip`
+        );
+    },
+
+    /** Import course from ZIP file */
+    importCourse: (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        return apiClient.request<{ success: boolean; message: string; course_id: number }>(
+            `${BASE}/import`,
+            { method: 'POST', body: formData, headers: {} }
+        );
+    },
 };

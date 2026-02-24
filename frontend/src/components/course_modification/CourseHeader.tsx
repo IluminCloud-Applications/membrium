@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import { courseModificationService } from "@/services/courseModification";
+import { toast } from "sonner";
 
 interface CourseHeaderProps {
     courseName: string;
@@ -11,10 +14,25 @@ interface CourseHeaderProps {
 
 export function CourseHeader({ courseName, courseId, modulesCount, lessonsCount }: CourseHeaderProps) {
     const navigate = useNavigate();
+    const [exporting, setExporting] = useState(false);
 
     function handlePreview() {
         if (!courseId) return;
         window.open(`/member?preview=true`, "_blank");
+    }
+
+    async function handleExport() {
+        if (!courseId) return;
+        setExporting(true);
+        try {
+            await courseModificationService.exportCourse(courseId, courseName);
+            toast.success("Curso exportado com sucesso!");
+        } catch (err) {
+            console.error("Erro ao exportar curso:", err);
+            toast.error("Erro ao exportar curso");
+        } finally {
+            setExporting(false);
+        }
     }
 
     return (
@@ -47,15 +65,31 @@ export function CourseHeader({ courseName, courseId, modulesCount, lessonsCount 
                     </div>
                 </div>
 
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handlePreview}
-                    className="gap-2"
-                >
-                    <i className="ri-eye-line" />
-                    Ver como Aluno
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExport}
+                        disabled={exporting}
+                        className="gap-2"
+                    >
+                        {exporting ? (
+                            <i className="ri-loader-4-line animate-spin" />
+                        ) : (
+                            <i className="ri-download-2-line" />
+                        )}
+                        Exportar Curso
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handlePreview}
+                        className="gap-2"
+                    >
+                        <i className="ri-eye-line" />
+                        Ver como Aluno
+                    </Button>
+                </div>
             </div>
         </div>
     );

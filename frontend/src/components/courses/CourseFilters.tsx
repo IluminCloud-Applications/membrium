@@ -24,6 +24,7 @@ interface CourseFiltersProps {
     onViewModeChange: (value: ViewMode) => void;
     onCreateCourse: () => void;
     onCreateGroup: () => void;
+    onImportCourse: () => void;
     groups: CourseGroup[];
     activeGroupId: number | null;
     onGroupChange: (groupId: number | null) => void;
@@ -48,6 +49,7 @@ export function CourseFilters({
     onViewModeChange,
     onCreateCourse,
     onCreateGroup,
+    onImportCourse,
     groups,
     activeGroupId,
     onGroupChange,
@@ -131,6 +133,11 @@ export function CourseFilters({
                     <Button onClick={onCreateGroup} variant="outline" className="h-9 text-sm">
                         <i className="ri-stack-line mr-1" />
                         Agrupar
+                    </Button>
+
+                    <Button onClick={onImportCourse} variant="outline" className="h-9 text-sm">
+                        <i className="ri-upload-2-line mr-1" />
+                        Importar
                     </Button>
 
                     <Button onClick={onCreateCourse} className="btn-brand h-9 text-sm">

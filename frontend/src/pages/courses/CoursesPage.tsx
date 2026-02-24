@@ -9,6 +9,7 @@ import { CourseModal } from "@/components/modals/courses/CreateCourseModal";
 import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModal";
 import { WebhookModal } from "@/components/modals/courses/WebhookModal";
 import { GroupModal } from "@/components/modals/courses/GroupModal";
+import { ImportCourseModal } from "@/components/modals/courses/ImportCourseModal";
 import type { ViewMode, SortOption } from "@/components/courses";
 import type { Course, CourseCategory, CourseGroup } from "@/types/course";
 import { coursesService } from "@/services/courses";
@@ -33,6 +34,7 @@ export function CoursesPage() {
     const [groupModalOpen, setGroupModalOpen] = useState(false);
     const [editingGroup, setEditingGroup] = useState<CourseGroup | null>(null);
     const [deleteGroupTarget, setDeleteGroupTarget] = useState<CourseGroup | null>(null);
+    const [importModalOpen, setImportModalOpen] = useState(false);
 
     function setViewMode(mode: ViewMode) {
         setViewModeState(mode);
@@ -146,6 +148,7 @@ export function CoursesPage() {
                 sortBy={sortBy} onSortChange={setSortBy}
                 viewMode={viewMode} onViewModeChange={setViewMode}
                 onCreateCourse={handleCreateOpen} onCreateGroup={handleCreateGroup}
+                onImportCourse={() => setImportModalOpen(true)}
                 groups={groups} activeGroupId={activeGroupId} onGroupChange={setActiveGroupId}
             />
 
@@ -179,6 +182,7 @@ export function CoursesPage() {
                 title="Excluir Grupo" description={`Tem certeza que deseja excluir o grupo "${deleteGroupTarget?.name}"? Os cursos não serão removidos, apenas o agrupamento.`} confirmLabel="Excluir Grupo" />
             <WebhookModal open={!!webhookTarget} onOpenChange={() => setWebhookTarget(null)} course={webhookTarget} />
             <GroupModal open={groupModalOpen} onOpenChange={setGroupModalOpen} editGroup={editingGroup} courses={courses} onSubmit={handleGroupSubmit} />
+            <ImportCourseModal open={importModalOpen} onOpenChange={setImportModalOpen} onSuccess={refetch} />
         </div>
     );
 }
