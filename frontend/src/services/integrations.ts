@@ -36,10 +36,37 @@ export interface YouTubeSettings {
     channel_id: string;
 }
 
+export interface VTurbSettings {
+    enabled: boolean;
+    api_key: string;
+    org_id: string;
+}
+
+export interface VTurbVideo {
+    id: string;
+    name: string;
+    pitch_time: number;
+    duration: number;
+    created_at: string;
+}
+
+export interface ProxySettings {
+    enabled: boolean;
+    url: string;
+}
+
+interface VTurbVideosResponse {
+    success: boolean;
+    videos: VTurbVideo[];
+    message?: string;
+}
+
 export interface IntegrationsData {
     brevo: BrevoSettings;
     evolution: EvolutionSettings;
     youtube: YouTubeSettings;
+    vturb: VTurbSettings;
+    proxy: ProxySettings;
 }
 
 interface ApiResponse {
@@ -128,4 +155,16 @@ export const integrationsService = {
     /** Disconnect YouTube channel */
     disconnectYouTube: () =>
         apiClient.post<ApiResponse>("/youtube/disconnect", {}),
+
+    /** Update VTurb settings */
+    updateVTurb: (data: Partial<VTurbSettings>) =>
+        apiClient.post<ApiResponse>("/settings/vturb", data),
+
+    /** Update Proxy settings */
+    updateProxy: (data: Partial<ProxySettings>) =>
+        apiClient.post<ApiResponse>("/settings/proxy", data),
+
+    /** List VTurb videos via backend proxy */
+    listVTurbVideos: (search?: string) =>
+        apiClient.get<VTurbVideosResponse>(`/settings/vturb/videos${search ? `?q=${encodeURIComponent(search)}` : ""}`),
 };

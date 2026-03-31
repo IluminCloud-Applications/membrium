@@ -90,11 +90,21 @@ export function ChatbotTab({ chatbot, gemini, openai, onUpdate }: ChatbotTabProp
         setModel("");
     }
 
-    async function handleSave() {
+    async function handleToggle(value: boolean) {
+        if (value) {
+            // Just expand the form — API called only on "Salvar Configurações"
+            setEnabled(true);
+            return;
+        }
+        // Disabling — call API immediately to persist
+        await handleSave(false);
+    }
+
+    async function handleSave(overrideEnabled?: boolean) {
         setSaving(true);
         try {
             const resp = await aiService.updateChatbot({
-                enabled,
+                enabled: typeof overrideEnabled === "boolean" ? overrideEnabled : enabled,
                 name,
                 provider,
                 model,
@@ -102,6 +112,9 @@ export function ChatbotTab({ chatbot, gemini, openai, onUpdate }: ChatbotTabProp
                 use_internal_knowledge: useInternalKnowledge,
             });
             toast.success(resp.message);
+            if (typeof overrideEnabled === "boolean") {
+                setEnabled(overrideEnabled);
+            }
             onUpdate();
         } catch {
             toast.error("Erro ao salvar configurações do Chatbot");
@@ -118,7 +131,7 @@ export function ChatbotTab({ chatbot, gemini, openai, onUpdate }: ChatbotTabProp
                 title="Chatbot de Suporte"
                 description="Assistente virtual que responde dúvidas com base nas transcrições das aulas"
                 enabled={enabled}
-                onToggle={setEnabled}
+                onToggle={(v) => handleToggle(v)}
             >
                 {/* Name + Provider + Model — side by side */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -211,7 +224,7 @@ export function ChatbotTab({ chatbot, gemini, openai, onUpdate }: ChatbotTabProp
                         Testar Chatbot
                     </Button>
 
-                    <Button onClick={handleSave} disabled={saving} className="btn-brand">
+                    <Button onClick={() => handleSave()} disabled={saving} className="btn-brand">
                         {saving ? (
                             <>
                                 <i className="ri-loader-4-line animate-spin mr-2" />

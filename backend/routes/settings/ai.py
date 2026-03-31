@@ -55,14 +55,19 @@ def update_gemini():
     if isinstance(enabled, str):
         enabled = enabled.lower() == 'true'
 
-    config = {}
+    _, existing = get_integration('gemini')
+    config = existing.copy()
+
     if enabled:
         api_key = data.get('api_key')
         if not api_key:
             return jsonify({'success': False, 'message': 'API Key é obrigatória'}), 400
         config['api_key'] = api_key
     else:
-        config['api_key'] = None
+        # Preserve existing api_key on disable — don't wipe credentials
+        incoming = data.get('api_key')
+        if incoming:
+            config['api_key'] = incoming
 
     set_integration('gemini', enabled, config)
     return jsonify({'success': True, 'message': 'Configurações do Gemini atualizadas com sucesso'})
@@ -78,14 +83,19 @@ def update_openai():
     if isinstance(enabled, str):
         enabled = enabled.lower() == 'true'
 
-    config = {}
+    _, existing = get_integration('openai')
+    config = existing.copy()
+
     if enabled:
         api_key = data.get('api_key')
         if not api_key:
             return jsonify({'success': False, 'message': 'API Key é obrigatória'}), 400
         config['api_key'] = api_key
     else:
-        config['api_key'] = None
+        # Preserve existing api_key on disable — don't wipe credentials
+        incoming = data.get('api_key')
+        if incoming:
+            config['api_key'] = incoming
 
     set_integration('openai', enabled, config)
     return jsonify({'success': True, 'message': 'Configurações da OpenAI atualizadas com sucesso'})

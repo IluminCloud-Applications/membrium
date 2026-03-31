@@ -3,6 +3,8 @@ transcript_sync — Auto-importação de transcrição do YouTube ao criar/edita
 
 Busca a transcrição automaticamente quando a aula possui um vídeo do YouTube
 e salva no banco como LessonTranscript.
+
+Usa a API oficial Google YouTube Data API v3 (captions.list + captions.download).
 """
 
 import logging

@@ -31,74 +31,76 @@ export function LessonFormRight({ form, onChange }: LessonFormRightProps) {
 
     return (
         <div className="space-y-5">
-            {/* CTA section (now first) */}
-            <div className="space-y-4">
-                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <i className="ri-cursor-line text-primary" />
-                    Call to Action (CTA)
-                </h4>
+            {/* CTA section — only for YouTube */}
+            {form.videoPlatform === "youtube" && (
+                <div className="space-y-4">
+                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                        <i className="ri-cursor-line text-primary" />
+                        Call to Action (CTA)
+                    </h4>
 
-                {/* CTA toggle */}
-                <div className="flex items-center justify-between rounded-lg border p-3">
-                    <div className="space-y-0.5">
-                        <Label className="text-sm font-medium">Adicionar CTA</Label>
-                        <p className="text-xs text-muted-foreground">
-                            Exibe um botão de ação durante a aula.
-                        </p>
-                    </div>
-                    <Switch
-                        checked={form.hasCta}
-                        onCheckedChange={(val) => onChange("hasCta", val)}
-                    />
-                </div>
-
-                {/* CTA fields */}
-                {form.hasCta && (
-                    <div className="space-y-4 animate-fade-in">
-                        <div className="space-y-2">
-                            <Label htmlFor="lesson-cta-text">Texto do Botão</Label>
-                            <Input
-                                id="lesson-cta-text"
-                                placeholder="Ex: Garanta sua vaga!"
-                                value={form.ctaText}
-                                onChange={(e) => onChange("ctaText", e.target.value)}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="lesson-cta-url">Link do Botão</Label>
-                            <div className="relative">
-                                <i className="ri-link absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm" />
-                                <Input
-                                    id="lesson-cta-url"
-                                    type="url"
-                                    placeholder="https://..."
-                                    value={form.ctaUrl}
-                                    onChange={(e) => onChange("ctaUrl", e.target.value)}
-                                    className="pl-9"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="lesson-cta-delay">Delay do Botão (segundos)</Label>
-                            <Input
-                                id="lesson-cta-delay"
-                                type="number"
-                                min={0}
-                                value={form.ctaDelay}
-                                onChange={(e) => onChange("ctaDelay", Number(e.target.value))}
-                            />
+                    {/* CTA toggle */}
+                    <div className="flex items-center justify-between rounded-lg border p-3">
+                        <div className="space-y-0.5">
+                            <Label className="text-sm font-medium">Adicionar CTA</Label>
                             <p className="text-xs text-muted-foreground">
-                                Se 0, o botão será exibido imediatamente. Caso contrário,
-                                aparecerá após o tempo especificado.
+                                Exibe um botão de ação durante a aula.
                             </p>
                         </div>
+                        <Switch
+                            checked={form.hasCta}
+                            onCheckedChange={(val) => onChange("hasCta", val)}
+                        />
                     </div>
-                )}
-            </div>
 
-            {/* Attachments (now after CTA) */}
+                    {/* CTA fields */}
+                    {form.hasCta && (
+                        <div className="space-y-4 animate-fade-in">
+                            <div className="space-y-2">
+                                <Label htmlFor="lesson-cta-text">Texto do Botão</Label>
+                                <Input
+                                    id="lesson-cta-text"
+                                    placeholder="Ex: Garanta sua vaga!"
+                                    value={form.ctaText}
+                                    onChange={(e) => onChange("ctaText", e.target.value)}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="lesson-cta-url">Link do Botão</Label>
+                                <div className="relative">
+                                    <i className="ri-link absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm" />
+                                    <Input
+                                        id="lesson-cta-url"
+                                        type="url"
+                                        placeholder="https://..."
+                                        value={form.ctaUrl}
+                                        onChange={(e) => onChange("ctaUrl", e.target.value)}
+                                        className="pl-9"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="lesson-cta-delay">Delay do Botão (segundos)</Label>
+                                <Input
+                                    id="lesson-cta-delay"
+                                    type="number"
+                                    min={0}
+                                    value={form.ctaDelay}
+                                    onChange={(e) => onChange("ctaDelay", Number(e.target.value))}
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    Se 0, o botão será exibido imediatamente. Caso contrário,
+                                    aparecerá após o tempo especificado.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Attachments */}
             <div className="space-y-4">
                 <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <i className="ri-attachment-2 text-primary" />

@@ -14,14 +14,15 @@ import type {
 } from "@/services/courseModification";
 
 export function mapLesson(raw: LessonResponse): Lesson {
+    const platform = (raw.video_platform as "youtube" | "custom" | "vturb") || "youtube";
     return {
         id: raw.id,
         moduleId: raw.module_id,
         title: raw.title,
         description: raw.description,
-        videoPlatform: (raw.video_platform as "youtube" | "custom") || "youtube",
+        videoPlatform: platform,
         videoUrl: raw.video_url,
-        customVideoCode: raw.video_platform === "custom" ? raw.video_url : "",
+        customVideoCode: platform === "custom" ? raw.video_url : "",
         attachments: raw.attachments.map((a): LessonAttachment => ({
             id: a.id,
             name: a.name,
@@ -37,6 +38,7 @@ export function mapLesson(raw: LessonResponse): Lesson {
         order: raw.order,
     };
 }
+
 
 export function mapModule(raw: ModuleResponse): CourseModule {
     return {

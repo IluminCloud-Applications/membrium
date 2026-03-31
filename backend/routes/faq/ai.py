@@ -2,14 +2,15 @@
 FAQ AI Routes — Geração de FAQs com IA usando transcrições.
 
 Endpoints:
-- POST /api/faq/ai/generate → Gera FAQs para uma aula
+- GET  /api/faq/ai/pending-lessons → Lista aulas com status de FAQ, transcrição e YouTube
+- POST /api/faq/ai/generate         → Gera FAQs para uma aula
 """
 
 import logging
 from flask import Blueprint, request, jsonify, session
 from functools import wraps
 
-from models import Admin, LessonTranscript, Lesson, Module, Course
+from models import Admin, LessonTranscript, Lesson, Module, Course, FAQ
 from db.database import db
 from db.integration_helpers import get_ai_api_key
 from ai.models.faq import FaqAI
@@ -29,6 +30,67 @@ def admin_required(f):
             return jsonify({'error': 'Unauthorized'}), 401
         return f(*args, **kwargs)
     return decorated_function
+
+
+
+@ai_bp.route('/ai/pending-lessons', methods=['GET'])
+@admin_required
+def get_pending_lessons():
+    """
+    Lista todas as aulas com status de FAQ, transcrição e se é YouTube.
+    Usada pelo modal de FAQ Automático para mostrar o estado de cada aula.
+    """
+    try:
+        lessons = (
+            Lesson.query
+            .join(Module, Lesson.module_id == Module.id)
+            .join(Course, Module.course_id == Course.id)
+            .order_by(Course.name, Module.order, Lesson.order)
+            .all()
+        )
+
+        result = []
+        for lesson in lessons:
+            module = Module.query.get(lesson.module_id)
+            course = Course.query.get(module.course_id) if module else None
+            if not module or not course:
+                continue
+
+            transcript = LessonTranscript.query.filter_by(lesson_id=lesson.id).first()
+            existing_faqs = FAQ.query.filter_by(lesson_id=lesson.id).count()
+
+            has_transcript = bool(transcript and transcript.transcript_text)
+            has_faq = existing_faqs > 0
+            is_youtube = bool(
+                lesson.video_url and
+                YouTubeTranscriptTool.is_youtube_url(lesson.video_url or '')
+            )
+
+            # Determinar se pode gerar FAQ:
+            # - tem transcrição: SIM
+            # - não tem transcrição mas é YouTube: SIM (vai buscar na hora)
+            # - não tem transcrição e não é YouTube: NÃO
+            can_generate = has_transcript or is_youtube
+
+            result.append({
+                'lessonId': lesson.id,
+                'lessonName': lesson.title,
+                'moduleId': module.id,
+                'moduleName': module.name,
+                'courseId': course.id,
+                'courseName': course.name,
+                'hasTranscript': has_transcript,
+                'hasFaq': has_faq,
+                'isYoutube': is_youtube,
+                'canGenerate': can_generate,
+                'videoUrl': lesson.video_url or '',
+                'faqCount': existing_faqs,
+            })
+
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Erro ao buscar aulas para FAQ automático: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 
 @ai_bp.route('/ai/generate', methods=['POST'])
@@ -132,7 +194,7 @@ def _get_or_fetch_transcript(lesson: Lesson, module: Module, course: Course) -> 
             "Adicione uma transcrição manualmente ou configure um vídeo do YouTube."
         )
 
-    # Buscar transcrição do YouTube
+    # Buscar transcrição via API oficial Google YouTube
     logger.info(f"Buscando transcrição do YouTube para aula {lesson.id}")
     result = YouTubeTranscriptTool.fetch_transcript(video_url)
 

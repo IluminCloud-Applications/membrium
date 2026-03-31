@@ -24,6 +24,8 @@ def get_integrations():
     brevo_enabled, brevo = get_integration('brevo')
     evolution_enabled, evolution = get_integration('evolution')
     youtube_enabled, youtube = get_integration('youtube')
+    vturb_enabled, vturb = get_integration('vturb')
+    proxy_enabled, proxy = get_integration('proxy')
     _, support = get_integration('support')
 
     return jsonify({
@@ -56,6 +58,15 @@ def get_integrations():
             'channel_name': youtube.get('channel_name', ''),
             'channel_id': youtube.get('channel_id', ''),
         },
+        'vturb': {
+            'enabled': vturb_enabled,
+            'api_key': vturb.get('api_key', ''),
+            'org_id': vturb.get('org_id', ''),
+        },
+        'proxy': {
+            'enabled': proxy_enabled,
+            'url': proxy.get('url', ''),
+        },
     })
 
 
@@ -69,12 +80,14 @@ def update_brevo():
     if isinstance(enabled, str):
         enabled = enabled.lower() == 'true'
 
-    config = {}
+    _, existing = get_integration('brevo')
+    config = existing.copy()
+
     if enabled:
         api_key = data.get('api_key')
         if not api_key:
             return jsonify({'success': False, 'message': 'API Key é obrigatória quando Brevo está habilitado'}), 400
-        config = {
+        config.update({
             'api_key': api_key,
             'email_subject': data.get('email_subject'),
             'email_template': data.get('email_template'),
@@ -82,7 +95,7 @@ def update_brevo():
             'forgot_email_subject': data.get('forgot_email_subject'),
             'forgot_email_template': data.get('forgot_email_template'),
             'forgot_template_mode': data.get('forgot_template_mode', 'simple'),
-        }
+        })
 
         # Sender info goes to support provider
         _, support = get_integration('support')
@@ -90,10 +103,10 @@ def update_brevo():
         support['sender_email'] = data.get('sender_email', support.get('sender_email', ''))
         set_integration('support', True, support)
     else:
-        # Keep existing config but clear api_key
-        _, existing = get_integration('brevo')
-        config = existing
-        config['api_key'] = None
+        # Preserve existing credentials on disable — only update what is sent
+        incoming_key = data.get('api_key')
+        if incoming_key:
+            config['api_key'] = incoming_key
 
     set_integration('brevo', enabled, config)
     return jsonify({'success': True, 'message': 'Configurações da Brevo atualizadas com sucesso'})
@@ -109,7 +122,9 @@ def update_evolution():
     if isinstance(enabled, str):
         enabled = enabled.lower() == 'true'
 
-    config = {}
+    _, existing = get_integration('evolution')
+    config = existing.copy()
+
     if enabled:
         url = data.get('url')
         api_key = data.get('api_key')
@@ -125,18 +140,20 @@ def update_evolution():
         if not instance:
             return jsonify({'success': False, 'message': 'Instância do WhatsApp é obrigatória'}), 400
 
-        config = {
+        config.update({
             'url': url,
             'api_key': api_key,
             'version': version,
             'instance': instance,
             'message_template': data.get('message_template'),
             'template_mode': data.get('template_mode', 'simple'),
-        }
+        })
     else:
-        _, existing = get_integration('evolution')
-        config = existing
-        config['api_key'] = None
+        # Preserve existing credentials on disable — only update what is sent
+        for field in ('url', 'api_key', 'version', 'instance', 'message_template', 'template_mode'):
+            incoming = data.get(field)
+            if incoming:
+                config[field] = incoming
 
     set_integration('evolution', enabled, config)
     return jsonify({'success': True, 'message': 'Configurações da Evolution API atualizadas com sucesso'})
@@ -270,8 +287,130 @@ def update_youtube():
         config['client_id'] = client_id
         config['client_secret'] = client_secret
     else:
-        config['client_id'] = None
-        config['client_secret'] = None
+        # Preserve existing credentials on disable
+        incoming_client_id = data.get('client_id')
+        incoming_client_secret = data.get('client_secret')
+        if incoming_client_id:
+            config['client_id'] = incoming_client_id
+        if incoming_client_secret:
+            config['client_secret'] = incoming_client_secret
 
     set_integration('youtube', enabled, config)
     return jsonify({'success': True, 'message': 'Configurações do YouTube atualizadas com sucesso'})
+
+
+# ─── VTurb ─────────────────────────────────────────────────────────
+
+@integrations_bp.route('/api/settings/vturb', methods=['POST'])
+@admin_required
+def update_vturb():
+    data = request.json or request.form
+    enabled = data.get('enabled', False)
+    if isinstance(enabled, str):
+        enabled = enabled.lower() == 'true'
+
+    _, existing = get_integration('vturb')
+    config = existing.copy()
+
+    if enabled:
+        api_key = data.get('api_key')
+        if not api_key:
+            return jsonify({'success': False, 'message': 'API Key é obrigatória quando VTurb está habilitado'}), 400
+        config['api_key'] = api_key
+    else:
+        # Preserve existing api_key on disable (don't wipe credentials)
+        incoming_api_key = data.get('api_key')
+        if incoming_api_key:
+            config['api_key'] = incoming_api_key
+
+    # Always save org_id if provided
+    org_id = data.get('org_id')
+    if org_id is not None:
+        config['org_id'] = org_id
+
+    set_integration('vturb', enabled, config)
+    return jsonify({'success': True, 'message': 'Configurações do VTurb atualizadas com sucesso'})
+
+
+# ─── Proxy ─────────────────────────────────────────────────────────
+
+@integrations_bp.route('/api/settings/proxy', methods=['POST'])
+@admin_required
+def update_proxy():
+    data = request.json or request.form
+    enabled = data.get('enabled', False)
+    if isinstance(enabled, str):
+        enabled = enabled.lower() == 'true'
+
+    _, existing = get_integration('proxy')
+    config = existing.copy()
+
+    if enabled:
+        url = data.get('url')
+        if not url:
+            return jsonify({'success': False, 'message': 'URL do Proxy é obrigatória (ex: http://user:pass@host:port)'}), 400
+        config['url'] = url
+    else:
+        # Preserve existing url on disable
+        incoming_url = data.get('url')
+        if incoming_url:
+            config['url'] = incoming_url
+
+    set_integration('proxy', enabled, config)
+    return jsonify({'success': True, 'message': 'Configurações de Proxy atualizadas com sucesso'})
+
+
+# ─── VTurb — List videos proxy ────────────────────────────────────
+
+@integrations_bp.route('/api/settings/vturb/videos', methods=['GET'])
+@admin_required
+def list_vturb_videos():
+    """Proxy to the VTurb analytics API to list player videos."""
+    _, vturb = get_integration('vturb')
+    api_key = vturb.get('api_key')
+
+    if not api_key:
+        return jsonify({'success': False, 'message': 'VTurb API Key não configurada. Acesse Integrações → VTurb.', 'videos': []}), 400
+
+    search_query = request.args.get('q', '').strip()
+
+    import requests as http_requests
+    try:
+        resp = http_requests.get(
+            'https://analytics.vturb.net/players/list',
+            headers={
+                'X-Api-Token': api_key,
+                'X-Api-Version': 'v1',
+                'Content-Type': 'application/json',
+                'Accept': '*/*',
+            },
+            timeout=15
+        )
+
+        if resp.status_code != 200:
+            return jsonify({
+                'success': False,
+                'message': f'Erro da API VTurb: {resp.status_code}',
+                'videos': []
+            }), 400
+
+        videos = resp.json()
+        if not isinstance(videos, list):
+            videos = []
+
+        # Filter client-side if search query provided
+        if search_query:
+            q_lower = search_query.lower()
+            videos = [
+                v for v in videos
+                if q_lower in v.get('name', '').lower() or q_lower in v.get('id', '').lower()
+            ]
+
+        return jsonify({'success': True, 'videos': videos})
+
+    except http_requests.exceptions.ConnectionError:
+        return jsonify({'success': False, 'message': 'Não foi possível conectar à API do VTurb.', 'videos': []}), 400
+    except http_requests.exceptions.Timeout:
+        return jsonify({'success': False, 'message': 'Timeout ao conectar à API do VTurb.', 'videos': []}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e), 'videos': []}), 500

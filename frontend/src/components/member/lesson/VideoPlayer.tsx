@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import {
     MediaPlayer,
     MediaProvider,
@@ -14,6 +14,8 @@ import {
     type MediaPlayerInstance,
 } from "@vidstack/react";
 import "@vidstack/react/player/styles/base.css";
+import { VTurbPlayer } from "./VTurbPlayer";
+import { integrationsService } from "@/services/integrations";
 
 interface VideoPlayerProps {
     title: string;
@@ -53,13 +55,9 @@ export function VideoPlayer({
         });
     }, [onTimeUpdate, initialTime]);
 
-    // If it's vturb/custom, render as raw HTML
+    // If it's vturb, use the dedicated VTurb player
     if (videoType === "vturb") {
-        return (
-            <div className="lesson-video-container lesson-video-custom">
-                <div dangerouslySetInnerHTML={{ __html: src }} />
-            </div>
-        );
+        return <VTurbEmbedLoader videoId={src} />;
     }
 
     return (
@@ -202,4 +200,18 @@ function getVideoSource(src: string, videoType: string): string {
         return `youtube/${src}`;
     }
     return src;
+}
+
+/* ---- VTurb embed loader ---- */
+
+function VTurbEmbedLoader({ videoId }: { videoId: string }) {
+    const [orgId, setOrgId] = useState("");
+
+    useEffect(() => {
+        integrationsService.getAll()
+            .then((data) => setOrgId(data.vturb?.org_id || ""))
+            .catch(() => { /* ignore */ });
+    }, []);
+
+    return <VTurbPlayer videoId={videoId} orgId={orgId} />;
 }

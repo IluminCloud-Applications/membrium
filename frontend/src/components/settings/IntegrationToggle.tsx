@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -8,7 +9,7 @@ interface IntegrationToggleProps {
     title: string;
     description: string;
     enabled: boolean;
-    onToggle: (enabled: boolean) => void;
+    onToggle: (enabled: boolean) => void | Promise<void>;
     badge?: React.ReactNode;
     children?: React.ReactNode;
 }
@@ -23,6 +24,17 @@ export function IntegrationToggle({
     badge,
     children,
 }: IntegrationToggleProps) {
+    const [toggling, setToggling] = useState(false);
+
+    async function handleToggle(value: boolean) {
+        setToggling(true);
+        try {
+            await onToggle(value);
+        } finally {
+            setToggling(false);
+        }
+    }
+
     return (
         <div className="rounded-lg border bg-card">
             {/* Header row */}
@@ -39,10 +51,15 @@ export function IntegrationToggle({
                         <p className="text-xs text-muted-foreground">{description}</p>
                     </div>
                 </div>
-                <Switch id={id} checked={enabled} onCheckedChange={onToggle} />
+                <Switch
+                    id={id}
+                    checked={enabled}
+                    onCheckedChange={handleToggle}
+                    disabled={toggling}
+                />
             </div>
 
-            {/* Expandable content inside the same card */}
+            {/* Expandable content */}
             {enabled && children && (
                 <>
                     <Separator />
@@ -54,4 +71,3 @@ export function IntegrationToggle({
         </div>
     );
 }
-

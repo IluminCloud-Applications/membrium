@@ -8,6 +8,7 @@ import type {
     FAQItem,
 } from "@/types/faq";
 import type { FAQStatsResponse } from "@/services/faq";
+import { useAutoFAQ } from "./useAutoFAQ";
 
 export function useFAQPage() {
     // Data state
@@ -35,6 +36,7 @@ export function useFAQPage() {
     const [aiModalOpen, setAiModalOpen] = useState(false);
     const [aiLessonId, setAiLessonId] = useState<number>(0);
     const [aiLessonName, setAiLessonName] = useState("");
+    const [autoFaqOpen, setAutoFaqOpen] = useState(false);
 
     // Fetch data
     const fetchData = useCallback(async () => {
@@ -52,6 +54,9 @@ export function useFAQPage() {
             setLoading(false);
         }
     }, []);
+
+    // Auto FAQ hook — must be after fetchData is declared
+    const autoFaq = useAutoFAQ(fetchData);
 
     useEffect(() => {
         fetchData();
@@ -262,6 +267,8 @@ export function useFAQPage() {
         detailsItem, setDetailsItem, deleteTarget, setDeleteTarget,
         aiModalOpen, setAiModalOpen,
         aiLessonId, aiLessonName,
+        autoFaqOpen, setAutoFaqOpen,
+        autoFaq,
         handleCreateOpen, handleEdit, handleView, handleSubmit, handleConfirmDelete,
         handleAIGenerate, handleApplyAIFaqs,
     };

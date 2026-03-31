@@ -102,7 +102,13 @@ export function CourseModificationPage() {
         formData.append("title", data.title);
         formData.append("description", data.description);
         formData.append("video_platform", data.videoPlatform);
-        formData.append("video_url", data.videoPlatform === "custom" ? data.customVideoCode : data.videoUrl);
+        if (data.videoPlatform === "custom") {
+            formData.append("video_url", data.customVideoCode);
+        } else if (data.videoPlatform === "vturb") {
+            formData.append("video_url", data.vturbVideoId);
+        } else {
+            formData.append("video_url", data.videoUrl);
+        }
         formData.append("has_cta", String(data.hasCta));
         if (data.hasCta) {
             formData.append("cta_text", data.ctaText);

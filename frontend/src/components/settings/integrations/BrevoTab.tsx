@@ -54,12 +54,31 @@ export function BrevoTab() {
         setData((prev) => ({ ...prev, ...patch }));
     }
 
-    async function handleSave() {
+    async function handleToggle(value: boolean) {
+        if (value) {
+            // Just expand the form — API called only on "Salvar Configurações"
+            update({ enabled: true });
+            return;
+        }
+        // Disabling — call API immediately to persist
+        await handleSave(false);
+    }
+
+    async function handleSave(overrideEnabled?: boolean) {
         setSaving(true);
         setFeedback(null);
+        
+        const payload = { ...data };
+        if (typeof overrideEnabled === "boolean") {
+            payload.enabled = overrideEnabled;
+        }
+
         try {
-            const res = await integrationsService.updateBrevo(data);
+            const res = await integrationsService.updateBrevo(payload);
             setFeedback(res.message);
+            if (typeof overrideEnabled === "boolean") {
+                setData(prev => ({ ...prev, enabled: overrideEnabled }));
+            }
         } catch {
             setFeedback("Erro ao salvar");
         } finally {
@@ -75,7 +94,7 @@ export function BrevoTab() {
             title="Brevo"
             description="Envie emails automáticos para seus alunos"
             enabled={data.enabled}
-            onToggle={(v) => update({ enabled: v })}
+            onToggle={(v) => handleToggle(v)}
         >
             {/* Sender info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -164,7 +183,7 @@ export function BrevoTab() {
                     <span className="text-sm text-green-600">{feedback}</span>
                 )}
                 <Button
-                    onClick={handleSave}
+                    onClick={() => handleSave()}
                     disabled={saving}
                     className="btn-brand"
                 >

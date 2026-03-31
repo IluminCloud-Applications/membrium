@@ -3,7 +3,7 @@
    Used across course editing components
    ============================================ */
 
-export type VideoPlatform = "youtube" | "custom";
+export type VideoPlatform = "youtube" | "custom" | "vturb";
 
 export interface LessonCTA {
     text: string;
@@ -81,6 +81,7 @@ export interface LessonFormData {
     videoPlatform: VideoPlatform;
     videoUrl: string;
     customVideoCode: string;
+    vturbVideoId: string;
     attachments: File[];
     existingAttachments: LessonAttachment[];
     hasCta: boolean;

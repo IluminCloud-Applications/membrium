@@ -3,6 +3,8 @@ import { SettingsHeader } from "@/components/settings";
 import { BrevoTab } from "@/components/settings/integrations/BrevoTab";
 import { EvolutionTab } from "@/components/settings/integrations/EvolutionTab";
 import { YouTubeTab } from "@/components/settings/integrations/YouTubeTab";
+import { VTurbTab } from "@/components/settings/integrations/VTurbTab";
+import { ProxyTab } from "@/components/settings/integrations/ProxyTab";
 
 export function IntegrationsPage() {
     return (
@@ -36,6 +38,14 @@ export function IntegrationsPage() {
                         <i className="ri-youtube-line" />
                         YouTube
                     </TabsTrigger>
+                    <TabsTrigger value="vturb" className="text-sm px-4 h-8 gap-1.5">
+                        <i className="ri-play-circle-line" />
+                        VTurb
+                    </TabsTrigger>
+                    <TabsTrigger value="proxy" className="text-sm px-4 h-8 gap-1.5">
+                        <i className="ri-shield-keyhole-line" />
+                        Proxy
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="brevo" className="mt-4">
@@ -46,6 +56,12 @@ export function IntegrationsPage() {
                 </TabsContent>
                 <TabsContent value="youtube" className="mt-4">
                     <YouTubeTab />
+                </TabsContent>
+                <TabsContent value="vturb" className="mt-4">
+                    <VTurbTab />
+                </TabsContent>
+                <TabsContent value="proxy" className="mt-4">
+                    <ProxyTab />
                 </TabsContent>
             </Tabs>
         </div>

@@ -39,6 +39,22 @@ export interface FAQAIGenerateResponse {
     message?: string;
 }
 
+/** Lesson status for the auto-FAQ modal */
+export interface FAQPendingLesson {
+    lessonId: number;
+    lessonName: string;
+    moduleId: number;
+    moduleName: string;
+    courseId: number;
+    courseName: string;
+    hasTranscript: boolean;
+    hasFaq: boolean;
+    isYoutube: boolean;
+    canGenerate: boolean;
+    videoUrl: string;
+    faqCount: number;
+}
+
 /* ============================================
    FAQ SERVICE
    ============================================ */
@@ -88,7 +104,12 @@ export const faqService = {
     getLessons: (moduleId: number) =>
         apiClient.get<FAQLesson[]>(`/faq/modules/${moduleId}/lessons`),
 
+    /** Get all lessons with FAQ/transcript/youtube status (for auto-FAQ modal) */
+    getPendingLessons: () =>
+        apiClient.get<FAQPendingLesson[]>("/faq/ai/pending-lessons"),
+
     /** Generate FAQs using AI */
     generateWithAI: (data: FAQAIGeneratePayload) =>
         apiClient.post<FAQAIGenerateResponse>("/faq/ai/generate", data),
 };
+

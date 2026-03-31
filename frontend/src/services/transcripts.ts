@@ -117,9 +117,18 @@ export const transcriptsService = {
     autoGenerate: (data: AutoGeneratePayload) =>
         apiClient.post<AutoGenerateResponse>("/transcripts/auto-generate", data),
 
-    /** Fetch YouTube transcript for a lesson by lessonId */
+    /** Fetch YouTube transcript for a lesson by lessonId (via Google YouTube API) */
     fetchYoutubeTranscript: (lessonId: number) =>
-        apiClient.post<{ success: boolean; text: string; wordCount: number; language: string; message?: string }>(
+        apiClient.post<{
+            success: boolean;
+            text: string;
+            srt: string;
+            wordCount: number;
+            language: string;
+            captionId: string;
+            isAutoSynced: boolean;
+            message?: string;
+        }>(
             "/transcripts/youtube-transcript",
             { lessonId }
         ),

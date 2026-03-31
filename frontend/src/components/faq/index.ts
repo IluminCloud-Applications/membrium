@@ -5,3 +5,4 @@ export { FAQCourseTable } from "./FAQCourseTable";
 export { FAQModuleTable } from "./FAQModuleTable";
 export { FAQLessonTable } from "./FAQLessonTable";
 export { FAQEmptyState } from "./FAQEmptyState";
+export { AutoFAQProgress } from "./AutoFAQProgress";

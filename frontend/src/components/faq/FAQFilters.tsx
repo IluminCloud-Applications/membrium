@@ -5,12 +5,14 @@ interface FAQFiltersProps {
     search: string;
     onSearchChange: (value: string) => void;
     onCreateFaq: () => void;
+    onAutoFaq: () => void;
 }
 
 export function FAQFilters({
     search,
     onSearchChange,
     onCreateFaq,
+    onAutoFaq,
 }: FAQFiltersProps) {
     return (
         <div className="flex items-center gap-3">
@@ -23,6 +25,16 @@ export function FAQFilters({
                     className="pl-9 h-9"
                 />
             </div>
+
+            {/* Auto FAQ button — same design as TranscriptFilters */}
+            <Button
+                variant="outline"
+                className="h-9 text-sm gap-2"
+                onClick={onAutoFaq}
+            >
+                <i className="ri-robot-2-line text-primary" />
+                FAQ Automático
+            </Button>
 
             <Button
                 onClick={onCreateFaq}

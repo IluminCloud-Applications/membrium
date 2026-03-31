@@ -7,9 +7,11 @@ import {
     FAQLessonTable,
     FAQEmptyState,
 } from "@/components/faq";
+import { AutoFAQProgress } from "@/components/faq/AutoFAQProgress";
 import { FAQModal } from "@/components/modals/faq/FAQModal";
 import { FAQDetailsModal } from "@/components/modals/faq/FAQDetailsModal";
 import { FAQAIModal } from "@/components/modals/faq/FAQAIModal";
+import { AutoFAQModal } from "@/components/modals/faq/AutoFAQModal";
 import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModal";
 import { useFAQPage } from "./useFAQPage";
 
@@ -46,6 +48,7 @@ export function FAQPage() {
                 search={faq.search}
                 onSearchChange={faq.setSearch}
                 onCreateFaq={faq.handleCreateOpen}
+                onAutoFaq={() => faq.setAutoFaqOpen(true)}
             />
 
             <FAQBreadcrumb
@@ -83,6 +86,12 @@ export function FAQPage() {
                 onApplyFaqs={faq.handleApplyAIFaqs}
             />
 
+            <AutoFAQModal
+                open={faq.autoFaqOpen}
+                onOpenChange={faq.setAutoFaqOpen}
+                onStartGeneration={faq.autoFaq.startGeneration}
+            />
+
             <DeleteConfirmModal
                 open={!!faq.deleteTarget}
                 onOpenChange={() => faq.setDeleteTarget(null)}
@@ -90,6 +99,12 @@ export function FAQPage() {
                 title="Excluir FAQ"
                 description={`Tem certeza que deseja excluir o FAQ da aula "${faq.deleteTarget?.lessonName}"? Esta ação não pode ser desfeita.`}
                 confirmLabel="Excluir FAQ"
+            />
+
+            {/* Floating progress */}
+            <AutoFAQProgress
+                job={faq.autoFaq.job}
+                onDismiss={faq.autoFaq.dismiss}
             />
         </div>
     );

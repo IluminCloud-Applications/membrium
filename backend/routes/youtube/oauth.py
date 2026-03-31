@@ -53,11 +53,14 @@ def get_auth_url():
         }), 400
 
     try:
-        auth_url = build_auth_url(
+        auth_url, state, code_verifier = build_auth_url(
             client_id=youtube['client_id'],
             client_secret=youtube['client_secret'],
             redirect_uri=redirect_uri,
         )
+
+        session['youtube_oauth_state'] = state
+        session['youtube_code_verifier'] = code_verifier
 
         return jsonify({
             'success': True,
@@ -96,12 +99,19 @@ def handle_callback():
         }), 400
 
     try:
+        code_verifier = session.get('youtube_code_verifier')
+
         result = exchange_code(
             client_id=youtube['client_id'],
             client_secret=youtube['client_secret'],
             code=code,
             redirect_uri=redirect_uri,
+            code_verifier=code_verifier,
         )
+
+        # Clear session vars after successful use
+        session.pop('youtube_code_verifier', None)
+        session.pop('youtube_oauth_state', None)
 
         youtube['refresh_token'] = result['refresh_token']
         youtube['channel_name'] = result['channel_name']

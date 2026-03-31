@@ -259,8 +259,11 @@ def fetch_youtube_transcript():
         return jsonify({
             'success': True,
             'text': result['text'],
+            'srt': result.get('srt', ''),
             'wordCount': result.get('word_count', 0),
             'language': result.get('language_code', 'pt-BR'),
+            'captionId': result.get('caption_id', ''),
+            'isAutoSynced': result.get('is_auto_synced', False),
         })
 
     except Exception as e:

@@ -24,13 +24,33 @@ export function AIApiTab({ gemini, openai, onUpdate }: AIApiTabProps) {
     const [showOpenaiKey, setShowOpenaiKey] = useState(false);
     const [savingOpenai, setSavingOpenai] = useState(false);
 
+    /**
+     * Toggle handler for Gemini:
+     * - Enable → just expand the form (don't call API, key may not be set)
+     * - Disable → call API immediately to persist disabled state
+     */
+    async function handleToggleGemini(value: boolean) {
+        if (value) {
+            setGeminiEnabled(true);
+            return;
+        }
+        setSavingGemini(true);
+        try {
+            const resp = await aiService.updateGemini({ enabled: false, api_key: geminiKey });
+            toast.success(resp.message);
+            setGeminiEnabled(false);
+            onUpdate();
+        } catch {
+            toast.error("Erro ao desabilitar Gemini");
+        } finally {
+            setSavingGemini(false);
+        }
+    }
+
     async function handleSaveGemini() {
         setSavingGemini(true);
         try {
-            const resp = await aiService.updateGemini({
-                enabled: geminiEnabled,
-                api_key: geminiKey,
-            });
+            const resp = await aiService.updateGemini({ enabled: geminiEnabled, api_key: geminiKey });
             toast.success(resp.message);
             onUpdate();
         } catch {
@@ -40,13 +60,33 @@ export function AIApiTab({ gemini, openai, onUpdate }: AIApiTabProps) {
         }
     }
 
+    /**
+     * Toggle handler for OpenAI:
+     * - Enable → just expand the form (don't call API, key may not be set)
+     * - Disable → call API immediately to persist disabled state
+     */
+    async function handleToggleOpenai(value: boolean) {
+        if (value) {
+            setOpenaiEnabled(true);
+            return;
+        }
+        setSavingOpenai(true);
+        try {
+            const resp = await aiService.updateOpenAI({ enabled: false, api_key: openaiKey });
+            toast.success(resp.message);
+            setOpenaiEnabled(false);
+            onUpdate();
+        } catch {
+            toast.error("Erro ao desabilitar OpenAI");
+        } finally {
+            setSavingOpenai(false);
+        }
+    }
+
     async function handleSaveOpenai() {
         setSavingOpenai(true);
         try {
-            const resp = await aiService.updateOpenAI({
-                enabled: openaiEnabled,
-                api_key: openaiKey,
-            });
+            const resp = await aiService.updateOpenAI({ enabled: openaiEnabled, api_key: openaiKey });
             toast.success(resp.message);
             onUpdate();
         } catch {
@@ -65,7 +105,7 @@ export function AIApiTab({ gemini, openai, onUpdate }: AIApiTabProps) {
                 title="Google Gemini"
                 description="IA do Google — rápida, gratuita e recomendada"
                 enabled={geminiEnabled}
-                onToggle={setGeminiEnabled}
+                onToggle={handleToggleGemini}
                 badge={
                     <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px]">
                         Recomendado
@@ -124,7 +164,7 @@ export function AIApiTab({ gemini, openai, onUpdate }: AIApiTabProps) {
                 title="OpenAI"
                 description="IA premium com acesso ao ChatGPT — mais avançada e inteligente"
                 enabled={openaiEnabled}
-                onToggle={setOpenaiEnabled}
+                onToggle={handleToggleOpenai}
             >
                 <div className="space-y-2">
                     <Label htmlFor="openaiApiKey">API Key</Label>

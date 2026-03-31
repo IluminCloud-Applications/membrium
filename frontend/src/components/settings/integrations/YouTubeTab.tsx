@@ -54,16 +54,29 @@ export function YouTubeTab() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [clientId, clientSecret]);
 
-    async function handleSave() {
+    async function handleToggle(value: boolean) {
+        if (value) {
+            // Just expand the form — API called only on "Salvar Configurações"
+            setEnabled(true);
+            return;
+        }
+        // Disabling — call API immediately to persist
+        await handleSave(false);
+    }
+
+    async function handleSave(overrideEnabled?: boolean) {
         setSaving(true);
         setFeedback(null);
         try {
             const res = await integrationsService.updateYouTube({
-                enabled,
+                enabled: typeof overrideEnabled === "boolean" ? overrideEnabled : enabled,
                 client_id: clientId,
                 client_secret: clientSecret,
             });
             setFeedback(res.message);
+            if (typeof overrideEnabled === "boolean") {
+                setEnabled(overrideEnabled);
+            }
         } catch {
             setFeedback("Erro ao salvar");
         } finally {
@@ -152,7 +165,7 @@ export function YouTubeTab() {
             title="YouTube"
             description="Faça upload de vídeos para o YouTube via API"
             enabled={enabled}
-            onToggle={setEnabled}
+            onToggle={(v) => handleToggle(v)}
         >
             <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
                 <i className="ri-information-line text-blue-500" />
@@ -189,7 +202,7 @@ export function YouTubeTab() {
                     </span>
                 )}
                 <Button
-                    onClick={handleSave}
+                    onClick={() => handleSave()}
                     disabled={saving || !canSave}
                     className="btn-brand"
                 >

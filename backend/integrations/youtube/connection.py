@@ -38,10 +38,10 @@ def _build_client_config(client_id: str, client_secret: str) -> dict:
     }
 
 
-def build_auth_url(client_id: str, client_secret: str, redirect_uri: str) -> str:
+def build_auth_url(client_id: str, client_secret: str, redirect_uri: str) -> tuple[str, str, str]:
     """
     Build the Google OAuth2 authorization URL.
-    Returns the URL the admin should be redirected to.
+    Returns the URL the admin should be redirected to, state, and code_verifier.
     """
     client_config = _build_client_config(client_id, client_secret)
 
@@ -57,7 +57,7 @@ def build_auth_url(client_id: str, client_secret: str, redirect_uri: str) -> str
         include_granted_scopes='true',
     )
 
-    return authorization_url
+    return authorization_url, state, flow.code_verifier
 
 
 def exchange_code(
@@ -65,6 +65,7 @@ def exchange_code(
     client_secret: str,
     code: str,
     redirect_uri: str,
+    code_verifier: str = None
 ) -> dict:
     """
     Exchange the authorization code for tokens.
@@ -72,10 +73,17 @@ def exchange_code(
     """
     client_config = _build_client_config(client_id, client_secret)
 
+    flow_kwargs = {}
+    if code_verifier:
+        flow_kwargs['code_verifier'] = code_verifier
+    else:
+        flow_kwargs['autogenerate_code_verifier'] = False
+
     flow = Flow.from_client_config(
         client_config,
         scopes=SCOPES,
         redirect_uri=redirect_uri,
+        **flow_kwargs
     )
 
     flow.fetch_token(code=code)
