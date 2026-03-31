@@ -16,7 +16,7 @@ git push
 
 ```bash
 git add -A
-git commit -m "v1.2.0"
+git commit -m "v1.0"
 git branch -M main
 git push -u origin main
 ```
