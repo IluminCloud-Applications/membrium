@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLessonPage } from "@/hooks/useLessonPage";
 import { memberService } from "@/services/member";
 import { MemberHeader } from "@/components/member";
-import { ChatBubble } from "@/components/member/chatbot";
+import { ChatWidget } from "@/components/member/chatbot";
 import { PreviewBanner } from "@/components/member/PreviewBanner";
 import { usePreview } from "@/contexts/PreviewContext";
 import {
@@ -156,7 +156,7 @@ export function LessonPlayerPage() {
             <footer className="member-footer">
                 <p>{platformName} · Todos os direitos reservados</p>
             </footer>
-            <ChatBubble />
+            <ChatWidget />
         </div>
     );
 }

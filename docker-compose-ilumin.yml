@@ -1,13 +1,14 @@
 services:
   membrium:
-    image: ghcr.io/iluminapp/membrium:${APP_VERSION}
+    image: ghcr.io/ilumincloud-applications/membrium:${APP_VERSION}
     depends_on:
       - postgres
     environment:
       - DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@postgres:5432/membriumwl
+      - DB_PASSWORD=${DB_PASSWORD}
       - FLASK_APP=app.py
       - FLASK_ENV=production
-      - SECRET_KEY=${SECRET_KEY:-super-secret-key-change-me}
+      - SECRET_KEY=${DB_PASSWORD}
     volumes:
       - uploads_data:/app/backend/static/uploads
     networks:

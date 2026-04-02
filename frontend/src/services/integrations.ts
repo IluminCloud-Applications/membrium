@@ -55,6 +55,16 @@ export interface ProxySettings {
     url: string;
 }
 
+export interface ChatwootSettings {
+    enabled: boolean;
+    base_url: string;
+    account_id: string;
+    inbox_id: string;
+    api_key: string;
+    embed_enabled: boolean;
+    embed_script: string;
+}
+
 interface VTurbVideosResponse {
     success: boolean;
     videos: VTurbVideo[];
@@ -67,6 +77,7 @@ export interface IntegrationsData {
     youtube: YouTubeSettings;
     vturb: VTurbSettings;
     proxy: ProxySettings;
+    chatwoot: ChatwootSettings;
 }
 
 interface ApiResponse {
@@ -167,4 +178,12 @@ export const integrationsService = {
     /** List VTurb videos via backend proxy */
     listVTurbVideos: (search?: string) =>
         apiClient.get<VTurbVideosResponse>(`/settings/vturb/videos${search ? `?q=${encodeURIComponent(search)}` : ""}`),
+
+    /** Update Chatwoot settings */
+    updateChatwoot: (data: Partial<ChatwootSettings>) =>
+        apiClient.post<ApiResponse>("/settings/chatwoot", data),
+
+    /** Get public Chatwoot embed config (for member area, no auth required) */
+    getChatwootEmbed: () =>
+        apiClient.get<{ embed_enabled: boolean; embed_script: string }>("/chatwoot/embed"),
 };

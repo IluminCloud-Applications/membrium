@@ -17,6 +17,7 @@ from models import Admin, LessonTranscript
 from db.database import db
 from db.integration_helpers import get_integration, get_ai_api_key
 from ai.models.chatbot import ChatbotAI
+from routes.chatbot.chatwoot_sync import sync_user_and_ai_messages
 
 logger = logging.getLogger("routes.chatbot.chat")
 
@@ -71,6 +72,9 @@ def chat_with_bot():
         relevant_transcripts=relevant_transcripts,
         base_url=base_url,
     )
+
+    # Sincronizar incoming (aluno) + outgoing (IA) ao Chatwoot em background
+    sync_user_and_ai_messages(student_id, query, response)
 
     return jsonify({"response": response})
 

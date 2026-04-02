@@ -26,6 +26,7 @@ def get_integrations():
     youtube_enabled, youtube = get_integration('youtube')
     vturb_enabled, vturb = get_integration('vturb')
     proxy_enabled, proxy = get_integration('proxy')
+    chatwoot_enabled, chatwoot = get_integration('chatwoot')
     _, support = get_integration('support')
 
     return jsonify({
@@ -66,6 +67,15 @@ def get_integrations():
         'proxy': {
             'enabled': proxy_enabled,
             'url': proxy.get('url', ''),
+        },
+        'chatwoot': {
+            'enabled': chatwoot_enabled,
+            'base_url': chatwoot.get('base_url', ''),
+            'account_id': chatwoot.get('account_id', ''),
+            'inbox_id': chatwoot.get('inbox_id', ''),
+            'api_key': chatwoot.get('api_key', ''),
+            'embed_enabled': chatwoot.get('embed_enabled', False),
+            'embed_script': chatwoot.get('embed_script', ''),
         },
     })
 
@@ -414,3 +424,83 @@ def list_vturb_videos():
         return jsonify({'success': False, 'message': 'Timeout ao conectar à API do VTurb.', 'videos': []}), 400
     except Exception as e:
         return jsonify({'success': False, 'message': str(e), 'videos': []}), 500
+
+
+# ─── Chatwoot ─────────────────────────────────────────────────────────
+
+@integrations_bp.route('/api/settings/chatwoot', methods=['POST'])
+@admin_required
+def update_chatwoot():
+    data = request.json or request.form
+    enabled = data.get('enabled', False)
+    if isinstance(enabled, str):
+        enabled = enabled.lower() == 'true'
+
+    embed_enabled = data.get('embed_enabled', False)
+    if isinstance(embed_enabled, str):
+        embed_enabled = embed_enabled.lower() == 'true'
+
+    _, existing = get_integration('chatwoot')
+    config = existing.copy()
+
+    # ── Embed mode (own Chatwoot widget) ──────────────────────────────
+    # When embed is enabled, the sync API credentials are not required.
+    config['embed_enabled'] = embed_enabled
+
+    embed_script = data.get('embed_script', '').strip()
+    if embed_script:
+        config['embed_script'] = embed_script
+
+    if embed_enabled and not config.get('embed_script'):
+        return jsonify({'success': False, 'message': 'Cole o código embed do Chatwoot para ativar'}), 400
+
+    # ── Sync / AI mode credentials ────────────────────────────────────
+    if enabled:
+        base_url = data.get('base_url', '').rstrip('/')
+        account_id = data.get('account_id')
+        inbox_id = data.get('inbox_id')
+        api_key = data.get('api_key')
+
+        if not base_url:
+            return jsonify({'success': False, 'message': 'URL do Chatwoot é obrigatória'}), 400
+        if not account_id:
+            return jsonify({'success': False, 'message': 'Account ID é obrigatório'}), 400
+        if not inbox_id:
+            return jsonify({'success': False, 'message': 'Inbox ID é obrigatório'}), 400
+        if not api_key:
+            return jsonify({'success': False, 'message': 'API Access Token é obrigatório'}), 400
+
+        config['base_url'] = base_url
+        config['account_id'] = account_id
+        config['inbox_id'] = inbox_id
+        config['api_key'] = api_key
+    else:
+        # Preserve credentials if disabling
+        for field, getter in [
+            ('base_url', lambda v: v.rstrip('/')),
+            ('account_id', lambda v: v),
+            ('inbox_id', lambda v: v),
+            ('api_key', lambda v: v),
+        ]:
+            incoming = data.get(field)
+            if incoming:
+                config[field] = getter(incoming)
+
+    set_integration('chatwoot', enabled, config)
+    return jsonify({'success': True, 'message': 'Configurações do Chatwoot atualizadas com sucesso'})
+
+
+# ─── Chatwoot — Public embed endpoint (for members) ───────────────
+
+@integrations_bp.route('/api/chatwoot/embed', methods=['GET'])
+def get_chatwoot_embed():
+    """Public endpoint: returns the embed script if the user has activated their own Chatwoot widget."""
+    _, config = get_integration('chatwoot')
+    embed_enabled = config.get('embed_enabled', False)
+    embed_script = config.get('embed_script', '')
+
+    return jsonify({
+        'embed_enabled': bool(embed_enabled),
+        'embed_script': embed_script if embed_enabled else '',
+    })
+

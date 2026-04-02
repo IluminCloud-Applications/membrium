@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { memberService } from "@/services/member";
 import { MemberHeader } from "@/components/member";
-import { ChatBubble } from "@/components/member/chatbot";
+import { ChatWidget } from "@/components/member/chatbot";
 import { ProfileForm } from "./ProfileForm";
 import { PasswordForm } from "./PasswordForm";
 import { SupportCard } from "./SupportCard";
@@ -103,7 +103,7 @@ export function MemberProfilePage() {
                 />
             </div>
 
-            <ChatBubble />
+            <ChatWidget />
         </div>
     );
 }

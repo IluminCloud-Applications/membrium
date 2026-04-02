@@ -5,6 +5,7 @@ import { EvolutionTab } from "@/components/settings/integrations/EvolutionTab";
 import { YouTubeTab } from "@/components/settings/integrations/YouTubeTab";
 import { VTurbTab } from "@/components/settings/integrations/VTurbTab";
 import { ProxyTab } from "@/components/settings/integrations/ProxyTab";
+import { ChatwootTab } from "@/components/settings/integrations/ChatwootTab";
 
 export function IntegrationsPage() {
     return (
@@ -46,6 +47,10 @@ export function IntegrationsPage() {
                         <i className="ri-shield-keyhole-line" />
                         Proxy
                     </TabsTrigger>
+                    <TabsTrigger value="chatwoot" className="text-sm px-4 h-8 gap-1.5">
+                        <i className="ri-chat-smile-2-line" />
+                        Chatwoot
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="brevo" className="mt-4">
@@ -62,6 +67,9 @@ export function IntegrationsPage() {
                 </TabsContent>
                 <TabsContent value="proxy" className="mt-4">
                     <ProxyTab />
+                </TabsContent>
+                <TabsContent value="chatwoot" className="mt-4">
+                    <ChatwootTab />
                 </TabsContent>
             </Tabs>
         </div>

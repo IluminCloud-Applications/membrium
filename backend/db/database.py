@@ -10,7 +10,18 @@ def init_db(app):
     """Initialize database with Flask app"""
     # Use a fixed secret key from env for session persistence across Gunicorn workers
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(24))
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
+    
+    raw_url = os.environ.get('DATABASE_URL', '')
+    db_password = os.environ.get('DB_PASSWORD')
+    
+    if db_password and raw_url:
+        import urllib.parse
+        encoded_password = urllib.parse.quote_plus(db_password)
+        safe_url = raw_url.replace(f":{db_password}@", f":{encoded_password}@", 1)
+        app.config['SQLALCHEMY_DATABASE_URI'] = safe_url
+    else:
+        app.config['SQLALCHEMY_DATABASE_URI'] = raw_url
+
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # Session cookie configuration — 30 days persistence

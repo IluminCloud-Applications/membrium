@@ -1,13 +1,13 @@
-# LOG POSE
+# MEMBRIUM
 
-Dashboard estratégico de performance para Direct Response.
+Área de Membros para cursos online.
 
 ## Push (após o inicial)
 
 ```bash
 git add .
 git add -A
-git commit -m "v1.0 - applications"
+git commit -m "v1.1 - chatwoot sync"
 git push
 ```
 

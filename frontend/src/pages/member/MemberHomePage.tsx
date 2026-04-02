@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { memberService } from "@/services/member";
 import { MemberHeader, CourseSection, GroupSelectorModal, GroupedCourseView, ShowcaseSection } from "@/components/member";
 import { PromotionQueue } from "@/components/member/promotion";
-import { ChatBubble } from "@/components/member/chatbot";
+import { ChatWidget } from "@/components/member/chatbot";
 import { getContinueWatching } from "@/utils/continueWatching";
 import { usePreview } from "@/contexts/PreviewContext";
 import { PreviewBanner } from "@/components/member/PreviewBanner";
@@ -115,7 +115,7 @@ export function MemberHomePage() {
                     <h2>Nenhum curso disponível</h2>
                     <p>Você ainda não possui acesso a nenhum curso.</p>
                 </div>
-                <ChatBubble />
+                <ChatWidget />
             </div>
         );
     }
@@ -135,7 +135,7 @@ export function MemberHomePage() {
                     platformName={platformName}
                 />
                 {promotions.length > 0 && <PromotionQueue promotions={promotions} />}
-                <ChatBubble />
+                <ChatWidget />
             </div>
         );
     }
@@ -171,7 +171,7 @@ export function MemberHomePage() {
                     <p>{platformName} · Todos os direitos reservados</p>
                 </footer>
                 {promotions.length > 0 && <PromotionQueue promotions={promotions} />}
-                <ChatBubble />
+                <ChatWidget />
             </div>
         );
     }
@@ -213,7 +213,7 @@ export function MemberHomePage() {
                 <p>{platformName} · Todos os direitos reservados</p>
             </footer>
             {promotions.length > 0 && <PromotionQueue promotions={promotions} />}
-            <ChatBubble />
+            <ChatWidget />
         </div>
     );
 }

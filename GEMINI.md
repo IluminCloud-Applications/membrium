@@ -26,7 +26,6 @@ o frontend é em frontend/ e o backend é em backend/
 - Organização do código é o mais importante, precisa ser um código limpo, organizado e bem estruturado.
 - Sempre pense no design dos componentes antes de criar, utilize o shadcn para obter os componentes prontos.
 - Sempre veja o css e veja se tem classes prontas para usar. O ideal é manter o design global, por exemplo, o botão 1 ser x e quando eu quiser repetir ele, basta utilizar a mesma class. Assim mantém o design uniforme em todo o aplicativo.
-- Não faça migrations, estamos em modo dev, SEMPRE o usuário exclui o banco antes de iniciar, então, ele vai criar do zero, por isso, não precisa migrations.
 
 ## Organização do código:
 - O projeto é dividido em frontend/ e backend/
@@ -70,7 +69,7 @@ Lembre-se de no frontend criar em services/ as funções que serão utilizadas, 
 ## RULES:
 - SEMPRE pense em componentes bem organizados e utilizados
 - Organização do código é o mais importante, precisa ser um código limpo, organizado e bem estruturado.
-- Não faça migrations, estamos em modo dev, SEMPRE o usuário exclui o banco antes de iniciar, então, ele vai criar do zero, por isso, não precisa migrations.
+- Crie migrations se necessário dentro de backend/db/migrations/
 - É importante limpar o código, como iremos reescrever o frontend para o modo dinâmico, temos que deletar todo código estático antigo.
 - SEMPRE lembre-se de limpar o código.
 - LEMBRE-SE de que existia um código antigo feito em HTML + JS e precisa excluir após a reorganização. Caso tenha alguma rota/funcionalidade que não vai utilizar na nova versão apague. E lembre-se de organizar corretamente as pastas para qualquer pessoa conseguir encontrar facilmente as APIs/Rotas daquela página, por isso, a slug da página como folder em routes/.
@@ -99,3 +98,7 @@ REGRA IMPORTANTE: Eu prefiro ter 10 componentes do que 1 arquivo gigante com 100
 - Python
 - RabbitMQ
 - Langchain
+
+# Migrations
+O app já está em produção precisa de migrations. A migration é com o nome do dia. Faça um código no app.py ou database.py ou um novo migration.py em db/ para iniciar as migrations, a ideia é: vou colocar o .sql para migrar sem perder dados anteriores do usuário (EXTREMAMENTE IMPORTANTE, SE PERDERMOS OS DADOS OU O APP QUEBRAR MILHARES DE CLIENTES VÃO FICAR SEM ACESSO), por isso é importante que crie o migration se mudou algo no banco.
+Crie com o nome do dia, por exemplo: 20260402.sql. Isso é o migration do dia 02/04/2026. E vai todas as migrations do dia em ordem cronológica dentro desse sql. Se o arquivo já existir do dia atual, apenas adicione as novas migrations dentro dele. Se não existir, crie um novo arquivo com o nome do dia.
