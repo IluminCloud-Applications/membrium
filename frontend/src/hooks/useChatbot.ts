@@ -56,9 +56,22 @@ export function useChatbot(): UseChatbotReturn {
         }
     }
 
+    const messagesRef = useRef<ChatMessage[]>([]);
+
+    // Keep ref in sync so sendMessage closure always sees fresh messages
+    useEffect(() => {
+        messagesRef.current = messages;
+    }, [messages]);
+
     const sendMessage = useCallback(
         async (text: string) => {
             if (!text.trim() || sending) return;
+
+            // Snapshot history BEFORE adding the new user message (last 10)
+            const historySnapshot = messagesRef.current
+                .filter((m) => m.role === "user" || m.role === "assistant")
+                .slice(-10)
+                .map((m) => ({ role: m.role, content: m.content }));
 
             const userMsg: ChatMessage = {
                 id: `msg-${++idCounter.current}`,
@@ -71,7 +84,7 @@ export function useChatbot(): UseChatbotReturn {
             try {
                 const data = await apiClient.post<{ response: string }>(
                     "/chatbot/chat",
-                    { message: text.trim() }
+                    { message: text.trim(), history: historySnapshot }
                 );
 
                 const assistantMsg: ChatMessage = {

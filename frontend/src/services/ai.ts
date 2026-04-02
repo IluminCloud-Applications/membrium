@@ -21,6 +21,7 @@ export interface ChatbotSettings {
     model: string;
     welcome_message: string;
     use_internal_knowledge: boolean;
+    additional_instructions: string;
 }
 
 export interface AISettingsData {

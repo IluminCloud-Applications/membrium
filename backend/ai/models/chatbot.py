@@ -82,6 +82,8 @@ class ChatbotAI:
         use_internal_knowledge: bool,
         relevant_transcripts: list | None = None,
         base_url: str = "",
+        additional_instructions: str = "",
+        client_history: list | None = None,
     ) -> str:
         """
         Gera resposta do chatbot.
@@ -106,25 +108,39 @@ class ChatbotAI:
             is_casual = ChatbotAI.is_casual_message(question)
             has_transcripts = relevant_transcripts and len(relevant_transcripts) > 0
             
-            # Adicionar pergunta ao histórico
+            # Adicionar pergunta ao histórico in-memory (para Chatwoot sync)
             ChatbotAI._append_to_history(student_id, "user", question)
-            history = ChatbotAI._build_langchain_history(ChatbotAI.get_history(student_id)[:-1])
+
+            # Usar histórico do frontend se disponível, senão usa in-memory
+            if client_history:
+                history = ChatbotAI._build_langchain_history(client_history)
+            else:
+                history = ChatbotAI._build_langchain_history(
+                    ChatbotAI.get_history(student_id)[:-1]
+                )
             
+            # Formatar instruções adicionais para o prompt
+            extra = (
+                f"\n\nINSTRUÇÕES ADICIONAIS DO ADMINISTRADOR:\n{additional_instructions.strip()}"
+                if additional_instructions and additional_instructions.strip()
+                else ""
+            )
+
             # Decidir qual prompt usar
             if is_casual and use_internal_knowledge:
                 # Conversa casual com conhecimento interno
                 response = ChatbotAI._respond_with_internal_knowledge(
-                    llm, parser, question, history
+                    llm, parser, question, history, extra
                 )
             elif has_transcripts:
                 # Resposta com base nas transcrições
                 response = ChatbotAI._respond_with_transcripts(
-                    llm, parser, question, history, relevant_transcripts, base_url
+                    llm, parser, question, history, relevant_transcripts, base_url, extra
                 )
             elif use_internal_knowledge:
                 # Sem transcrições mas com conhecimento interno
                 response = ChatbotAI._respond_with_internal_knowledge(
-                    llm, parser, question, history
+                    llm, parser, question, history, extra
                 )
             else:
                 response = "Desculpe, não encontrei informações sobre isso nas aulas. Tente reformular a pergunta ou entre em contato com o suporte."
@@ -140,7 +156,7 @@ class ChatbotAI:
     @staticmethod
     def _respond_with_transcripts(
         llm, parser, question: str, history: list,
-        transcripts: list, base_url: str
+        transcripts: list, base_url: str, additional_instructions: str = ""
     ) -> str:
         """Gera resposta usando transcrições como contexto (RAG)."""
         transcripts_text = ChatbotAI._format_transcripts(transcripts, base_url)
@@ -148,17 +164,21 @@ class ChatbotAI:
         chain = CHATBOT_WITH_TRANSCRIPTS | llm | parser
         return chain.invoke({
             "context_instructions": "Use as transcrições das aulas fornecidas para responder ao aluno.",
+            "additional_instructions": additional_instructions,
             "history": history,
             "transcripts": transcripts_text,
             "question": question,
         })
 
     @staticmethod
-    def _respond_with_internal_knowledge(llm, parser, question: str, history: list) -> str:
+    def _respond_with_internal_knowledge(
+        llm, parser, question: str, history: list, additional_instructions: str = ""
+    ) -> str:
         """Gera resposta usando o conhecimento interno da LLM."""
         chain = CHATBOT_INTERNAL_KNOWLEDGE | llm | parser
         return chain.invoke({
             "context_instructions": "Você pode usar seu conhecimento interno para responder ao aluno.",
+            "additional_instructions": additional_instructions,
             "history": history,
             "question": question,
         })

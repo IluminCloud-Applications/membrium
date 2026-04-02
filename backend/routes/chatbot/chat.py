@@ -54,6 +54,9 @@ def chat_with_bot():
     if not api_key:
         return jsonify({"error": f"{provider} não está configurada"}), 400
 
+    # Histórico enviado pelo frontend (últimas 10 msgs do estado local)
+    client_history = data.get('history') or []
+
     # Buscar transcrições relevantes
     use_internal = chatbot_config.get('use_internal_knowledge', False)
     relevant_transcripts = None
@@ -71,6 +74,8 @@ def chat_with_bot():
         use_internal_knowledge=use_internal,
         relevant_transcripts=relevant_transcripts,
         base_url=base_url,
+        additional_instructions=chatbot_config.get('additional_instructions', ''),
+        client_history=client_history,
     )
 
     # Sincronizar incoming (aluno) + outgoing (IA) ao Chatwoot em background
@@ -141,6 +146,7 @@ def test_chatbot():
         use_internal_knowledge=use_internal,
         relevant_transcripts=relevant_transcripts,
         base_url=base_url,
+        additional_instructions=chatbot_config.get('additional_instructions', ''),
     )
 
     return jsonify({"response": response})

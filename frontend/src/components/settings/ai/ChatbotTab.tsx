@@ -37,6 +37,7 @@ export function ChatbotTab({ chatbot, gemini, openai, onUpdate }: ChatbotTabProp
     const [model, setModel] = useState(chatbot.model);
     const [welcomeMessage, setWelcomeMessage] = useState(chatbot.welcome_message);
     const [useInternalKnowledge, setUseInternalKnowledge] = useState(chatbot.use_internal_knowledge);
+    const [additionalInstructions, setAdditionalInstructions] = useState(chatbot.additional_instructions);
     const [saving, setSaving] = useState(false);
     const [testDrawerOpen, setTestDrawerOpen] = useState(false);
 
@@ -110,6 +111,7 @@ export function ChatbotTab({ chatbot, gemini, openai, onUpdate }: ChatbotTabProp
                 model,
                 welcome_message: welcomeMessage,
                 use_internal_knowledge: useInternalKnowledge,
+                additional_instructions: additionalInstructions,
             });
             toast.success(resp.message);
             if (typeof overrideEnabled === "boolean") {
@@ -206,6 +208,26 @@ export function ChatbotTab({ chatbot, gemini, openai, onUpdate }: ChatbotTabProp
                         checked={useInternalKnowledge}
                         onCheckedChange={setUseInternalKnowledge}
                     />
+                </div>
+
+                {/* Additional instructions */}
+                <div className="space-y-2">
+                    <Label htmlFor="chatbotAdditionalInstructions" className="flex items-center gap-1.5">
+                        <i className="ri-file-text-line text-sm" />
+                        Instruções Adicionais
+                        <span className="text-xs text-muted-foreground font-normal">(opcional)</span>
+                    </Label>
+                    <Textarea
+                        id="chatbotAdditionalInstructions"
+                        value={additionalInstructions}
+                        onChange={(e) => setAdditionalInstructions(e.target.value)}
+                        placeholder={`Ex: Sobre reembolsos, informe que o prazo é de 7 dias corridos conforme o Código de Defesa do Consumidor.\n\nSobre o suporte, oriente o aluno a enviar e-mail para suporte@suaempresa.com.br.`}
+                        className="min-h-[120px] max-h-[240px] resize-y font-mono text-[13px] leading-relaxed"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                        Defina comportamentos personalizados: política de reembolso, canais de suporte, regras específicas do produto e muito mais.
+                        A IA seguirá estas instruções em todas as conversas.
+                    </p>
                 </div>
 
                 {/* Preview */}

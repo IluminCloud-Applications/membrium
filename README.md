@@ -7,7 +7,7 @@
 ```bash
 git add .
 git add -A
-git commit -m "v1.1 - chatwoot sync"
+git commit -m "v1.2 - chatwoot sync"
 git push
 ```
 

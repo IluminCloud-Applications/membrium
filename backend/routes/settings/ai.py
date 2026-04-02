@@ -41,6 +41,7 @@ def get_ai_settings():
             'model': chatbot.get('model', ''),
             'welcome_message': chatbot.get('welcome_message', ''),
             'use_internal_knowledge': chatbot.get('use_internal_knowledge', False),
+            'additional_instructions': chatbot.get('additional_instructions', ''),
         },
     })
 
@@ -120,6 +121,7 @@ def update_chatbot():
         config['model'] = data.get('model', '')
         config['welcome_message'] = data.get('welcome_message', '')
         config['use_internal_knowledge'] = bool(data.get('use_internal_knowledge', False))
+        config['additional_instructions'] = data.get('additional_instructions', '')
 
     set_integration('chatbot', enabled, config)
     return jsonify({'success': True, 'message': 'Configurações do Chatbot atualizadas com sucesso'})

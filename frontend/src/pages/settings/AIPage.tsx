@@ -15,6 +15,7 @@ const DEFAULT_SETTINGS: AISettingsData = {
         model: "",
         welcome_message: "",
         use_internal_knowledge: false,
+        additional_instructions: "",
     },
 };
 
