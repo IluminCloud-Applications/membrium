@@ -25,8 +25,9 @@ interface ModuleCardProps {
     onEditLesson: (lessonId: number) => void;
     onDeleteLesson: (lessonId: number) => void;
     onReorderLessons?: (orderedIds: number[]) => void;
-    onBulkUpload?: () => void;
+    onBulkUpload?: (platform: "youtube" | "telegram") => void;
     youtubeConnected?: boolean;
+    telegramConnected?: boolean;
 }
 
 export function ModuleCard({
@@ -40,6 +41,7 @@ export function ModuleCard({
     onReorderLessons,
     onBulkUpload,
     youtubeConnected,
+    telegramConnected,
 }: ModuleCardProps) {
     const [isOpen, setIsOpen] = useState(false);
     const lessonsCount = module.lessons.length;
@@ -133,13 +135,24 @@ export function ModuleCard({
                                     <i className="ri-add-line mr-2 text-base" /> Adicionar Aula
                                 </DropdownMenuItem>
 
-                                {/* Bulk upload - Only show when YouTube is connected */}
+                                {/* Bulk upload — YouTube */}
                                 {youtubeConnected && onBulkUpload && (
                                     <>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem onClick={onBulkUpload} className="rounded-lg cursor-pointer">
+                                        <DropdownMenuItem onClick={() => onBulkUpload("youtube")} className="rounded-lg cursor-pointer">
                                             <i className="ri-youtube-fill mr-2 text-base text-red-500" />
-                                            Upload em Massa
+                                            Upload em Massa (YouTube)
+                                        </DropdownMenuItem>
+                                    </>
+                                )}
+
+                                {/* Bulk upload — Telegram */}
+                                {telegramConnected && onBulkUpload && (
+                                    <>
+                                        {!youtubeConnected && <DropdownMenuSeparator />}
+                                        <DropdownMenuItem onClick={() => onBulkUpload("telegram")} className="rounded-lg cursor-pointer">
+                                            <i className="ri-telegram-fill mr-2 text-base text-blue-500" />
+                                            Upload em Massa (Telegram)
                                         </DropdownMenuItem>
                                     </>
                                 )}
@@ -171,8 +184,13 @@ export function ModuleCard({
                                         <i className="ri-add-line" /> Adicionar Aula
                                     </Button>
                                     {youtubeConnected && onBulkUpload && (
-                                        <Button variant="outline" size="sm" onClick={onBulkUpload} className="gap-1.5">
-                                            <i className="ri-youtube-fill text-red-500" /> Upload em Massa
+                                        <Button variant="outline" size="sm" onClick={() => onBulkUpload("youtube")} className="gap-1.5">
+                                            <i className="ri-youtube-fill text-red-500" /> Upload YouTube
+                                        </Button>
+                                    )}
+                                    {telegramConnected && onBulkUpload && (
+                                        <Button variant="outline" size="sm" onClick={() => onBulkUpload("telegram")} className="gap-1.5">
+                                            <i className="ri-telegram-fill text-blue-500" /> Upload Telegram
                                         </Button>
                                     )}
                                 </div>

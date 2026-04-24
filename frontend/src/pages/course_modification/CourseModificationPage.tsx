@@ -36,22 +36,30 @@ export function CourseModificationPage() {
         menuItemId?: number;
     } | null>(null);
 
-    // YouTube state
+    // YouTube / Telegram upload state
     const [youtubeConnected, setYoutubeConnected] = useState(false);
+    const [telegramConnected, setTelegramConnected] = useState(false);
     const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
     const [bulkUploadModuleId, setBulkUploadModuleId] = useState<number | null>(null);
+    const [bulkUploadPlatform, setBulkUploadPlatform] = useState<"youtube" | "telegram">("youtube");
 
-    // Check YouTube connection status
+    // Check YouTube & Telegram connection status
     useEffect(() => {
-        async function checkYouTube() {
+        async function checkConnections() {
             try {
                 const res = await integrationsService.getYouTubeStatus();
                 setYoutubeConnected(res.connected);
             } catch {
                 setYoutubeConnected(false);
             }
+            try {
+                const res = await integrationsService.getAll();
+                setTelegramConnected(res.telegram?.connected ?? false);
+            } catch {
+                setTelegramConnected(false);
+            }
         }
-        checkYouTube();
+        checkConnections();
     }, []);
 
     const totalLessons = useMemo(
@@ -102,7 +110,7 @@ export function CourseModificationPage() {
         formData.append("title", data.title);
         formData.append("description", data.description);
         formData.append("video_platform", data.videoPlatform);
-        if (data.videoPlatform === "custom") {
+        if (data.videoPlatform === "custom" || data.videoPlatform === "telegram") {
             formData.append("video_url", data.customVideoCode);
         } else if (data.videoPlatform === "vturb") {
             formData.append("video_url", data.vturbVideoId);
@@ -189,8 +197,9 @@ export function CourseModificationPage() {
     }
 
     /* ---- Bulk Upload ---- */
-    function handleBulkUpload(moduleId: number) {
+    function handleBulkUpload(moduleId: number, platform: "youtube" | "telegram" = "youtube") {
         setBulkUploadModuleId(moduleId);
+        setBulkUploadPlatform(platform);
         setBulkUploadOpen(true);
     }
 
@@ -245,6 +254,7 @@ export function CourseModificationPage() {
                 onAddMenuItem={handleAddMenuItem} onEditMenuItem={handleEditMenuItem} onDeleteMenuItem={handleDeleteMenuItem}
                 onBulkUpload={handleBulkUpload}
                 youtubeConnected={youtubeConnected}
+                telegramConnected={telegramConnected}
             />
             <ModuleModal open={moduleModalOpen} onOpenChange={setModuleModalOpen} editModule={editingModule} onSubmit={handleModuleSubmit} />
             <LessonModal open={lessonModalOpen} onOpenChange={setLessonModalOpen} editLesson={editingLesson} onSubmit={handleLessonSubmit} />
@@ -259,6 +269,7 @@ export function CourseModificationPage() {
                     onOpenChange={setBulkUploadOpen}
                     moduleId={bulkUploadModuleId}
                     moduleName={bulkUploadModuleName}
+                    platform={bulkUploadPlatform}
                     onComplete={handleBulkUploadComplete}
                 />
             )}

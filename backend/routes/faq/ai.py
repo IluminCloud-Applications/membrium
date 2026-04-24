@@ -15,6 +15,7 @@ from db.database import db
 from db.integration_helpers import get_ai_api_key
 from ai.models.faq import FaqAI
 from ai.tools.youtube_transcript import YouTubeTranscriptTool
+from ai.tools.assemblyai_transcript import AssemblyAITranscriptTool
 
 logger = logging.getLogger("routes.faq.ai")
 
@@ -65,12 +66,13 @@ def get_pending_lessons():
                 lesson.video_url and
                 YouTubeTranscriptTool.is_youtube_url(lesson.video_url or '')
             )
+            is_telegram = lesson.video_type == 'telegram'
 
             # Determinar se pode gerar FAQ:
             # - tem transcrição: SIM
-            # - não tem transcrição mas é YouTube: SIM (vai buscar na hora)
-            # - não tem transcrição e não é YouTube: NÃO
-            can_generate = has_transcript or is_youtube
+            # - não tem transcrição mas é YouTube/Telegram: SIM (vai buscar na hora)
+            # - não tem transcrição e não é YouTube/Telegram: NÃO
+            can_generate = has_transcript or is_youtube or is_telegram
 
             result.append({
                 'lessonId': lesson.id,
@@ -82,6 +84,7 @@ def get_pending_lessons():
                 'hasTranscript': has_transcript,
                 'hasFaq': has_faq,
                 'isYoutube': is_youtube,
+                'isTelegram': is_telegram,
                 'canGenerate': can_generate,
                 'videoUrl': lesson.video_url or '',
                 'faqCount': existing_faqs,
@@ -186,17 +189,24 @@ def _get_or_fetch_transcript(lesson: Lesson, module: Module, course: Course) -> 
         logger.info(f"Usando transcrição existente para aula {lesson.id}")
         return existing.transcript_text
 
-    # Verificar se é vídeo do YouTube
     video_url = lesson.video_url
-    if not video_url or not YouTubeTranscriptTool.is_youtube_url(video_url):
+    is_youtube = bool(video_url and YouTubeTranscriptTool.is_youtube_url(video_url))
+    is_telegram = lesson.video_type == 'telegram'
+
+    if not is_youtube and not is_telegram:
         raise ValueError(
-            "Esta aula não possui transcrição nem vídeo do YouTube. "
-            "Adicione uma transcrição manualmente ou configure um vídeo do YouTube."
+            "Esta aula não possui transcrição nem vídeo suportado (YouTube ou Telegram). "
+            "Adicione uma transcrição manualmente ou configure um formato de vídeo compatível."
         )
 
-    # Buscar transcrição via API oficial Google YouTube
-    logger.info(f"Buscando transcrição do YouTube para aula {lesson.id}")
-    result = YouTubeTranscriptTool.fetch_transcript(video_url)
+    if is_telegram:
+        logger.info(f"Buscando transcrição da AssemblyAI (Telegram) para aula {lesson.id}")
+        result = AssemblyAITranscriptTool.fetch_transcript(lesson)
+        provider_name = "assemblyai"
+    else:
+        logger.info(f"Buscando transcrição do YouTube para aula {lesson.id}")
+        result = YouTubeTranscriptTool.fetch_transcript(video_url)
+        provider_name = "youtube_transcript_api"
 
     # Salvar no banco para uso futuro
     transcript = LessonTranscript(
@@ -208,7 +218,7 @@ def _get_or_fetch_transcript(lesson: Lesson, module: Module, course: Course) -> 
         course_name=course.name,
         video_url=video_url,
         transcript_text=result["text"],
-        transcription_provider="youtube_transcript_api",
+        transcription_provider=provider_name,
         language=result.get("language_code", "pt-BR"),
         duration_seconds=result.get("duration_seconds"),
         word_count=result.get("word_count"),

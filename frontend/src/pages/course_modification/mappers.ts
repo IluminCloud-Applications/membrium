@@ -14,7 +14,7 @@ import type {
 } from "@/services/courseModification";
 
 export function mapLesson(raw: LessonResponse): Lesson {
-    const platform = (raw.video_platform as "youtube" | "custom" | "vturb") || "youtube";
+    const platform = (raw.video_platform as "youtube" | "custom" | "vturb" | "telegram") || "youtube";
     return {
         id: raw.id,
         moduleId: raw.module_id,
@@ -22,7 +22,7 @@ export function mapLesson(raw: LessonResponse): Lesson {
         description: raw.description,
         videoPlatform: platform,
         videoUrl: raw.video_url,
-        customVideoCode: platform === "custom" ? raw.video_url : "",
+        customVideoCode: (platform === "custom" || platform === "telegram") ? raw.video_url : "",
         attachments: raw.attachments.map((a): LessonAttachment => ({
             id: a.id,
             name: a.name,

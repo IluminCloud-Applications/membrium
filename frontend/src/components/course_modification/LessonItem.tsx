@@ -34,8 +34,12 @@ export function LessonItem({ lesson, index, onEdit, onDelete }: LessonItemProps)
                 <p className="text-sm font-medium truncate">{lesson.title}</p>
                 <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <i className={lesson.videoPlatform === "youtube" ? "ri-youtube-line" : "ri-code-s-slash-line"} />
-                        {lesson.videoPlatform === "youtube" ? "YouTube" : "Custom"}
+                        <i className={
+                            lesson.videoPlatform === "youtube" ? "ri-youtube-line" : 
+                            lesson.videoPlatform === "vturb" ? "ri-play-circle-line" : "ri-telegram-line"
+                        } />
+                        {lesson.videoPlatform === "youtube" ? "YouTube" : 
+                         lesson.videoPlatform === "vturb" ? "VTurb" : "Telegram"}
                     </span>
                     {lesson.attachments.length > 0 && (
                         <span className="text-xs text-muted-foreground flex items-center gap-1">

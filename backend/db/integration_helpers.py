@@ -18,7 +18,7 @@ def get_integration(provider: str) -> tuple[bool, dict]:
     row = IntegrationConfig.query.filter_by(provider=provider).first()
     if not row:
         return False, {}
-    return row.enabled, row.config or {}
+    return row.enabled, dict(row.config or {})
 
 
 def set_integration(provider: str, enabled: bool, config: dict) -> IntegrationConfig:
@@ -54,7 +54,7 @@ def update_integration_config(provider: str, partial_config: dict) -> Integratio
         row = IntegrationConfig(provider=provider, enabled=False, config={})
         db.session.add(row)
 
-    current = row.config or {}
+    current = dict(row.config or {})
     current.update(partial_config)
     row.config = current
     db.session.commit()

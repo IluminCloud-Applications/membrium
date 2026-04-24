@@ -65,6 +65,20 @@ export interface ChatwootSettings {
     embed_script: string;
 }
 
+export interface TelegramSettings {
+    enabled: boolean;
+    connected: boolean;
+    api_id: string;
+    canal_id: string;
+    canal_nome: string;
+    phone: string;
+}
+
+export interface AssemblyAISettings {
+    enabled: boolean;
+    api_key: string;
+}
+
 interface VTurbVideosResponse {
     success: boolean;
     videos: VTurbVideo[];
@@ -78,6 +92,8 @@ export interface IntegrationsData {
     vturb: VTurbSettings;
     proxy: ProxySettings;
     chatwoot: ChatwootSettings;
+    telegram: TelegramSettings;
+    assemblyai: AssemblyAISettings;
 }
 
 interface ApiResponse {
@@ -186,4 +202,8 @@ export const integrationsService = {
     /** Get public Chatwoot embed config (for member area, no auth required) */
     getChatwootEmbed: () =>
         apiClient.get<{ embed_enabled: boolean; embed_script: string }>("/chatwoot/embed"),
+
+    /** Update AssemblyAI settings */
+    updateAssemblyAI: (data: Partial<AssemblyAISettings>) =>
+        apiClient.post<ApiResponse>("/settings/assemblyai", data),
 };

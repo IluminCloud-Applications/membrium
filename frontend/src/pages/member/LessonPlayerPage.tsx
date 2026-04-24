@@ -103,6 +103,7 @@ export function LessonPlayerPage() {
                             title={currentLesson.title}
                             src={currentLesson.videoUrl}
                             videoType={currentLesson.videoType}
+                            lessonId={currentLesson.id}
                             hasNextLesson={lessons.findIndex((l) => l.id === currentLesson.id) < lessons.length - 1}
                             initialTime={initialVideoTime}
                             onNextLesson={goToNext}

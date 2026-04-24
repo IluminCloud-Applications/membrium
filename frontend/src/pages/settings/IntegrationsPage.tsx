@@ -6,6 +6,8 @@ import { YouTubeTab } from "@/components/settings/integrations/YouTubeTab";
 import { VTurbTab } from "@/components/settings/integrations/VTurbTab";
 import { ProxyTab } from "@/components/settings/integrations/ProxyTab";
 import { ChatwootTab } from "@/components/settings/integrations/ChatwootTab";
+import { TelegramTab } from "@/components/settings/integrations/TelegramTab";
+import { AssemblyAITab } from "@/components/settings/integrations/AssemblyAITab";
 
 export function IntegrationsPage() {
     return (
@@ -51,6 +53,14 @@ export function IntegrationsPage() {
                         <i className="ri-chat-smile-2-line" />
                         Chatwoot
                     </TabsTrigger>
+                    <TabsTrigger value="telegram" className="text-sm px-4 h-8 gap-1.5">
+                        <i className="ri-telegram-line" />
+                        Telegram
+                    </TabsTrigger>
+                    <TabsTrigger value="assemblyai" className="text-sm px-4 h-8 gap-1.5">
+                        <i className="ri-mic-line" />
+                        AssemblyAI
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="brevo" className="mt-4">
@@ -70,6 +80,12 @@ export function IntegrationsPage() {
                 </TabsContent>
                 <TabsContent value="chatwoot" className="mt-4">
                     <ChatwootTab />
+                </TabsContent>
+                <TabsContent value="telegram" className="mt-4">
+                    <TelegramTab />
+                </TabsContent>
+                <TabsContent value="assemblyai" className="mt-4">
+                    <AssemblyAITab />
                 </TabsContent>
             </Tabs>
         </div>

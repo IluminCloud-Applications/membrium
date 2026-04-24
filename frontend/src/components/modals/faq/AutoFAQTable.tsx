@@ -31,7 +31,7 @@ export function AutoFAQTable({ lessons }: AutoFAQTableProps) {
             <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-3 px-4 py-2.5 bg-muted/50 text-xs font-medium text-muted-foreground">
                 <span>Aula</span>
                 <span className="text-center w-24">Transcrição</span>
-                <span className="text-center w-20">YouTube</span>
+                <span className="text-center w-20">Fonte</span>
                 <span className="text-center w-16">FAQs</span>
                 <span className="text-center w-24">Status</span>
             </div>
@@ -72,12 +72,17 @@ function LessonRow({ lesson }: { lesson: FAQPendingLesson }) {
                 )}
             </div>
 
-            {/* YouTube */}
+            {/* Fonte */}
             <div className="w-20 flex justify-center">
                 {lesson.isYoutube ? (
                     <Badge variant="secondary" className="text-[10px] bg-red-500/10 text-red-600 dark:text-red-400">
                         <i className="ri-youtube-line mr-1" />
-                        Sim
+                        YT
+                    </Badge>
+                ) : lesson.isTelegram ? (
+                    <Badge variant="secondary" className="text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                        <i className="ri-telegram-line mr-1" />
+                        TG
                     </Badge>
                 ) : (
                     <Badge variant="outline" className="text-[10px] text-muted-foreground">
@@ -124,11 +129,21 @@ function StatusBadge({ lesson }: { lesson: FAQPendingLesson }) {
         );
     }
 
-    // Is YouTube but no transcript yet
-    return (
-        <Badge variant="secondary" className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-400">
-            <i className="ri-youtube-line mr-1" />
-            Via YT
-        </Badge>
-    );
+    // Is YouTube/Telegram but no transcript yet
+    if (lesson.isYoutube) {
+        return (
+            <Badge variant="secondary" className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-400">
+                <i className="ri-youtube-line mr-1" />
+                Via YT
+            </Badge>
+        );
+    }
+    if (lesson.isTelegram) {
+        return (
+            <Badge variant="secondary" className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-400">
+                <i className="ri-telegram-line mr-1" />
+                Via TG
+            </Badge>
+        );
+    }
 }

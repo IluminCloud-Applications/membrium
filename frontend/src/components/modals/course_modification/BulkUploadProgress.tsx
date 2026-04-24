@@ -1,9 +1,23 @@
 import { Button } from "@/components/ui/button";
 import type { YouTubeUploadResult } from "@/services/youtubeUpload";
+import type { TelegramUploadResult } from "@/services/telegramService";
+
+type BulkResult = YouTubeUploadResult | TelegramUploadResult;
 
 interface BulkUploadProgressProps {
-    results: YouTubeUploadResult[];
+    results: BulkResult[];
     onClose: () => void;
+}
+
+function getSuccessDetail(result: BulkResult): string | null {
+    if ("video_url" in result && result.video_url) return result.video_url;
+    if ("message_id" in result && result.message_id) return `Telegram message_id: ${result.message_id}`;
+    return null;
+}
+
+function getSuccessIcon(result: BulkResult): string {
+    if ("video_url" in result) return "ri-youtube-line";
+    return "ri-telegram-line";
 }
 
 export function BulkUploadProgress({ results, onClose }: BulkUploadProgressProps) {
@@ -55,12 +69,15 @@ export function BulkUploadProgress({ results, onClose }: BulkUploadProgressProps
                             }`} />
                         <div className="flex-1 min-w-0">
                             <p className="font-medium truncate">{result.title}</p>
-                            {result.success && result.video_url && (
-                                <p className="text-xs text-muted-foreground truncate">
-                                    <i className="ri-youtube-line mr-1" />
-                                    {result.video_url}
-                                </p>
-                            )}
+                            {result.success && (() => {
+                                const detail = getSuccessDetail(result);
+                                return detail ? (
+                                    <p className="text-xs text-muted-foreground truncate">
+                                        <i className={`${getSuccessIcon(result)} mr-1`} />
+                                        {detail}
+                                    </p>
+                                ) : null;
+                            })()}
                             {!result.success && result.error && (
                                 <p className="text-xs text-red-500">{result.error}</p>
                             )}

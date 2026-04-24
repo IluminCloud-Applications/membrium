@@ -9,6 +9,7 @@ import {
     TimeSlider,
     VolumeSlider,
     Time,
+    Spinner,
     useMediaState,
     useMediaPlayer,
     type MediaPlayerInstance,
@@ -21,6 +22,7 @@ interface VideoPlayerProps {
     title: string;
     src: string;
     videoType: string;
+    lessonId?: number;
     hasNextLesson?: boolean;
     initialTime?: number;
     onNextLesson?: () => void;
@@ -31,6 +33,7 @@ export function VideoPlayer({
     title,
     src,
     videoType,
+    lessonId,
     hasNextLesson,
     initialTime,
     onNextLesson,
@@ -39,8 +42,8 @@ export function VideoPlayer({
     const playerRef = useRef<MediaPlayerInstance>(null);
     const seekedRef = useRef(false);
 
-    // For YouTube, convert to proper src format
-    const videoSrc = getVideoSource(src, videoType);
+    // For YouTube, convert to proper src format. For Telegram, use stream proxy.
+    const videoSrc = getVideoSource(src, videoType, lessonId);
 
     useEffect(() => {
         if (!playerRef.current || !onTimeUpdate) return;
@@ -70,12 +73,33 @@ export function VideoPlayer({
                 className="lesson-media-player"
             >
                 <MediaProvider className="lesson-media-provider" />
+                <VideoLoadingIndicator />
                 <ClickToPlay />
                 <VideoControls
                     hasNextLesson={hasNextLesson}
                     onNextLesson={onNextLesson}
                 />
             </MediaPlayer>
+        </div>
+    );
+}
+
+function VideoLoadingIndicator() {
+    const isWaiting = useMediaState("waiting");
+    const canPlay = useMediaState("canPlay");
+
+    if (!isWaiting && canPlay) return null;
+
+    return (
+        <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none bg-black/20">
+            <Spinner.Root className="w-12 h-12 text-primary opacity-80 animate-spin">
+                <Spinner.Track className="opacity-25" />
+                <Spinner.TrackFill className="opacity-75" />
+                <svg className="w-full h-full text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </Spinner.Root>
         </div>
     );
 }
@@ -190,7 +214,7 @@ function FullscreenIcon() {
         : <i className="ri-fullscreen-fill" />;
 }
 
-function getVideoSource(src: string, videoType: string): string {
+function getVideoSource(src: string, videoType: string, lessonId?: number): any {
     if (videoType === "youtube") {
         const match = src.match(
             /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/
@@ -198,6 +222,11 @@ function getVideoSource(src: string, videoType: string): string {
         if (match) return `youtube/${match[1]}`;
         if (src.startsWith("youtube/")) return src;
         return `youtube/${src}`;
+    }
+    if (videoType === "telegram") {
+        // Stream via backend proxy (supports Range requests for seeking)
+        // Pass type to avoid vidstack fetching headers to infer type
+        return { src: `/api/telegram/stream/${lessonId}`, type: 'video/mp4' };
     }
     return src;
 }

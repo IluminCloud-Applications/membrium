@@ -10,12 +10,17 @@ import { Button } from "@/components/ui/button";
 import { BulkUploadList } from "./BulkUploadList";
 import { BulkUploadProgress } from "./BulkUploadProgress";
 import { youtubeUploadService, type YouTubeUploadResult } from "@/services/youtubeUpload";
+import { telegramService, type TelegramUploadResult } from "@/services/telegramService";
+
+type BulkResult = YouTubeUploadResult | TelegramUploadResult;
+type Platform = "youtube" | "telegram";
 
 interface BulkUploadModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     moduleId: number;
     moduleName: string;
+    platform?: Platform;
     onComplete: () => void;
 }
 
@@ -26,17 +31,35 @@ export interface BulkVideoItem {
     preview: string; // Thumbnail placeholder or video name
 }
 
+const PLATFORM_CONFIG: Record<Platform, { icon: string; iconClass: string; label: string; description: string }> = {
+    youtube: {
+        icon: "ri-youtube-fill",
+        iconClass: "text-red-500",
+        label: "YouTube",
+        description: "Os vídeos serão enviados para o YouTube e as aulas criadas automaticamente.",
+    },
+    telegram: {
+        icon: "ri-telegram-fill",
+        iconClass: "text-blue-500",
+        label: "Telegram",
+        description: "Os vídeos serão enviados para o canal privado do Telegram e as aulas criadas automaticamente. Sem limite de tamanho.",
+    },
+};
+
 export function BulkUploadModal({
     open,
     onOpenChange,
     moduleId,
     moduleName,
+    platform = "youtube",
     onComplete,
 }: BulkUploadModalProps) {
     const [videos, setVideos] = useState<BulkVideoItem[]>([]);
     const [uploading, setUploading] = useState(false);
-    const [results, setResults] = useState<YouTubeUploadResult[] | null>(null);
+    const [results, setResults] = useState<BulkResult[] | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const config = PLATFORM_CONFIG[platform];
 
     function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
         const files = Array.from(e.target.files || []);
@@ -79,11 +102,14 @@ export function BulkUploadModal({
             const files = videos.map((v) => v.file);
             const titles = videos.map((v) => v.title);
 
-            const res = await youtubeUploadService.uploadBulk(files, titles, moduleId);
-            setResults(res.results);
-
-            if (res.success) {
-                onComplete();
+            if (platform === "telegram") {
+                const res = await telegramService.uploadBulk(files, titles, moduleId);
+                setResults(res.results);
+                if (res.success) onComplete();
+            } else {
+                const res = await youtubeUploadService.uploadBulk(files, titles, moduleId);
+                setResults(res.results);
+                if (res.success) onComplete();
             }
         } catch (err) {
             console.error("Erro no upload em massa:", err);
@@ -113,12 +139,12 @@ export function BulkUploadModal({
             <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <i className="ri-youtube-fill text-red-500" />
-                        Upload em Massa — {moduleName}
+                        <i className={`${config.icon} ${config.iconClass}`} />
+                        Upload em Massa ({config.label}) — {moduleName}
                     </DialogTitle>
                     <DialogDescription>
-                        Selecione os vídeos, organize a ordem e defina os títulos das aulas.
-                        Os vídeos serão enviados para o YouTube e as aulas criadas automaticamente.
+                        Selecione os vídeos, organize a ordem e defina os títulos das aulas.{" "}
+                        {config.description}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -176,7 +202,7 @@ export function BulkUploadModal({
                                     ) : (
                                         <>
                                             <i className="ri-upload-cloud-2-line" />
-                                            Enviar para YouTube
+                                            Enviar para {config.label}
                                         </>
                                     )}
                                 </Button>
