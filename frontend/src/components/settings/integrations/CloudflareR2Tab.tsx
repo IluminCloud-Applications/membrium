@@ -12,9 +12,8 @@ export function CloudflareR2Tab() {
     const [secretAccessKey, setSecretAccessKey] = useState("");
     const [bucket, setBucket] = useState("");
     const [customDomain, setCustomDomain] = useState("");
-    const [apiToken, setApiToken] = useState("");
+    const [apiToken] = useState("");
     const [showSecret, setShowSecret] = useState(false);
-    const [showToken, setShowToken] = useState(false);
     const [saving, setSaving] = useState(false);
     const [testing, setTesting] = useState(false);
     const [corsTesting, setCorsTesting] = useState(false);
@@ -223,36 +222,6 @@ export function CloudflareR2Tab() {
                     <p className="text-xs text-muted-foreground">
                         Conecte seu domínio ao bucket em <strong>R2 → Settings → Public access</strong>.
                         Esta URL é o que o player do aluno vai carregar.
-                    </p>
-                </div>
-
-                {/* API Token (for CORS auto-config) */}
-                <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="r2ApiToken">
-                        API Token{" "}
-                        <span className="text-muted-foreground font-normal text-xs">(opcional — para configurar CORS automaticamente)</span>
-                    </Label>
-                    <div className="relative">
-                        <Input
-                            id="r2ApiToken"
-                            type={showToken ? "text" : "password"}
-                            value={apiToken}
-                            onChange={(e) => setApiToken(e.target.value)}
-                            placeholder="Cloudflare API Token com permissão R2:Edit"
-                            className="pr-10"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowToken(!showToken)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                            <i className={showToken ? "ri-eye-off-line" : "ri-eye-line"} />
-                        </button>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                        Crie em <strong>Cloudflare → Meu Perfil → API Tokens</strong> com permissão{" "}
-                        <strong>R2:Edit</strong>. Sem ele, configure o CORS manualmente no dashboard do R2{" "}
-                        (bucket → Settings → CORS). O CORS é necessário para o upload direto do browser funcionar.
                     </p>
                 </div>
             </div>

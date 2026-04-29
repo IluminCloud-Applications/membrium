@@ -262,7 +262,7 @@ function CloudflarePlatformFields({ form, onChange }: CloudflarePlatformFieldsPr
             )}
 
             <p className="text-[11px] text-muted-foreground">
-                O upload é feito direto para o seu bucket R2 — os bytes não passam por este servidor.
+                O vídeo é enviado para o servidor e depois para o seu bucket R2 automaticamente.
             </p>
         </div>
     );

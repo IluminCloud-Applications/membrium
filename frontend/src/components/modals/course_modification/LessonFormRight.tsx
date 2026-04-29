@@ -31,8 +31,8 @@ export function LessonFormRight({ form, onChange }: LessonFormRightProps) {
 
     return (
         <div className="space-y-5">
-            {/* CTA section — only for YouTube */}
-            {form.videoPlatform === "youtube" && (
+            {/* CTA section — YouTube and Cloudflare R2 */}
+            {(form.videoPlatform === "youtube" || form.videoPlatform === "cloudflare") && (
                 <div className="space-y-4">
                     <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
                         <i className="ri-cursor-line text-primary" />
