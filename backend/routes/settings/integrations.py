@@ -28,6 +28,7 @@ def get_integrations():
     proxy_enabled, proxy = get_integration('proxy')
     chatwoot_enabled, chatwoot = get_integration('chatwoot')
     assemblyai_enabled, assemblyai = get_integration('assemblyai')
+    r2_enabled, r2 = get_integration('cloudflare_r2')
     _, support = get_integration('support')
 
     return jsonify({
@@ -81,6 +82,15 @@ def get_integrations():
         'assemblyai': {
             'enabled': assemblyai_enabled,
             'api_key': assemblyai.get('api_key', ''),
+        },
+        'cloudflare_r2': {
+            'enabled': r2_enabled,
+            'account_id': r2.get('account_id', ''),
+            'access_key_id': r2.get('access_key_id', ''),
+            'secret_access_key': r2.get('secret_access_key', ''),
+            'bucket': r2.get('bucket', ''),
+            'custom_domain': r2.get('custom_domain', ''),
+            'api_token': r2.get('api_token', ''),
         },
     })
 
@@ -535,4 +545,189 @@ def update_assemblyai():
 
     set_integration('assemblyai', enabled, config)
     return jsonify({'success': True, 'message': 'Configurações da AssemblyAI atualizadas com sucesso'})
+
+
+# ─── Cloudflare R2 ────────────────────────────────────────────────
+
+@integrations_bp.route('/api/settings/cloudflare-r2', methods=['POST'])
+@admin_required
+def update_cloudflare_r2():
+    """Save Cloudflare R2 credentials (preserves stored credentials when disabling)."""
+    data = request.json or request.form
+    enabled = data.get('enabled', False)
+    if isinstance(enabled, str):
+        enabled = enabled.lower() == 'true'
+
+    _, existing = get_integration('cloudflare_r2')
+    config = existing.copy()
+
+    fields = ('account_id', 'access_key_id', 'secret_access_key', 'bucket', 'custom_domain')
+    optional_fields = ('api_token',)
+
+    if enabled:
+        # When enabling, all required credentials must be present
+        for f in fields:
+            value = (data.get(f) or '').strip()
+            if not value:
+                labels = {
+                    'account_id': 'Account ID',
+                    'access_key_id': 'Access Key ID',
+                    'secret_access_key': 'Secret Access Key',
+                    'bucket': 'Bucket',
+                    'custom_domain': 'Custom Domain (URL pública)',
+                }
+                return jsonify({'success': False, 'message': f'{labels[f]} é obrigatório'}), 400
+            config[f] = value
+        # Optional fields
+        for f in optional_fields:
+            incoming = data.get(f)
+            if incoming is not None:
+                config[f] = str(incoming).strip()
+    else:
+        # Preserve credentials when disabling — only update fields that came in
+        for f in (*fields, *optional_fields):
+            incoming = data.get(f)
+            if incoming is not None and str(incoming).strip():
+                config[f] = str(incoming).strip()
+
+    set_integration('cloudflare_r2', enabled, config)
+
+    if enabled:
+        # Auto-configure bucket CORS via Cloudflare REST API (requires api_token)
+        from integrations.cloudflare_r2 import apply_cors
+        api_token = config.get('api_token') or config.get('access_key_id')
+        cors_ok, cors_msg = apply_cors(
+            config['account_id'],
+            api_token,
+            config['secret_access_key'],
+            config['bucket'],
+        )
+        if cors_ok:
+            return jsonify({
+                'success': True,
+                'message': 'Configurações do Cloudflare R2 salvas e CORS configurado automaticamente no bucket.'
+            })
+        else:
+            # Non-fatal — credentials saved, but CORS needs manual setup
+            return jsonify({
+                'success': True,
+                'cors_warning': cors_msg,
+                'message': f'Configurações salvas. {cors_msg}'
+            })
+
+    return jsonify({'success': True, 'message': 'Configurações do Cloudflare R2 atualizadas com sucesso'})
+
+
+@integrations_bp.route('/api/settings/cloudflare-r2/test', methods=['POST'])
+@admin_required
+def test_cloudflare_r2():
+    """Test the provided R2 credentials by issuing a HEAD on the bucket."""
+    from integrations.cloudflare_r2 import test_connection
+
+    data = request.json or request.form
+    account_id = (data.get('account_id') or '').strip()
+    access_key_id = (data.get('access_key_id') or '').strip()
+    secret_access_key = (data.get('secret_access_key') or '').strip()
+    bucket = (data.get('bucket') or '').strip()
+
+    if not all((account_id, access_key_id, secret_access_key, bucket)):
+        return jsonify({'success': False, 'message': 'Preencha todos os campos antes de testar.'}), 400
+
+    ok, message = test_connection(account_id, access_key_id, secret_access_key, bucket)
+    status_code = 200 if ok else 400
+    return jsonify({'success': ok, 'message': message}), status_code
+
+
+@integrations_bp.route('/api/settings/cloudflare-r2/apply-cors', methods=['POST'])
+@admin_required
+def apply_cors_cloudflare_r2():
+    """Apply (or refresh) CORS policy on the saved R2 bucket.
+
+    Useful when the user changes the bucket or the automatic apply during save failed.
+    Uses the credentials already stored in the database.
+    """
+    from integrations.cloudflare_r2 import get_client_from_config, apply_cors
+
+    client, cfg = get_client_from_config()
+    if client is None:
+        return jsonify({'success': False, 'message': cfg}), 400  # cfg is error message here
+
+    ok, message = apply_cors(
+        cfg['account_id'],
+        cfg['access_key_id'],
+        cfg['secret_access_key'],
+        cfg['bucket'],
+    )
+    status_code = 200 if ok else 400
+    return jsonify({'success': ok, 'message': message}), status_code
+
+
+
+
+@integrations_bp.route('/api/settings/cloudflare-r2/upload', methods=['POST'])
+@admin_required
+def upload_cloudflare_r2():
+    """Upload a video file to R2 via server-side proxy (avoids browser CORS restrictions).
+
+    Accepts multipart/form-data with:
+        - file: the video file
+        - content_type: optional MIME type override
+
+    Returns: { success, public_url, key }
+    """
+    from integrations.cloudflare_r2 import upload_to_r2
+
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'message': 'Nenhum arquivo enviado'}), 400
+
+    file = request.files['file']
+    if not file.filename:
+        return jsonify({'success': False, 'message': 'Nome de arquivo inválido'}), 400
+
+    content_type = request.form.get('content_type') or file.content_type or 'video/mp4'
+
+    result, error = upload_to_r2(file.stream, file.filename, content_type)
+    if error:
+        return jsonify({'success': False, 'message': error}), 400
+
+    if not result.get('public_url'):
+        return jsonify({
+            'success': False,
+            'message': 'Custom domain não configurado — defina-o em Integrações → Cloudflare R2.'
+        }), 400
+
+    return jsonify({'success': True, **result})
+
+
+@integrations_bp.route('/api/settings/cloudflare-r2/presign', methods=['POST'])
+@admin_required
+def presign_cloudflare_r2_upload():
+    """Generate a short-lived presigned PUT URL so the browser uploads directly to R2.
+
+    Body JSON:
+        - filename: original filename (used to build the object key)
+        - content_type: MIME (e.g. 'video/mp4')
+
+    Returns: { success, upload_url, public_url, key, headers, expires_in }
+    """
+    from integrations.cloudflare_r2 import presign_put
+
+    data = request.json or {}
+    filename = (data.get('filename') or '').strip()
+    content_type = (data.get('content_type') or '').strip() or 'video/mp4'
+
+    if not filename:
+        return jsonify({'success': False, 'message': 'filename é obrigatório'}), 400
+
+    result, error = presign_put(filename, content_type)
+    if error:
+        return jsonify({'success': False, 'message': error}), 400
+
+    if not result.get('public_url'):
+        return jsonify({
+            'success': False,
+            'message': 'Custom domain não configurado — defina-o em Integrações → Cloudflare R2.'
+        }), 400
+
+    return jsonify({'success': True, **result})
 

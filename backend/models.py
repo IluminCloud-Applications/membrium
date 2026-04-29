@@ -68,7 +68,7 @@ class Lesson(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
     video_url = db.Column(db.Text, nullable=True)
-    video_type = db.Column(db.String(50), default='youtube')  # Pode ser 'youtube' ou 'vturb'
+    video_type = db.Column(db.String(50), default='youtube')  # 'youtube', 'vturb', 'cloudflare', ou 'custom'
     order = db.Column(db.Integer, nullable=False)
     has_button = db.Column(db.Boolean, default=False)
     button_text = db.Column(db.String(100))
@@ -78,12 +78,7 @@ class Lesson(db.Model):
     documents = db.relationship('Document', backref='lesson', lazy=True)
     
     def format_video_url(self):
-        if self.video_type == 'youtube':
-            # Formato atual para YouTube
-            return self.video_url
-        elif self.video_type == 'vturb':
-            # Retorna o código VTurb como está
-            return self.video_url
+        """Returns the video URL as stored — each type is already in its final form."""
         return self.video_url
 
 class Document(db.Model):
@@ -129,7 +124,7 @@ class CourseGroup(db.Model):
 class IntegrationConfig(db.Model):
     """Configurações flexíveis por integração — uma linha por provider.
     
-    Providers: 'support', 'brevo', 'evolution', 'youtube', 'gemini', 'openai', 'chatbot'
+    Providers: 'support', 'brevo', 'evolution', 'youtube', 'gemini', 'openai', 'chatbot', 'cloudflare_r2', 'assemblyai'
     
     Cada provider armazena seus dados específicos no campo JSONB `config`.
     O campo `enabled` é separado para facilitar queries de integrações ativas.

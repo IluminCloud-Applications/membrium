@@ -12,6 +12,7 @@ import type {
 } from "@/types/course-modification";
 import { courseModificationService } from "@/services/courseModification";
 import { integrationsService } from "@/services/integrations";
+import { cloudflareUploadService } from "@/services/cloudflareUpload";
 import { useCourseModification } from "./useCourseModification";
 import { toast } from "sonner";
 
@@ -36,20 +37,27 @@ export function CourseModificationPage() {
         menuItemId?: number;
     } | null>(null);
 
-    // YouTube upload state
+    // Upload state — YouTube + Cloudflare R2
     const [youtubeConnected, setYoutubeConnected] = useState(false);
+    const [cloudflareEnabled, setCloudflareEnabled] = useState(false);
     const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
     const [bulkUploadModuleId, setBulkUploadModuleId] = useState<number | null>(null);
-    const [bulkUploadPlatform, setBulkUploadPlatform] = useState<"youtube">("youtube");
+    const [bulkUploadPlatform, setBulkUploadPlatform] = useState<"youtube" | "cloudflare">("youtube");
+    const [lessonSubmitting, setLessonSubmitting] = useState(false);
 
-    // Check YouTube connection status
+    // Check connection statuses
     useEffect(() => {
         async function checkConnections() {
             try {
-                const res = await integrationsService.getYouTubeStatus();
-                setYoutubeConnected(res.connected);
+                const [yt, integrations] = await Promise.all([
+                    integrationsService.getYouTubeStatus(),
+                    integrationsService.getAll(),
+                ]);
+                setYoutubeConnected(yt.connected);
+                setCloudflareEnabled(integrations.cloudflare_r2?.enabled ?? false);
             } catch {
                 setYoutubeConnected(false);
+                setCloudflareEnabled(false);
             }
         }
         checkConnections();
@@ -99,6 +107,32 @@ export function CourseModificationPage() {
     }
 
     async function handleLessonSubmit(data: LessonFormData) {
+        // ── If Cloudflare and a new file is selected, upload to R2 first ──
+        let cloudflareVideoUrl = data.cloudflareUrl;
+        if (data.videoPlatform === "cloudflare" && data.cloudflareFile) {
+            const uploadToast = toast.loading("Enviando vídeo ao Cloudflare R2...");
+            setLessonSubmitting(true);
+            try {
+                const result = await cloudflareUploadService.upload(data.cloudflareFile, {
+                    onProgress: (fraction) => {
+                        toast.loading(
+                            `Enviando ao Cloudflare R2... ${Math.round(fraction * 100)}%`,
+                            { id: uploadToast }
+                        );
+                    },
+                });
+                cloudflareVideoUrl = result.publicUrl;
+                toast.success("Vídeo enviado ao Cloudflare R2!", { id: uploadToast });
+            } catch (err) {
+                toast.error(
+                    err instanceof Error ? err.message : "Erro ao enviar vídeo ao R2",
+                    { id: uploadToast }
+                );
+                setLessonSubmitting(false);
+                return;
+            }
+        }
+
         const formData = new FormData();
         formData.append("title", data.title);
         formData.append("description", data.description);
@@ -107,6 +141,8 @@ export function CourseModificationPage() {
             formData.append("video_url", data.customVideoCode);
         } else if (data.videoPlatform === "vturb") {
             formData.append("video_url", data.vturbVideoId);
+        } else if (data.videoPlatform === "cloudflare") {
+            formData.append("video_url", cloudflareVideoUrl);
         } else {
             formData.append("video_url", data.videoUrl);
         }
@@ -124,11 +160,20 @@ export function CourseModificationPage() {
             } else if (activeModuleId) {
                 const result = await courseModificationService.createLesson(activeModuleId, formData);
                 if (result.transcript_imported) {
-                    toast.success("Transcrição importada automaticamente do YouTube!");
+                    if (data.videoPlatform === "cloudflare") {
+                        toast.success("Transcrição agendada automaticamente (AssemblyAI).");
+                    } else {
+                        toast.success("Transcrição importada automaticamente do YouTube!");
+                    }
                 }
             }
             await refetch();
-        } catch (err) { console.error("Erro ao salvar aula:", err); }
+        } catch (err) {
+            console.error("Erro ao salvar aula:", err);
+            toast.error("Erro ao salvar aula");
+        } finally {
+            setLessonSubmitting(false);
+        }
         setLessonModalOpen(false);
         setEditingLesson(null);
         setActiveModuleId(null);
@@ -190,7 +235,7 @@ export function CourseModificationPage() {
     }
 
     /* ---- Bulk Upload ---- */
-    function handleBulkUpload(moduleId: number, platform: "youtube" = "youtube") {
+    function handleBulkUpload(moduleId: number, platform: "youtube" | "cloudflare" = "youtube") {
         setBulkUploadModuleId(moduleId);
         setBulkUploadPlatform(platform);
         setBulkUploadOpen(true);
@@ -247,9 +292,10 @@ export function CourseModificationPage() {
                 onAddMenuItem={handleAddMenuItem} onEditMenuItem={handleEditMenuItem} onDeleteMenuItem={handleDeleteMenuItem}
                 onBulkUpload={handleBulkUpload}
                 youtubeConnected={youtubeConnected}
+                cloudflareEnabled={cloudflareEnabled}
                 />
             <ModuleModal open={moduleModalOpen} onOpenChange={setModuleModalOpen} editModule={editingModule} onSubmit={handleModuleSubmit} />
-            <LessonModal open={lessonModalOpen} onOpenChange={setLessonModalOpen} editLesson={editingLesson} onSubmit={handleLessonSubmit} />
+            <LessonModal open={lessonModalOpen} onOpenChange={setLessonModalOpen} editLesson={editingLesson} onSubmit={handleLessonSubmit} isLoading={lessonSubmitting} />
             <MenuItemModal open={menuModalOpen} onOpenChange={setMenuModalOpen} editItem={editingMenuItem} onSubmit={handleMenuItemSubmit} />
             <DeleteConfirmModal open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)} onConfirm={handleConfirmDelete}
                 title={currentDelete?.title} description={currentDelete?.description} confirmLabel={currentDelete?.label} />

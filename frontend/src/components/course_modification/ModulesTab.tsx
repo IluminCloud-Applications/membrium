@@ -13,8 +13,9 @@ interface ModulesTabProps {
     onDeleteLesson: (moduleId: number, lessonId: number) => void;
     onReorderModules?: (orderedIds: number[]) => void;
     onReorderLessons?: (moduleId: number, orderedIds: number[]) => void;
-    onBulkUpload?: (moduleId: number, platform: "youtube") => void;
+    onBulkUpload?: (moduleId: number, platform: "youtube" | "cloudflare") => void;
     youtubeConnected?: boolean;
+    cloudflareEnabled?: boolean;
 }
 
 export function ModulesTab({
@@ -29,6 +30,7 @@ export function ModulesTab({
     onReorderLessons,
     onBulkUpload,
     youtubeConnected,
+    cloudflareEnabled,
 }: ModulesTabProps) {
     const [dragOverId, setDragOverId] = useState<number | null>(null);
     const dragItemRef = useRef<number | null>(null);
@@ -117,6 +119,7 @@ export function ModulesTab({
                             onReorderLessons={onReorderLessons ? (ids) => onReorderLessons(mod.id, ids) : undefined}
                             onBulkUpload={onBulkUpload ? (platform) => onBulkUpload(mod.id, platform) : undefined}
                             youtubeConnected={youtubeConnected}
+                            cloudflareEnabled={cloudflareEnabled}
                         />
                     </div>
                 ))}

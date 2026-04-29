@@ -10,9 +10,11 @@ import { Button } from "@/components/ui/button";
 import { BulkUploadList } from "./BulkUploadList";
 import { BulkUploadProgress } from "./BulkUploadProgress";
 import { youtubeUploadService, type YouTubeUploadResult } from "@/services/youtubeUpload";
+import { cloudflareUploadService } from "@/services/cloudflareUpload";
+import { courseModificationService } from "@/services/courseModification";
 
 type BulkResult = YouTubeUploadResult;
-type Platform = "youtube";
+type Platform = "youtube" | "cloudflare";
 
 interface BulkUploadModalProps {
     open: boolean;
@@ -37,6 +39,12 @@ const PLATFORM_CONFIG: Record<Platform, { icon: string; iconClass: string; label
         label: "YouTube",
         description: "Os vídeos serão enviados para o YouTube e as aulas criadas automaticamente.",
     },
+    cloudflare: {
+        icon: "ri-cloud-line",
+        iconClass: "text-orange-600",
+        label: "Cloudflare R2",
+        description: "Os vídeos sobem direto para o seu bucket R2 (sem passar pelo servidor) e cada aula é criada automaticamente.",
+    },
 };
 
 export function BulkUploadModal({
@@ -49,6 +57,7 @@ export function BulkUploadModal({
 }: BulkUploadModalProps) {
     const [videos, setVideos] = useState<BulkVideoItem[]>([]);
     const [uploading, setUploading] = useState(false);
+    const [progressNote, setProgressNote] = useState<string | null>(null);
     const [results, setResults] = useState<BulkResult[] | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -59,11 +68,10 @@ export function BulkUploadModal({
         const newVideos: BulkVideoItem[] = files.map((file) => ({
             id: `${file.name}-${file.size}-${Date.now()}-${Math.random()}`,
             file,
-            title: file.name.replace(/\.[^/.]+$/, ""), // Remove extension
+            title: file.name.replace(/\.[^/.]+$/, ""),
             preview: file.name,
         }));
         setVideos((prev) => [...prev, ...newVideos]);
-        // Reset input for re-selection
         if (fileInputRef.current) fileInputRef.current.value = "";
     }
 
@@ -90,12 +98,60 @@ export function BulkUploadModal({
         if (videos.length === 0) return;
         setUploading(true);
         setResults(null);
+        setProgressNote(null);
 
         try {
-            const files = videos.map((v) => v.file);
-            const res = await youtubeUploadService.uploadBulk(files, titles, moduleId);
-            setResults(res.results);
-            if (res.success) onComplete();
+            if (platform === "youtube") {
+                const files = videos.map((v) => v.file);
+                const titles = videos.map((v) => v.title);
+                const res = await youtubeUploadService.uploadBulk(files, titles, moduleId);
+                setResults(res.results);
+                if (res.success) onComplete();
+            } else {
+                // Cloudflare R2: per-file presign → PUT → create-lesson, sequentially.
+                // Sequential keeps the public_url ordering stable and avoids hammering R2.
+                const localResults: BulkResult[] = [];
+                for (let i = 0; i < videos.length; i++) {
+                    const v = videos[i];
+                    setProgressNote(`Enviando ${i + 1}/${videos.length}: ${v.title}`);
+                    try {
+                        const upload = await cloudflareUploadService.upload(v.file, {
+                            onProgress: (frac) => {
+                                setProgressNote(
+                                    `Enviando ${i + 1}/${videos.length}: ${v.title} — ${Math.round(frac * 100)}%`
+                                );
+                            },
+                        });
+
+                        const formData = new FormData();
+                        formData.append("title", v.title);
+                        formData.append("description", "");
+                        formData.append("video_platform", "cloudflare");
+                        formData.append("video_url", upload.publicUrl);
+                        formData.append("has_cta", "false");
+
+                        const created = await courseModificationService.createLesson(moduleId, formData);
+
+                        localResults.push({
+                            index: i,
+                            title: v.title,
+                            success: true,
+                            video_url: upload.publicUrl,
+                            lesson_id: created.lesson?.id,
+                        });
+                    } catch (err) {
+                        localResults.push({
+                            index: i,
+                            title: v.title,
+                            success: false,
+                            error: err instanceof Error ? err.message : "Erro desconhecido",
+                        });
+                    }
+                }
+                setResults(localResults);
+                setProgressNote(null);
+                if (localResults.some((r) => r.success)) onComplete();
+            }
         } catch (err) {
             console.error("Erro no upload em massa:", err);
             setResults([{
@@ -106,6 +162,7 @@ export function BulkUploadModal({
             }]);
         } finally {
             setUploading(false);
+            setProgressNote(null);
         }
     }
 
@@ -113,6 +170,7 @@ export function BulkUploadModal({
         if (uploading) return;
         setVideos([]);
         setResults(null);
+        setProgressNote(null);
         onOpenChange(false);
     }
 
@@ -133,7 +191,6 @@ export function BulkUploadModal({
                     </DialogDescription>
                 </DialogHeader>
 
-                {/* File input */}
                 <input
                     ref={fileInputRef}
                     type="file"
@@ -143,7 +200,6 @@ export function BulkUploadModal({
                     className="hidden"
                 />
 
-                {/* Video list or empty state */}
                 {!results ? (
                     <>
                         <BulkUploadList
@@ -154,7 +210,6 @@ export function BulkUploadModal({
                             disabled={uploading}
                         />
 
-                        {/* Add more / select videos */}
                         <Button
                             variant="outline"
                             onClick={() => fileInputRef.current?.click()}
@@ -165,7 +220,13 @@ export function BulkUploadModal({
                             {hasVideos ? "Adicionar Mais Vídeos" : "Selecionar Vídeos"}
                         </Button>
 
-                        {/* Footer */}
+                        {progressNote && (
+                            <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground flex items-center gap-2 animate-fade-in">
+                                <i className="ri-loader-4-line animate-spin text-primary" />
+                                {progressNote}
+                            </div>
+                        )}
+
                         <div className="flex items-center justify-between pt-2 border-t">
                             <span className="text-xs text-muted-foreground">
                                 {videos.length} {videos.length === 1 ? "vídeo" : "vídeos"} selecionados

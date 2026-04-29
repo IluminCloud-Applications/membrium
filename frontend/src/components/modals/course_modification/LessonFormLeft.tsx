@@ -24,6 +24,7 @@ interface LessonFormLeftProps {
 export function LessonFormLeft({ form, onChange }: LessonFormLeftProps) {
     const [youtubeConnected, setYoutubeConnected] = useState(false);
     const [vturbEnabled, setVturbEnabled] = useState(false);
+    const [cloudflareEnabled, setCloudflareEnabled] = useState(false);
     const [uploadingVideo, setUploadingVideo] = useState(false);
     const [uploadFeedback, setUploadFeedback] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -37,6 +38,7 @@ export function LessonFormLeft({ form, onChange }: LessonFormLeftProps) {
                 ]);
                 setYoutubeConnected(ytStatus.connected);
                 setVturbEnabled(integrations.vturb?.enabled ?? false);
+                setCloudflareEnabled(integrations.cloudflare_r2?.enabled ?? false);
             } catch { /* ignore */ }
         }
         checkStatus();
@@ -125,6 +127,14 @@ export function LessonFormLeft({ form, onChange }: LessonFormLeftProps) {
                                 </span>
                             </SelectItem>
                         )}
+                        {cloudflareEnabled && (
+                            <SelectItem value="cloudflare">
+                                <span className="flex items-center gap-2">
+                                    <i className="ri-cloud-line text-orange-600" />
+                                    Cloudflare R2
+                                </span>
+                            </SelectItem>
+                        )}
                         <SelectItem value="custom">
                             <span className="flex items-center gap-2">
                                 <i className="ri-code-s-slash-line text-blue-500" />
@@ -155,6 +165,10 @@ export function LessonFormLeft({ form, onChange }: LessonFormLeftProps) {
                 />
             )}
 
+            {form.videoPlatform === "cloudflare" && (
+                <CloudflarePlatformFields form={form} onChange={onChange} />
+            )}
+
             {form.videoPlatform === "custom" && (
                 <div className="space-y-4">
                     <div className="space-y-2">
@@ -173,6 +187,83 @@ export function LessonFormLeft({ form, onChange }: LessonFormLeftProps) {
                     </div>
                 </div>
             )}
+        </div>
+    );
+}
+
+/* ---- Cloudflare platform fields ---- */
+
+interface CloudflarePlatformFieldsProps {
+    form: LessonFormData;
+    onChange: (field: keyof LessonFormData, value: unknown) => void;
+}
+
+function CloudflarePlatformFields({ form, onChange }: CloudflarePlatformFieldsProps) {
+    const fileRef = useRef<HTMLInputElement>(null);
+    const file = form.cloudflareFile;
+    const existingUrl = form.cloudflareUrl;
+
+    function handlePick(e: React.ChangeEvent<HTMLInputElement>) {
+        const f = e.target.files?.[0];
+        if (!f) return;
+        onChange("cloudflareFile", f);
+    }
+
+    function handleClear() {
+        onChange("cloudflareFile", null);
+        if (fileRef.current) fileRef.current.value = "";
+    }
+
+    return (
+        <div className="space-y-3">
+            <Label>Vídeo</Label>
+            <input
+                ref={fileRef}
+                type="file"
+                accept="video/*"
+                onChange={handlePick}
+                className="hidden"
+            />
+
+            {file ? (
+                <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-3">
+                    <i className="ri-film-line text-orange-600 text-xl flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{file.name}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                            {(file.size / (1024 * 1024)).toFixed(1)} MB · será enviado ao R2 ao criar a aula
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={handleClear}
+                        className="text-muted-foreground hover:text-destructive transition-colors"
+                    >
+                        <i className="ri-close-line text-lg" />
+                    </button>
+                </div>
+            ) : (
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileRef.current?.click()}
+                    className="w-full gap-2 border-dashed"
+                >
+                    <i className="ri-upload-cloud-2-line text-orange-600" />
+                    {existingUrl ? "Trocar vídeo" : "Selecionar vídeo"}
+                </Button>
+            )}
+
+            {existingUrl && !file && (
+                <p className="text-xs text-muted-foreground break-all">
+                    <i className="ri-link mr-1" />
+                    {existingUrl}
+                </p>
+            )}
+
+            <p className="text-[11px] text-muted-foreground">
+                O upload é feito direto para o seu bucket R2 — os bytes não passam por este servidor.
+            </p>
         </div>
     );
 }

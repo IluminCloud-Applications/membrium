@@ -16,6 +16,8 @@ export default defineConfig({
       "/api": {
         target: "http://localhost:3000",
         changeOrigin: true,
+        proxyTimeout: 600000, // 10 min — large video uploads
+        timeout: 600000,
       },
       "/webhook": {
         target: "http://localhost:3000",

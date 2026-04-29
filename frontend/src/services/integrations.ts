@@ -70,6 +70,28 @@ export interface AssemblyAISettings {
     api_key: string;
 }
 
+export interface CloudflareR2Settings {
+    enabled: boolean;
+    account_id: string;
+    access_key_id: string;
+    secret_access_key: string;
+    bucket: string;
+    custom_domain: string;
+    /** Cloudflare API Token (opcional) — necessário para configurar CORS automaticamente via REST API */
+    api_token: string;
+}
+
+export interface CloudflareR2PresignResponse {
+    success: boolean;
+    upload_url: string;
+    public_url: string;
+    key: string;
+    headers: Record<string, string>;
+    expires_in: number;
+    bucket: string;
+    message?: string;
+}
+
 interface VTurbVideosResponse {
     success: boolean;
     videos: VTurbVideo[];
@@ -85,6 +107,7 @@ export interface IntegrationsData {
     chatwoot: ChatwootSettings;
 
     assemblyai: AssemblyAISettings;
+    cloudflare_r2: CloudflareR2Settings;
 }
 
 interface ApiResponse {
@@ -197,4 +220,29 @@ export const integrationsService = {
     /** Update AssemblyAI settings */
     updateAssemblyAI: (data: Partial<AssemblyAISettings>) =>
         apiClient.post<ApiResponse>("/settings/assemblyai", data),
+
+    /** Update Cloudflare R2 settings */
+    updateCloudflareR2: (data: Partial<CloudflareR2Settings>) =>
+        apiClient.post<ApiResponse>("/settings/cloudflare-r2", data),
+
+    /** Test Cloudflare R2 credentials (HEAD bucket) */
+    testCloudflareR2: (data: {
+        account_id: string;
+        access_key_id: string;
+        secret_access_key: string;
+        bucket: string;
+    }) =>
+        apiClient.post<ApiResponse>("/settings/cloudflare-r2/test", data),
+
+    /** Request a presigned PUT URL for direct browser-to-R2 upload */
+    presignCloudflareR2Upload: (filename: string, content_type: string) =>
+        apiClient.post<CloudflareR2PresignResponse>("/settings/cloudflare-r2/presign", {
+            filename,
+            content_type,
+        }),
+
+    /** Apply (or refresh) CORS policy on the saved bucket so the browser can upload directly */
+    applyCorsCloudflareR2: () =>
+        apiClient.post<ApiResponse>("/settings/cloudflare-r2/apply-cors", {}),
 };
+

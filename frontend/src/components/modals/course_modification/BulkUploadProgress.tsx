@@ -13,7 +13,9 @@ function getSuccessDetail(result: BulkResult): string | null {
 }
 
 function getSuccessIcon(result: BulkResult): string {
-    return "ri-youtube-line";
+    const url = "video_url" in result ? result.video_url || "" : "";
+    if (url.includes("youtu")) return "ri-youtube-line";
+    return "ri-cloud-line";
 }
 
 export function BulkUploadProgress({ results, onClose }: BulkUploadProgressProps) {

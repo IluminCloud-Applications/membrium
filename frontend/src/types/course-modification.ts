@@ -3,7 +3,7 @@
    Used across course editing components
    ============================================ */
 
-export type VideoPlatform = "youtube" | "custom" | "vturb";
+export type VideoPlatform = "youtube" | "custom" | "vturb" | "cloudflare";
 
 export interface LessonCTA {
     text: string;
@@ -82,6 +82,10 @@ export interface LessonFormData {
     videoUrl: string;
     customVideoCode: string;
     vturbVideoId: string;
+    /** Pending Cloudflare R2 upload (file selected but not yet uploaded) */
+    cloudflareFile: File | null;
+    /** Public R2 URL once upload completes — also reused when editing an existing lesson */
+    cloudflareUrl: string;
     attachments: File[];
     existingAttachments: LessonAttachment[];
     hasCta: boolean;

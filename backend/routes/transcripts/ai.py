@@ -14,9 +14,10 @@ from functools import wraps
 
 from models import Admin, LessonTranscript, Lesson, Module, Course
 from db.database import db
-from db.integration_helpers import get_ai_api_key
+from db.integration_helpers import get_ai_api_key, get_integration
 from ai.models.transcript_metadata import TranscriptMetadataAI
 from ai.tools.youtube_transcript import YouTubeTranscriptTool
+from ai.tools.assemblyai_transcript import AssemblyAITranscriptTool
 
 logger = logging.getLogger("routes.transcripts.ai")
 
@@ -63,6 +64,7 @@ def get_pending_lessons():
             has_summary = bool(transcript and transcript.transcript_vector)
             has_keywords = bool(transcript and transcript.searchable_keywords)
             is_youtube = bool(lesson.video_url and YouTubeTranscriptTool.is_youtube_url(lesson.video_url or ''))
+            is_cloudflare = lesson.video_type == 'cloudflare' and bool(lesson.video_url)
             result.append({
                 'lessonId': lesson.id,
                 'lessonName': lesson.title,
@@ -74,6 +76,7 @@ def get_pending_lessons():
                 'hasSummary': has_summary,
                 'hasKeywords': has_keywords,
                 'isYoutube': is_youtube,
+                'isCloudflare': is_cloudflare,
                 'videoUrl': lesson.video_url or '',
             })
 
@@ -165,19 +168,41 @@ def auto_generate():
         transcript = LessonTranscript.query.filter_by(lesson_id=lesson_id).first()
         transcript_text = transcript.transcript_text if transcript else None
 
-        # Se não tem transcrição, buscar do YouTube
+        # Se não tem transcrição, buscar (YouTube → captions, Cloudflare → AssemblyAI)
         if not transcript_text:
             video_url = lesson.video_url
-            if not video_url or not YouTubeTranscriptTool.is_youtube_url(video_url):
+            if not video_url:
                 return jsonify({
                     'success': False,
-                    'message': f'Aula "{lesson.title}" não possui vídeo suportado (YouTube).'
+                    'message': f'Aula "{lesson.title}" não possui vídeo.'
                 }), 400
 
-            yt_result = YouTubeTranscriptTool.fetch_transcript(video_url)
-            transcription_provider = 'youtube_transcript_api'
-
-            transcript_text = yt_result['text']
+            if YouTubeTranscriptTool.is_youtube_url(video_url):
+                yt_result = YouTubeTranscriptTool.fetch_transcript(video_url)
+                transcription_provider = 'youtube_transcript_api'
+                transcript_text = yt_result['text']
+                language = yt_result.get('language_code', 'pt-BR')
+                duration_seconds = yt_result.get('duration_seconds')
+                word_count = yt_result.get('word_count')
+            elif lesson.video_type == 'cloudflare':
+                aai_enabled, aai_cfg = get_integration('assemblyai')
+                aai_key = aai_cfg.get('api_key') if aai_enabled else None
+                if not aai_key:
+                    return jsonify({
+                        'success': False,
+                        'message': 'AssemblyAI não está configurada — habilite em Integrações → Ferramentas.'
+                    }), 400
+                aai = AssemblyAITranscriptTool.transcribe(video_url, aai_key)
+                transcription_provider = 'assemblyai'
+                transcript_text = aai['text']
+                language = aai.get('language_code', 'pt-BR')
+                duration_seconds = aai.get('duration_seconds')
+                word_count = aai.get('word_count')
+            else:
+                return jsonify({
+                    'success': False,
+                    'message': f'Aula "{lesson.title}" não possui vídeo suportado (YouTube ou Cloudflare R2).'
+                }), 400
 
             if not transcript:
                 transcript = LessonTranscript(
@@ -190,14 +215,14 @@ def auto_generate():
                     video_url=video_url,
                     transcript_text=transcript_text,
                     transcription_provider=transcription_provider,
-                    language=yt_result.get('language_code', 'pt-BR'),
-                    duration_seconds=yt_result.get('duration_seconds'),
-                    word_count=yt_result.get('word_count'),
+                    language=language,
+                    duration_seconds=duration_seconds,
+                    word_count=word_count,
                 )
                 db.session.add(transcript)
             else:
                 transcript.transcript_text = transcript_text
-                transcript.word_count = yt_result.get('word_count')
+                transcript.word_count = word_count
 
         # 2. Gerar metadados com IA (resumo + keywords)
         metadata = TranscriptMetadataAI.generate_metadata(

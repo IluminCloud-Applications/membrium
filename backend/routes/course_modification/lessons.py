@@ -62,10 +62,10 @@ def create_lesson(module_id):
 
     db.session.commit()
 
-    # Auto-fetch YouTube transcript in background (non-blocking)
+    # Auto-fetch transcript: synchronous for YouTube, background for Cloudflare/AssemblyAI
     transcript_result = {"success": False, "message": "Skipped"}
-    if video_url and new_lesson.video_type == 'youtube':
-        logger.info(f"Auto-importando transcrição para lesson={new_lesson.id}")
+    if video_url and new_lesson.video_type in ('youtube', 'cloudflare'):
+        logger.info(f"Auto-importando transcrição para lesson={new_lesson.id} (type={new_lesson.video_type})")
         transcript_result = auto_fetch_transcript(new_lesson.id)
 
     return jsonify({

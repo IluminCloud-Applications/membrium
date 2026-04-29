@@ -4,6 +4,7 @@ import { BrevoTab } from "@/components/settings/integrations/BrevoTab";
 import { EvolutionTab } from "@/components/settings/integrations/EvolutionTab";
 import { YouTubeTab } from "@/components/settings/integrations/YouTubeTab";
 import { VTurbTab } from "@/components/settings/integrations/VTurbTab";
+import { CloudflareR2Tab } from "@/components/settings/integrations/CloudflareR2Tab";
 import { ProxyTab } from "@/components/settings/integrations/ProxyTab";
 import { ChatwootTab } from "@/components/settings/integrations/ChatwootTab";
 import { AssemblyAITab } from "@/components/settings/integrations/AssemblyAITab";
@@ -26,57 +27,43 @@ export function IntegrationsPage() {
                 </p>
             </div>
 
-            <Tabs defaultValue="brevo" className="w-full">
+            <Tabs defaultValue="messaging" className="w-full">
                 <TabsList className="h-9">
-                    <TabsTrigger value="brevo" className="text-sm px-4 h-8 gap-1.5">
-                        <i className="ri-mail-send-line" />
-                        Email
+                    <TabsTrigger value="messaging" className="text-sm px-4 h-8 gap-1.5">
+                        <i className="ri-send-plane-line" />
+                        Envio de Mensagens
                     </TabsTrigger>
-                    <TabsTrigger value="evolution" className="text-sm px-4 h-8 gap-1.5">
-                        <i className="ri-whatsapp-line" />
-                        WhatsApp
+                    <TabsTrigger value="video" className="text-sm px-4 h-8 gap-1.5">
+                        <i className="ri-film-line" />
+                        Player de Vídeo
                     </TabsTrigger>
-                    <TabsTrigger value="youtube" className="text-sm px-4 h-8 gap-1.5">
-                        <i className="ri-youtube-line" />
-                        YouTube
+                    <TabsTrigger value="support" className="text-sm px-4 h-8 gap-1.5">
+                        <i className="ri-customer-service-2-line" />
+                        Suporte
                     </TabsTrigger>
-                    <TabsTrigger value="vturb" className="text-sm px-4 h-8 gap-1.5">
-                        <i className="ri-play-circle-line" />
-                        VTurb
-                    </TabsTrigger>
-                    <TabsTrigger value="proxy" className="text-sm px-4 h-8 gap-1.5">
-                        <i className="ri-shield-keyhole-line" />
-                        Proxy
-                    </TabsTrigger>
-                    <TabsTrigger value="chatwoot" className="text-sm px-4 h-8 gap-1.5">
-                        <i className="ri-chat-smile-2-line" />
-                        Chatwoot
-                    </TabsTrigger>
-                    <TabsTrigger value="assemblyai" className="text-sm px-4 h-8 gap-1.5">
-                        <i className="ri-mic-line" />
-                        AssemblyAI
+                    <TabsTrigger value="tools" className="text-sm px-4 h-8 gap-1.5">
+                        <i className="ri-tools-line" />
+                        Ferramentas
                     </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="brevo" className="mt-4">
+                <TabsContent value="messaging" className="mt-4 space-y-3">
                     <BrevoTab />
-                </TabsContent>
-                <TabsContent value="evolution" className="mt-4">
                     <EvolutionTab />
                 </TabsContent>
-                <TabsContent value="youtube" className="mt-4">
+
+                <TabsContent value="video" className="mt-4 space-y-3">
                     <YouTubeTab />
-                </TabsContent>
-                <TabsContent value="vturb" className="mt-4">
                     <VTurbTab />
+                    <CloudflareR2Tab />
                 </TabsContent>
-                <TabsContent value="proxy" className="mt-4">
-                    <ProxyTab />
-                </TabsContent>
-                <TabsContent value="chatwoot" className="mt-4">
+
+                <TabsContent value="support" className="mt-4 space-y-3">
                     <ChatwootTab />
                 </TabsContent>
-                <TabsContent value="assemblyai" className="mt-4">
+
+                <TabsContent value="tools" className="mt-4 space-y-3">
+                    <ProxyTab />
                     <AssemblyAITab />
                 </TabsContent>
             </Tabs>

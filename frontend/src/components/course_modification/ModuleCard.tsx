@@ -25,8 +25,9 @@ interface ModuleCardProps {
     onEditLesson: (lessonId: number) => void;
     onDeleteLesson: (lessonId: number) => void;
     onReorderLessons?: (orderedIds: number[]) => void;
-    onBulkUpload?: (platform: "youtube") => void;
+    onBulkUpload?: (platform: "youtube" | "cloudflare") => void;
     youtubeConnected?: boolean;
+    cloudflareEnabled?: boolean;
 }
 
 export function ModuleCard({
@@ -40,6 +41,7 @@ export function ModuleCard({
     onReorderLessons,
     onBulkUpload,
     youtubeConnected,
+    cloudflareEnabled,
 }: ModuleCardProps) {
     const [isOpen, setIsOpen] = useState(false);
     const lessonsCount = module.lessons.length;
@@ -140,6 +142,17 @@ export function ModuleCard({
                                         <DropdownMenuItem onClick={() => onBulkUpload("youtube")} className="rounded-lg cursor-pointer">
                                             <i className="ri-youtube-fill mr-2 text-base text-red-500" />
                                             Upload em Massa (YouTube)
+                                        </DropdownMenuItem>
+                                    </>
+                                )}
+
+                                {/* Bulk upload — Cloudflare R2 */}
+                                {cloudflareEnabled && onBulkUpload && (
+                                    <>
+                                        {!youtubeConnected && <DropdownMenuSeparator />}
+                                        <DropdownMenuItem onClick={() => onBulkUpload("cloudflare")} className="rounded-lg cursor-pointer">
+                                            <i className="ri-cloud-line mr-2 text-base text-orange-600" />
+                                            Upload em Massa (Cloudflare R2)
                                         </DropdownMenuItem>
                                     </>
                                 )}

@@ -31,6 +31,9 @@ def create_app():
     # CORS — allow frontend dev server
     CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 
+    # Allow large video uploads (up to 2 GB) for the R2 proxy endpoint
+    app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024 * 1024  # 2 GB
+
     # Initialize database
     init_db(app)
 
