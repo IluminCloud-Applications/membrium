@@ -70,6 +70,7 @@ def get_module_lessons(module_id):
             'id': l.id,
             'name': l.title,
             'moduleId': module_id,
+            'videoPlatform': l.video_type or 'youtube',
         } for l in lessons])
     except Exception as e:
         return jsonify({'error': str(e)}), 500

@@ -132,4 +132,17 @@ export const transcriptsService = {
             "/transcripts/youtube-transcript",
             { lessonId }
         ),
+
+    /** Transcreve vídeo Cloudflare R2 via AssemblyAI (retorna apenas o texto) */
+    transcribeCloudflare: (lessonId: number) =>
+        apiClient.post<{
+            success: boolean;
+            text: string;
+            wordCount: number;
+            language: string;
+            message?: string;
+        }>(
+            "/transcripts/cloudflare-transcript",
+            { lessonId }
+        ),
 };

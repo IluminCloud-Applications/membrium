@@ -295,3 +295,52 @@ def fetch_youtube_transcript():
         logger.error(f"Erro ao buscar transcrição do YouTube: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
+
+@ai_bp.route('/cloudflare-transcript', methods=['POST'])
+@admin_required
+def fetch_cloudflare_transcript():
+    """
+    Transcreve o vídeo Cloudflare R2 de uma aula via AssemblyAI.
+
+    Body JSON:
+    - lessonId: ID da aula
+
+    Retorna o texto transcrito para preencher o campo manualmente no modal.
+    """
+    try:
+        data = request.get_json()
+        lesson_id = data.get('lessonId')
+
+        if not lesson_id:
+            return jsonify({'success': False, 'message': 'lessonId obrigatório'}), 400
+
+        lesson = Lesson.query.get(lesson_id)
+        if not lesson:
+            return jsonify({'success': False, 'message': 'Aula não encontrada'}), 404
+
+        if lesson.video_type != 'cloudflare' or not lesson.video_url:
+            return jsonify({
+                'success': False,
+                'message': 'Esta aula não possui vídeo Cloudflare R2 configurado.',
+            }), 400
+
+        aai_enabled, aai_cfg = get_integration('assemblyai')
+        aai_key = aai_cfg.get('api_key') if aai_enabled else None
+        if not aai_key:
+            return jsonify({
+                'success': False,
+                'message': 'AssemblyAI não está configurada. Habilite em Configurações → Integrações → AssemblyAI.',
+            }), 400
+
+        result = AssemblyAITranscriptTool.transcribe(lesson.video_url, aai_key)
+
+        return jsonify({
+            'success': True,
+            'text': result.get('text', ''),
+            'wordCount': result.get('word_count', 0),
+            'language': result.get('language_code', 'pt-BR'),
+        })
+
+    except Exception as e:
+        logger.error(f"Erro ao transcrever Cloudflare via AssemblyAI: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500

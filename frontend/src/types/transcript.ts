@@ -39,6 +39,8 @@ export interface TranscriptLesson {
     id: number;
     name: string;
     moduleId: number;
+    /** 'youtube' | 'cloudflare' | 'vturb' | 'custom' */
+    videoPlatform: string;
 }
 
 export interface TranscriptCourseSummary {
@@ -69,5 +71,6 @@ export interface PendingLesson {
     hasSummary: boolean;
     hasKeywords: boolean;
     isYoutube: boolean;
+    isCloudflare: boolean;
     videoUrl: string;
 }

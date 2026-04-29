@@ -50,19 +50,20 @@ export function AutoTranscriptModal({
         ),
         [lessons]);
 
-    const pendingWithYoutube = useMemo(() =>
-        pendingLessons.filter((l) => l.isYoutube || l.hasTranscript),
+    // Lessons processable: YouTube (captions) OR Cloudflare R2 (AssemblyAI) OR already have transcript
+    const pendingWithVideo = useMemo(() =>
+        pendingLessons.filter((l) => l.isYoutube || l.isCloudflare || l.hasTranscript),
         [pendingLessons]);
 
     const stats = useMemo(() => ({
         total: lessons.length,
         pending: pendingLessons.length,
-        processable: pendingWithYoutube.length,
-    }), [lessons, pendingLessons, pendingWithYoutube]);
+        processable: pendingWithVideo.length,
+    }), [lessons, pendingLessons, pendingWithVideo]);
 
     function handleStart() {
-        if (pendingWithYoutube.length === 0 || !ai.model) return;
-        onStartGeneration(pendingWithYoutube, ai.provider, ai.model);
+        if (pendingWithVideo.length === 0 || !ai.model) return;
+        onStartGeneration(pendingWithVideo, ai.provider, ai.model);
         onOpenChange(false);
     }
 
@@ -75,7 +76,8 @@ export function AutoTranscriptModal({
                         Transcrição Automática
                     </DialogTitle>
                     <DialogDescription>
-                        Gera transcrições do YouTube e metadados (resumo + keywords) automaticamente com IA.
+                        Gera transcrições automaticamente (YouTube via legendas, Cloudflare R2 via AssemblyAI)
+                        e metadados (resumo + keywords) com IA.
                     </DialogDescription>
                 </DialogHeader>
 

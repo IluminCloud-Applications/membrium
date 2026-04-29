@@ -13,8 +13,12 @@ interface TranscriptFormContentProps {
     onTranscriptTextChange: (value: string) => void;
     onVectorChange: (value: string) => void;
     onKeywordsChange: (keywords: string[]) => void;
+    /** Plataforma da aula selecionada — controla qual botão de importação aparece */
+    videoPlatform?: string;
     onYoutubeImport: () => void;
     importingYoutube?: boolean;
+    onCloudflareTranscribe?: () => void;
+    transcribingCloudflare?: boolean;
     onGenerateAI?: (model: string) => void;
     generatingAI?: boolean;
     aiModels: AIModel[];
@@ -25,6 +29,11 @@ interface TranscriptFormContentProps {
 
 /**
  * Right column — transcript text area, AI summary, and keyword tags.
+ *
+ * Import/transcribe button logic:
+ * - youtube   → "Importar do YouTube" (captions API)
+ * - cloudflare → "Transcrever com IA" (AssemblyAI)
+ * - other     → button is hidden
  */
 export function TranscriptFormContent({
     transcriptText,
@@ -33,8 +42,11 @@ export function TranscriptFormContent({
     onTranscriptTextChange,
     onVectorChange,
     onKeywordsChange,
+    videoPlatform,
     onYoutubeImport,
     importingYoutube = false,
+    onCloudflareTranscribe,
+    transcribingCloudflare = false,
     onGenerateAI,
     generatingAI = false,
     aiModels,
@@ -60,6 +72,9 @@ export function TranscriptFormContent({
     }
 
     const canGenerate = !!transcriptText.trim() && !!selectedModel;
+    const isYoutube = videoPlatform === "youtube";
+    const isCloudflare = videoPlatform === "cloudflare";
+    const isBusy = importingYoutube || transcribingCloudflare;
 
     return (
         <div className="space-y-5">
@@ -70,25 +85,64 @@ export function TranscriptFormContent({
                         <i className="ri-draft-line text-primary" />
                         Transcrição
                     </h3>
-                    <button
-                        type="button"
-                        onClick={onYoutubeImport}
-                        disabled={importingYoutube}
-                        className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground bg-muted hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed px-2 py-1 rounded-md transition-colors"
-                    >
-                        {importingYoutube ? (
-                            <>
-                                <i className="ri-loader-4-line animate-spin text-red-500" />
-                                Importando...
-                            </>
-                        ) : (
-                            <>
-                                <i className="ri-youtube-line text-red-500" />
-                                Importar do YouTube
-                            </>
-                        )}
-                    </button>
+
+                    {/* YouTube import button */}
+                    {isYoutube && (
+                        <button
+                            type="button"
+                            onClick={onYoutubeImport}
+                            disabled={isBusy}
+                            className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground bg-muted hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed px-2 py-1 rounded-md transition-colors"
+                        >
+                            {importingYoutube ? (
+                                <>
+                                    <i className="ri-loader-4-line animate-spin text-red-500" />
+                                    Importando...
+                                </>
+                            ) : (
+                                <>
+                                    <i className="ri-youtube-line text-red-500" />
+                                    Importar do YouTube
+                                </>
+                            )}
+                        </button>
+                    )}
+
+                    {/* Cloudflare AssemblyAI transcribe button */}
+                    {isCloudflare && onCloudflareTranscribe && (
+                        <button
+                            type="button"
+                            onClick={onCloudflareTranscribe}
+                            disabled={isBusy}
+                            className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground bg-muted hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed px-2 py-1 rounded-md transition-colors"
+                        >
+                            {transcribingCloudflare ? (
+                                <>
+                                    <i className="ri-loader-4-line animate-spin text-orange-500" />
+                                    Transcrevendo...
+                                </>
+                            ) : (
+                                <>
+                                    <i className="ri-ai-generate text-orange-500" />
+                                    Transcrever Automático
+                                </>
+                            )}
+                        </button>
+                    )}
                 </div>
+
+                {/* Info banner for Cloudflare (AssemblyAI) */}
+                {isCloudflare && !transcriptText && (
+                    <div className="flex items-start gap-2 mb-2 rounded-lg bg-orange-500/8 border border-orange-500/20 px-3 py-2">
+                        <i className="ri-information-line text-orange-500 text-sm mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-orange-700 dark:text-orange-400">
+                            Vídeos do Cloudflare R2 são transcritos pela{" "}
+                            <strong>AssemblyAI</strong>. Configure a integração em{" "}
+                            Configurações → Integrações antes de transcrever.
+                        </p>
+                    </div>
+                )}
+
                 <Textarea
                     value={transcriptText}
                     onChange={(e) => onTranscriptTextChange(e.target.value)}

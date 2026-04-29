@@ -52,6 +52,8 @@ export function TranscriptModal({
     const [saving, setSaving] = useState(false);
     const [generatingAI, setGeneratingAI] = useState(false);
     const [importingYoutube, setImportingYoutube] = useState(false);
+    const [transcribingCloudflare, setTranscribingCloudflare] = useState(false);
+    const [selectedLessonPlatform, setSelectedLessonPlatform] = useState("");
 
     // Dynamic data from API
     const [courses, setCourses] = useState<TranscriptCourse[]>([]);
@@ -121,7 +123,14 @@ export function TranscriptModal({
     function handleModuleChange(value: string) {
         setModuleId(value);
         setForm((prev) => ({ ...prev, lessonId: "" }));
+        setSelectedLessonPlatform("");
         loadLessons(value);
+    }
+
+    function handleLessonChange(value: string) {
+        setForm((prev) => ({ ...prev, lessonId: value }));
+        const lesson = lessons.find((l) => l.id === Number(value));
+        setSelectedLessonPlatform(lesson?.videoPlatform || "");
     }
 
     async function handleYoutubeImport() {
@@ -136,6 +145,21 @@ export function TranscriptModal({
             console.error("Erro ao importar do YouTube:", error);
         } finally {
             setImportingYoutube(false);
+        }
+    }
+
+    async function handleCloudflareTranscribe() {
+        if (!form.lessonId) return;
+        setTranscribingCloudflare(true);
+        try {
+            const res = await transcriptsService.transcribeCloudflare(Number(form.lessonId));
+            if (res.success && res.text) {
+                setForm((prev) => ({ ...prev, text: res.text }));
+            }
+        } catch (error) {
+            console.error("Erro ao transcrever com AssemblyAI:", error);
+        } finally {
+            setTranscribingCloudflare(false);
         }
     }
 
@@ -179,6 +203,8 @@ export function TranscriptModal({
         ? editItem.lessonName
         : lessons.find((l) => l.id === Number(form.lessonId))?.name;
 
+    const effectivePlatform = selectedLessonPlatform;
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
@@ -213,9 +239,7 @@ export function TranscriptModal({
                             lessons={lessons}
                             onCourseChange={handleCourseChange}
                             onModuleChange={handleModuleChange}
-                            onLessonChange={(v) =>
-                                setForm((prev) => ({ ...prev, lessonId: v }))
-                            }
+                            onLessonChange={handleLessonChange}
                             selectedLessonName={selectedLessonName}
                         />
                     )}
@@ -243,6 +267,7 @@ export function TranscriptModal({
                                 transcriptText={form.text}
                                 vector={form.vector}
                                 keywords={form.keywords}
+                                videoPlatform={effectivePlatform}
                                 onTranscriptTextChange={(v) =>
                                     setForm((prev) => ({ ...prev, text: v }))
                                 }
@@ -254,6 +279,8 @@ export function TranscriptModal({
                                 }
                                 onYoutubeImport={handleYoutubeImport}
                                 importingYoutube={importingYoutube}
+                                onCloudflareTranscribe={handleCloudflareTranscribe}
+                                transcribingCloudflare={transcribingCloudflare}
                                 onGenerateAI={handleGenerateAI}
                                 generatingAI={generatingAI}
                                 aiModels={ai.models}
