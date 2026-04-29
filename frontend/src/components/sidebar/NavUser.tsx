@@ -94,7 +94,7 @@ export function NavUser({ user, onLogout }: NavUserProps) {
                                 {theme === "dark" ? "Modo Claro" : "Modo Escuro"}
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                                <a href="https://ilumin.app/membrium" target="_blank" rel="noopener noreferrer">
+                                <a href="https://ilumin.app?src=membrium" target="_blank" rel="noopener noreferrer">
                                     <i className="ri-lifebuoy-line mr-2" />
                                     Ajuda
                                 </a>

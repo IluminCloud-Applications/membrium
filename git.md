@@ -6,14 +6,11 @@
 
 ```bash
 git add -A
-git commit -m "v1.0.0 - init"
-git tag v1.0.0
+git commit -m "v1.0.1"
+git tag v1.0.1
 git push
-git push origin v1.0.0
+git push origin v1.0.1
 ```
-
-> A tag define a versão da imagem Docker (ex: `v2.3.0` → imagem `2.3.0` + `latest`).
-
 
 ## Push simples (sem nova versão)
 
