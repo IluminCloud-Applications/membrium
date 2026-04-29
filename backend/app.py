@@ -21,7 +21,6 @@ from routes.unsubscribe import unsubscribe_bp
 from routes.member import member_bp
 from webhook import webhook_bp
 from routes.youtube import youtube_bp
-from routes.telegram import telegram_bp
 from routes.customization import customization_bp
 
 
@@ -52,7 +51,6 @@ def create_app():
     app.register_blueprint(member_bp)
     app.register_blueprint(webhook_bp)
     app.register_blueprint(youtube_bp)
-    app.register_blueprint(telegram_bp)
     app.register_blueprint(customization_bp)
 
     # Ensure upload directory exists

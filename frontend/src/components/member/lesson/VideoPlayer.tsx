@@ -42,7 +42,7 @@ export function VideoPlayer({
     const playerRef = useRef<MediaPlayerInstance>(null);
     const seekedRef = useRef(false);
 
-    // For YouTube, convert to proper src format. For Telegram, use stream proxy.
+    // For YouTube, convert to proper src format.
     const videoSrc = getVideoSource(src, videoType, lessonId);
 
     useEffect(() => {
@@ -222,11 +222,6 @@ function getVideoSource(src: string, videoType: string, lessonId?: number): any 
         if (match) return `youtube/${match[1]}`;
         if (src.startsWith("youtube/")) return src;
         return `youtube/${src}`;
-    }
-    if (videoType === "telegram") {
-        // Stream via backend proxy (supports Range requests for seeking)
-        // Pass type to avoid vidstack fetching headers to infer type
-        return { src: `/api/telegram/stream/${lessonId}`, type: 'video/mp4' };
     }
     return src;
 }

@@ -74,7 +74,7 @@ export function AssemblyAITab() {
             id="assemblyaiToggle"
             icon="ri-mic-line"
             title="AssemblyAI"
-            description="Transcreva automaticamente vídeos longos vindos do Telegram."
+            description="Transcreva automaticamente vídeos longos."
             enabled={enabled}
             onToggle={handleToggle}
         >
@@ -82,7 +82,7 @@ export function AssemblyAITab() {
                 <i className="ri-information-line text-purple-500" />
                 <AlertDescription className="text-sm text-purple-700 dark:text-purple-300">
                     O AssemblyAI é utilizado para fornecer transcrições automatizadas
-                    e geração de FAQ / legendedas para os seus vídeos hospedados no Telegram.
+                    e geração de FAQ / legendedas para os seus vídeos.
                 </AlertDescription>
             </Alert>
 

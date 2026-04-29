@@ -65,15 +65,6 @@ export interface ChatwootSettings {
     embed_script: string;
 }
 
-export interface TelegramSettings {
-    enabled: boolean;
-    connected: boolean;
-    api_id: string;
-    canal_id: string;
-    canal_nome: string;
-    phone: string;
-}
-
 export interface AssemblyAISettings {
     enabled: boolean;
     api_key: string;
@@ -92,7 +83,7 @@ export interface IntegrationsData {
     vturb: VTurbSettings;
     proxy: ProxySettings;
     chatwoot: ChatwootSettings;
-    telegram: TelegramSettings;
+
     assemblyai: AssemblyAISettings;
 }
 

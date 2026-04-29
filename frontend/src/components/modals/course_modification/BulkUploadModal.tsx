@@ -10,10 +10,9 @@ import { Button } from "@/components/ui/button";
 import { BulkUploadList } from "./BulkUploadList";
 import { BulkUploadProgress } from "./BulkUploadProgress";
 import { youtubeUploadService, type YouTubeUploadResult } from "@/services/youtubeUpload";
-import { telegramService, type TelegramUploadResult } from "@/services/telegramService";
 
-type BulkResult = YouTubeUploadResult | TelegramUploadResult;
-type Platform = "youtube" | "telegram";
+type BulkResult = YouTubeUploadResult;
+type Platform = "youtube";
 
 interface BulkUploadModalProps {
     open: boolean;
@@ -37,12 +36,6 @@ const PLATFORM_CONFIG: Record<Platform, { icon: string; iconClass: string; label
         iconClass: "text-red-500",
         label: "YouTube",
         description: "Os vídeos serão enviados para o YouTube e as aulas criadas automaticamente.",
-    },
-    telegram: {
-        icon: "ri-telegram-fill",
-        iconClass: "text-blue-500",
-        label: "Telegram",
-        description: "Os vídeos serão enviados para o canal privado do Telegram e as aulas criadas automaticamente. Sem limite de tamanho.",
     },
 };
 
@@ -100,17 +93,9 @@ export function BulkUploadModal({
 
         try {
             const files = videos.map((v) => v.file);
-            const titles = videos.map((v) => v.title);
-
-            if (platform === "telegram") {
-                const res = await telegramService.uploadBulk(files, titles, moduleId);
-                setResults(res.results);
-                if (res.success) onComplete();
-            } else {
-                const res = await youtubeUploadService.uploadBulk(files, titles, moduleId);
-                setResults(res.results);
-                if (res.success) onComplete();
-            }
+            const res = await youtubeUploadService.uploadBulk(files, titles, moduleId);
+            setResults(res.results);
+            if (res.success) onComplete();
         } catch (err) {
             console.error("Erro no upload em massa:", err);
             setResults([{

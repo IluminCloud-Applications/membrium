@@ -3,7 +3,7 @@
    Used across course editing components
    ============================================ */
 
-export type VideoPlatform = "youtube" | "custom" | "vturb" | "telegram";
+export type VideoPlatform = "youtube" | "custom" | "vturb";
 
 export interface LessonCTA {
     text: string;
@@ -103,7 +103,6 @@ export const menuIconOptions = [
     { value: "ri-whatsapp-line", label: "WhatsApp" },
     { value: "ri-question-line", label: "Ajuda" },
     { value: "ri-group-line", label: "Comunidade" },
-    { value: "ri-telegram-line", label: "Telegram" },
     { value: "ri-instagram-line", label: "Instagram" },
     { value: "ri-links-line", label: "Link" },
     { value: "ri-global-line", label: "Website" },

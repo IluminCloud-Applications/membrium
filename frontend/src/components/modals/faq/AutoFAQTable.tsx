@@ -79,11 +79,6 @@ function LessonRow({ lesson }: { lesson: FAQPendingLesson }) {
                         <i className="ri-youtube-line mr-1" />
                         YT
                     </Badge>
-                ) : lesson.isTelegram ? (
-                    <Badge variant="secondary" className="text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                        <i className="ri-telegram-line mr-1" />
-                        TG
-                    </Badge>
                 ) : (
                     <Badge variant="outline" className="text-[10px] text-muted-foreground">
                         Não
@@ -129,20 +124,12 @@ function StatusBadge({ lesson }: { lesson: FAQPendingLesson }) {
         );
     }
 
-    // Is YouTube/Telegram but no transcript yet
+    // Is YouTube but no transcript yet
     if (lesson.isYoutube) {
         return (
             <Badge variant="secondary" className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-400">
                 <i className="ri-youtube-line mr-1" />
                 Via YT
-            </Badge>
-        );
-    }
-    if (lesson.isTelegram) {
-        return (
-            <Badge variant="secondary" className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-400">
-                <i className="ri-telegram-line mr-1" />
-                Via TG
             </Badge>
         );
     }

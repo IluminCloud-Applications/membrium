@@ -1,8 +1,6 @@
 import { Button } from "@/components/ui/button";
 import type { YouTubeUploadResult } from "@/services/youtubeUpload";
-import type { TelegramUploadResult } from "@/services/telegramService";
-
-type BulkResult = YouTubeUploadResult | TelegramUploadResult;
+type BulkResult = YouTubeUploadResult;
 
 interface BulkUploadProgressProps {
     results: BulkResult[];
@@ -11,13 +9,11 @@ interface BulkUploadProgressProps {
 
 function getSuccessDetail(result: BulkResult): string | null {
     if ("video_url" in result && result.video_url) return result.video_url;
-    if ("message_id" in result && result.message_id) return `Telegram message_id: ${result.message_id}`;
     return null;
 }
 
 function getSuccessIcon(result: BulkResult): string {
-    if ("video_url" in result) return "ri-youtube-line";
-    return "ri-telegram-line";
+    return "ri-youtube-line";
 }
 
 export function BulkUploadProgress({ results, onClose }: BulkUploadProgressProps) {

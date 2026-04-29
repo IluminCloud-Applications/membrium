@@ -21,9 +21,8 @@ interface CourseTabsProps {
     onAddMenuItem: () => void;
     onEditMenuItem: (item: CourseMenuItem) => void;
     onDeleteMenuItem: (item: CourseMenuItem) => void;
-    onBulkUpload?: (moduleId: number, platform: "youtube" | "telegram") => void;
+    onBulkUpload?: (moduleId: number, platform: "youtube") => void;
     youtubeConnected?: boolean;
-    telegramConnected?: boolean;
 }
 
 export function CourseTabs({
@@ -45,7 +44,6 @@ export function CourseTabs({
     onDeleteMenuItem,
     onBulkUpload,
     youtubeConnected,
-    telegramConnected,
 }: CourseTabsProps) {
     return (
         <Tabs defaultValue="modules" className="w-full">
@@ -77,7 +75,6 @@ export function CourseTabs({
                     onReorderLessons={onReorderLessons}
                     onBulkUpload={onBulkUpload}
                     youtubeConnected={youtubeConnected}
-                    telegramConnected={telegramConnected}
                 />
             </TabsContent>
 

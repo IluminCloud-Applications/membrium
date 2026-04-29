@@ -51,7 +51,7 @@ export function AutoTranscriptModal({
         [lessons]);
 
     const pendingWithYoutube = useMemo(() =>
-        pendingLessons.filter((l) => l.isYoutube || l.isTelegram || l.hasTranscript),
+        pendingLessons.filter((l) => l.isYoutube || l.hasTranscript),
         [pendingLessons]);
 
     const stats = useMemo(() => ({

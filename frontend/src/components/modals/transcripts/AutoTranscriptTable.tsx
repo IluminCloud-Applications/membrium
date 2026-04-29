@@ -62,9 +62,6 @@ function AutoTranscriptRow({ lesson }: { lesson: PendingLesson }) {
                     {lesson.isYoutube && (
                         <i className="ri-youtube-line text-red-500 text-xs flex-shrink-0" />
                     )}
-                    {lesson.isTelegram && (
-                        <i className="ri-telegram-line text-blue-500 text-xs flex-shrink-0" />
-                    )}
                     <p className="truncate">{lesson.lessonName}</p>
                 </div>
             </TableCell>

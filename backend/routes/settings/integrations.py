@@ -27,7 +27,6 @@ def get_integrations():
     vturb_enabled, vturb = get_integration('vturb')
     proxy_enabled, proxy = get_integration('proxy')
     chatwoot_enabled, chatwoot = get_integration('chatwoot')
-    telegram_enabled, telegram = get_integration('telegram')
     assemblyai_enabled, assemblyai = get_integration('assemblyai')
     _, support = get_integration('support')
 
@@ -78,14 +77,6 @@ def get_integrations():
             'api_key': chatwoot.get('api_key', ''),
             'embed_enabled': chatwoot.get('embed_enabled', False),
             'embed_script': chatwoot.get('embed_script', ''),
-        },
-        'telegram': {
-            'enabled': telegram_enabled,
-            'connected': bool(telegram.get('session_string')),
-            'api_id': telegram.get('api_id', ''),
-            'canal_id': str(telegram.get('canal_id', '')),
-            'canal_nome': telegram.get('canal_nome', ''),
-            'phone': telegram.get('phone', ''),
         },
         'assemblyai': {
             'enabled': assemblyai_enabled,

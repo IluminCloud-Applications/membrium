@@ -25,9 +25,8 @@ interface ModuleCardProps {
     onEditLesson: (lessonId: number) => void;
     onDeleteLesson: (lessonId: number) => void;
     onReorderLessons?: (orderedIds: number[]) => void;
-    onBulkUpload?: (platform: "youtube" | "telegram") => void;
+    onBulkUpload?: (platform: "youtube") => void;
     youtubeConnected?: boolean;
-    telegramConnected?: boolean;
 }
 
 export function ModuleCard({
@@ -41,7 +40,6 @@ export function ModuleCard({
     onReorderLessons,
     onBulkUpload,
     youtubeConnected,
-    telegramConnected,
 }: ModuleCardProps) {
     const [isOpen, setIsOpen] = useState(false);
     const lessonsCount = module.lessons.length;
@@ -146,17 +144,6 @@ export function ModuleCard({
                                     </>
                                 )}
 
-                                {/* Bulk upload — Telegram */}
-                                {telegramConnected && onBulkUpload && (
-                                    <>
-                                        {!youtubeConnected && <DropdownMenuSeparator />}
-                                        <DropdownMenuItem onClick={() => onBulkUpload("telegram")} className="rounded-lg cursor-pointer">
-                                            <i className="ri-telegram-fill mr-2 text-base text-blue-500" />
-                                            Upload em Massa (Telegram)
-                                        </DropdownMenuItem>
-                                    </>
-                                )}
-
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={onDelete} className="rounded-lg cursor-pointer text-destructive focus:text-destructive">
                                     <i className="ri-delete-bin-line mr-2 text-base" /> Excluir Módulo
@@ -186,11 +173,6 @@ export function ModuleCard({
                                     {youtubeConnected && onBulkUpload && (
                                         <Button variant="outline" size="sm" onClick={() => onBulkUpload("youtube")} className="gap-1.5">
                                             <i className="ri-youtube-fill text-red-500" /> Upload YouTube
-                                        </Button>
-                                    )}
-                                    {telegramConnected && onBulkUpload && (
-                                        <Button variant="outline" size="sm" onClick={() => onBulkUpload("telegram")} className="gap-1.5">
-                                            <i className="ri-telegram-fill text-blue-500" /> Upload Telegram
                                         </Button>
                                     )}
                                 </div>

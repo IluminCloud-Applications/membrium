@@ -50,7 +50,6 @@ export interface FAQPendingLesson {
     hasTranscript: boolean;
     hasFaq: boolean;
     isYoutube: boolean;
-    isTelegram: boolean;
     canGenerate: boolean;
     videoUrl: string;
     faqCount: number;

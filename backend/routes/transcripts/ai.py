@@ -17,7 +17,6 @@ from db.database import db
 from db.integration_helpers import get_ai_api_key
 from ai.models.transcript_metadata import TranscriptMetadataAI
 from ai.tools.youtube_transcript import YouTubeTranscriptTool
-from ai.tools.assemblyai_transcript import AssemblyAITranscriptTool
 
 logger = logging.getLogger("routes.transcripts.ai")
 
@@ -64,8 +63,6 @@ def get_pending_lessons():
             has_summary = bool(transcript and transcript.transcript_vector)
             has_keywords = bool(transcript and transcript.searchable_keywords)
             is_youtube = bool(lesson.video_url and YouTubeTranscriptTool.is_youtube_url(lesson.video_url or ''))
-            is_telegram = lesson.video_type == 'telegram'
-
             result.append({
                 'lessonId': lesson.id,
                 'lessonName': lesson.title,
@@ -77,7 +74,6 @@ def get_pending_lessons():
                 'hasSummary': has_summary,
                 'hasKeywords': has_keywords,
                 'isYoutube': is_youtube,
-                'isTelegram': is_telegram,
                 'videoUrl': lesson.video_url or '',
             })
 
@@ -169,22 +165,17 @@ def auto_generate():
         transcript = LessonTranscript.query.filter_by(lesson_id=lesson_id).first()
         transcript_text = transcript.transcript_text if transcript else None
 
-        # Se não tem transcrição, buscar do YouTube ou AssemblyAI (Telegram)
+        # Se não tem transcrição, buscar do YouTube
         if not transcript_text:
-            if lesson.video_type == 'telegram':
-                yt_result = AssemblyAITranscriptTool.fetch_transcript(lesson)
-                transcription_provider = 'assemblyai'
-                video_url = lesson.video_url
-            else:
-                video_url = lesson.video_url
-                if not video_url or not YouTubeTranscriptTool.is_youtube_url(video_url):
-                    return jsonify({
-                        'success': False,
-                        'message': f'Aula "{lesson.title}" não possui vídeo suportado (YouTube ou Telegram).'
-                    }), 400
+            video_url = lesson.video_url
+            if not video_url or not YouTubeTranscriptTool.is_youtube_url(video_url):
+                return jsonify({
+                    'success': False,
+                    'message': f'Aula "{lesson.title}" não possui vídeo suportado (YouTube).'
+                }), 400
 
-                yt_result = YouTubeTranscriptTool.fetch_transcript(video_url)
-                transcription_provider = 'youtube_transcript_api'
+            yt_result = YouTubeTranscriptTool.fetch_transcript(video_url)
+            transcription_provider = 'youtube_transcript_api'
 
             transcript_text = yt_result['text']
 
@@ -257,16 +248,13 @@ def fetch_youtube_transcript():
         if not lesson:
             return jsonify({'success': False, 'message': 'Aula não encontrada'}), 404
 
-        if lesson.video_type == 'telegram':
-            result = AssemblyAITranscriptTool.fetch_transcript(lesson)
-        else:
-            video_url = lesson.video_url
-            if not video_url or not YouTubeTranscriptTool.is_youtube_url(video_url):
-                return jsonify({
-                    'success': False,
-                    'message': 'Esta aula não possui vídeo suportado (YouTube ou Telegram).'
-                }), 400
-            result = YouTubeTranscriptTool.fetch_transcript(video_url)
+        video_url = lesson.video_url
+        if not video_url or not YouTubeTranscriptTool.is_youtube_url(video_url):
+            return jsonify({
+                'success': False,
+                'message': 'Esta aula não possui vídeo suportado (YouTube).'
+            }), 400
+        result = YouTubeTranscriptTool.fetch_transcript(video_url)
 
         return jsonify({
             'success': True,

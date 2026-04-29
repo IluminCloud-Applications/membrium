@@ -1,6 +1,9 @@
 import os
+import logging
 from datetime import timedelta
 from flask_sqlalchemy import SQLAlchemy
+
+logger = logging.getLogger('app')
 
 # Initialize SQLAlchemy
 db = SQLAlchemy()
@@ -8,8 +11,14 @@ db = SQLAlchemy()
 
 def init_db(app):
     """Initialize database with Flask app"""
-    # Use a fixed secret key from env for session persistence across Gunicorn workers
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(24))
+    secret_key = os.environ.get('SECRET_KEY')
+    if not secret_key:
+        logger.warning(
+            "⚠️  SECRET_KEY not set! Using insecure fallback. "
+            "Set SECRET_KEY environment variable in production."
+        )
+        secret_key = 'dev-insecure-fallback-set-SECRET_KEY-env'
+    app.config['SECRET_KEY'] = secret_key
     
     raw_url = os.environ.get('DATABASE_URL', '')
     db_password = os.environ.get('DB_PASSWORD')

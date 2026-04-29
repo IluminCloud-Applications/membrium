@@ -36,10 +36,10 @@ export function LessonItem({ lesson, index, onEdit, onDelete }: LessonItemProps)
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
                         <i className={
                             lesson.videoPlatform === "youtube" ? "ri-youtube-line" : 
-                            lesson.videoPlatform === "vturb" ? "ri-play-circle-line" : "ri-telegram-line"
+                            lesson.videoPlatform === "vturb" ? "ri-play-circle-line" : "ri-code-s-slash-line"
                         } />
                         {lesson.videoPlatform === "youtube" ? "YouTube" : 
-                         lesson.videoPlatform === "vturb" ? "VTurb" : "Telegram"}
+                         lesson.videoPlatform === "vturb" ? "VTurb" : "Custom"}
                     </span>
                     {lesson.attachments.length > 0 && (
                         <span className="text-xs text-muted-foreground flex items-center gap-1">

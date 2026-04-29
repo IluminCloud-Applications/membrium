@@ -69,6 +69,5 @@ export interface PendingLesson {
     hasSummary: boolean;
     hasKeywords: boolean;
     isYoutube: boolean;
-    isTelegram: boolean;
     videoUrl: string;
 }
