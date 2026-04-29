@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import type { CourseModule, ModuleFormData } from "@/types/course-modification";
+import { BannerPromptModal } from "@/components/modals/course_modification/BannerPromptModal";
 
 interface ModuleModalProps {
     open: boolean;
@@ -36,6 +37,7 @@ export function ModuleModal({
     isLoading,
 }: ModuleModalProps) {
     const [form, setForm] = useState<ModuleFormData>(emptyForm);
+    const [bannerPromptOpen, setBannerPromptOpen] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
     const isEditing = !!editModule;
 
@@ -72,6 +74,7 @@ export function ModuleModal({
     }
 
     return (
+        <>
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
@@ -117,7 +120,7 @@ export function ModuleModal({
                                         className="w-full h-auto object-cover"
                                     />
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex flex-wrap gap-2">
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -138,19 +141,43 @@ export function ModuleModal({
                                         <i className="ri-delete-bin-line" />
                                         Remover
                                     </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setBannerPromptOpen(true)}
+                                        disabled={!form.name.trim()}
+                                        className="gap-1.5 text-primary border-primary/40 hover:bg-primary/5"
+                                    >
+                                        <i className="ri-magic-line" />
+                                        Gerar Prompt
+                                    </Button>
                                 </div>
                             </div>
                         ) : (
-                            <button
-                                type="button"
-                                onClick={() => fileRef.current?.click()}
-                                className="w-full border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 flex flex-col items-center justify-center gap-2 hover:border-primary/50 hover:bg-primary/2 transition-all cursor-pointer"
-                            >
-                                <i className="ri-image-add-line text-3xl text-muted-foreground" />
-                                <p className="text-sm font-medium text-muted-foreground">
-                                    Clique para enviar uma imagem
-                                </p>
-                            </button>
+                            <div className="space-y-2">
+                                <button
+                                    type="button"
+                                    onClick={() => fileRef.current?.click()}
+                                    className="w-full border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 flex flex-col items-center justify-center gap-2 hover:border-primary/50 hover:bg-primary/2 transition-all cursor-pointer"
+                                >
+                                    <i className="ri-image-add-line text-3xl text-muted-foreground" />
+                                    <p className="text-sm font-medium text-muted-foreground">
+                                        Clique para enviar uma imagem
+                                    </p>
+                                </button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setBannerPromptOpen(true)}
+                                        disabled={!form.name.trim()}
+                                    className="w-full gap-1.5 text-primary border-primary/40 hover:bg-primary/5"
+                                >
+                                    <i className="ri-magic-line" />
+                                    Gerar Prompt de Banner com IA
+                                </Button>
+                            </div>
                         )}
 
                         <input
@@ -243,5 +270,12 @@ export function ModuleModal({
                 </form>
             </DialogContent>
         </Dialog>
+
+        <BannerPromptModal
+            open={bannerPromptOpen}
+            onOpenChange={setBannerPromptOpen}
+            moduleName={form.name}
+        />
+    </>
     );
 }

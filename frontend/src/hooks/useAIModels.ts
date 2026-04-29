@@ -1,16 +1,34 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { aiService } from "@/services/ai";
 import type { AIModel } from "@/services/ai";
+
+const STORAGE_KEY = "ai_selected_model";
+
+function getSavedModel(): string {
+    try { return localStorage.getItem(STORAGE_KEY) ?? ""; }
+    catch { return ""; }
+}
+
+function saveModel(model: string) {
+    try { localStorage.setItem(STORAGE_KEY, model); }
+    catch { /* ignore */ }
+}
 
 /**
  * Hook reutilizável que carrega as configurações de IA e os modelos disponíveis.
  * Detecta automaticamente o provider habilitado (gemini ou openai) e busca os modelos.
+ * Persiste o modelo selecionado no localStorage.
  */
 export function useAIModels(active: boolean) {
     const [provider, setProvider] = useState("gemini");
-    const [model, setModel] = useState("");
+    const [model, setModelState] = useState(getSavedModel);
     const [models, setModels] = useState<AIModel[]>([]);
     const [loading, setLoading] = useState(false);
+
+    const setModel = useCallback((value: string) => {
+        setModelState(value);
+        saveModel(value);
+    }, []);
 
     useEffect(() => {
         if (!active) return;

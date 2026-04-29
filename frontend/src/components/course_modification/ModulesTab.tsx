@@ -14,8 +14,11 @@ interface ModulesTabProps {
     onReorderModules?: (orderedIds: number[]) => void;
     onReorderLessons?: (moduleId: number, orderedIds: number[]) => void;
     onBulkUpload?: (moduleId: number, platform: "youtube" | "cloudflare") => void;
+    onBulkVturb?: (moduleId: number) => void;
+    onAutoDescription?: () => void;
     youtubeConnected?: boolean;
     cloudflareEnabled?: boolean;
+    vturbEnabled?: boolean;
 }
 
 export function ModulesTab({
@@ -29,8 +32,11 @@ export function ModulesTab({
     onReorderModules,
     onReorderLessons,
     onBulkUpload,
+    onBulkVturb,
+    onAutoDescription,
     youtubeConnected,
     cloudflareEnabled,
+    vturbEnabled,
 }: ModulesTabProps) {
     const [dragOverId, setDragOverId] = useState<number | null>(null);
     const dragItemRef = useRef<number | null>(null);
@@ -89,7 +95,17 @@ export function ModulesTab({
 
     return (
         <div className="space-y-4">
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+                {onAutoDescription && (
+                    <Button
+                        variant="outline"
+                        onClick={onAutoDescription}
+                        className="gap-2 rounded-lg border-primary/30 text-primary hover:bg-primary/5"
+                    >
+                        <i className="ri-magic-line" />
+                        Descrição Automática
+                    </Button>
+                )}
                 <Button onClick={onAddModule} className="btn-brand gap-2 rounded-lg">
                     <i className="ri-folder-add-line" />
                     Adicionar Módulo
@@ -105,8 +121,9 @@ export function ModulesTab({
                         onDragOver={(e) => handleDragOver(e, mod.id)}
                         onDrop={() => handleDrop(mod.id)}
                         onDragEnd={cleanup}
-                        className={`transition-all duration-150 ${dragOverId === mod.id ? "border-2 border-primary/40 rounded-xl" : ""
-                            }`}
+                        className={`transition-all duration-150 ${
+                            dragOverId === mod.id ? "border-2 border-primary/40 rounded-xl" : ""
+                        }`}
                     >
                         <ModuleCard
                             module={mod}
@@ -118,8 +135,10 @@ export function ModulesTab({
                             onDeleteLesson={(lessonId) => onDeleteLesson(mod.id, lessonId)}
                             onReorderLessons={onReorderLessons ? (ids) => onReorderLessons(mod.id, ids) : undefined}
                             onBulkUpload={onBulkUpload ? (platform) => onBulkUpload(mod.id, platform) : undefined}
+                            onBulkVturb={onBulkVturb ? () => onBulkVturb(mod.id) : undefined}
                             youtubeConnected={youtubeConnected}
                             cloudflareEnabled={cloudflareEnabled}
+                            vturbEnabled={vturbEnabled}
                         />
                     </div>
                 ))}

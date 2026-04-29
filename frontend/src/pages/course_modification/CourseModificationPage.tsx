@@ -5,6 +5,8 @@ import { ModuleModal } from "@/components/modals/course_modification/ModuleModal
 import { LessonModal } from "@/components/modals/course_modification/LessonModal";
 import { MenuItemModal } from "@/components/modals/course_modification/MenuItemModal";
 import { BulkUploadModal } from "@/components/modals/course_modification/BulkUploadModal";
+import { VTurbBulkModal } from "@/components/modals/course_modification/VTurbBulkModal";
+import { AutoDescriptionModal } from "@/components/modals/course_modification/AutoDescriptionModal";
 import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModal";
 import type {
     CourseModule, CourseMenuItem, Lesson,
@@ -37,13 +39,17 @@ export function CourseModificationPage() {
         menuItemId?: number;
     } | null>(null);
 
-    // Upload state — YouTube + Cloudflare R2
+    // Upload state — YouTube + Cloudflare R2 + VTurb
     const [youtubeConnected, setYoutubeConnected] = useState(false);
     const [cloudflareEnabled, setCloudflareEnabled] = useState(false);
+    const [vturbEnabled, setVturbEnabled] = useState(false);
     const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
     const [bulkUploadModuleId, setBulkUploadModuleId] = useState<number | null>(null);
     const [bulkUploadPlatform, setBulkUploadPlatform] = useState<"youtube" | "cloudflare">("youtube");
+    const [vturbBulkOpen, setVturbBulkOpen] = useState(false);
+    const [vturbBulkModuleId, setVturbBulkModuleId] = useState<number | null>(null);
     const [lessonSubmitting, setLessonSubmitting] = useState(false);
+    const [autoDescriptionOpen, setAutoDescriptionOpen] = useState(false);
 
     // Check connection statuses
     useEffect(() => {
@@ -55,9 +61,11 @@ export function CourseModificationPage() {
                 ]);
                 setYoutubeConnected(yt.connected);
                 setCloudflareEnabled(integrations.cloudflare_r2?.enabled ?? false);
+                setVturbEnabled(integrations.vturb?.enabled ?? false);
             } catch {
                 setYoutubeConnected(false);
                 setCloudflareEnabled(false);
+                setVturbEnabled(false);
             }
         }
         checkConnections();
@@ -246,6 +254,17 @@ export function CourseModificationPage() {
         toast.success("Upload em massa concluído!");
     }
 
+    /* ---- VTurb Bulk ---- */
+    function handleBulkVturb(moduleId: number) {
+        setVturbBulkModuleId(moduleId);
+        setVturbBulkOpen(true);
+    }
+
+    function handleBulkVturbComplete() {
+        refetch();
+        toast.success("Aulas do VTurb criadas com sucesso!");
+    }
+
     /* ---- Delete confirm ---- */
     async function handleConfirmDelete() {
         if (!deleteTarget || !courseId) return;
@@ -291,8 +310,11 @@ export function CourseModificationPage() {
                 onCoverChange={handleCoverChange} onCoverDelete={handleCoverDelete}
                 onAddMenuItem={handleAddMenuItem} onEditMenuItem={handleEditMenuItem} onDeleteMenuItem={handleDeleteMenuItem}
                 onBulkUpload={handleBulkUpload}
+                onBulkVturb={handleBulkVturb}
+                onAutoDescription={() => setAutoDescriptionOpen(true)}
                 youtubeConnected={youtubeConnected}
                 cloudflareEnabled={cloudflareEnabled}
+                vturbEnabled={vturbEnabled}
                 />
             <ModuleModal open={moduleModalOpen} onOpenChange={setModuleModalOpen} editModule={editingModule} onSubmit={handleModuleSubmit} />
             <LessonModal open={lessonModalOpen} onOpenChange={setLessonModalOpen} editLesson={editingLesson} onSubmit={handleLessonSubmit} isLoading={lessonSubmitting} />
@@ -300,7 +322,7 @@ export function CourseModificationPage() {
             <DeleteConfirmModal open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)} onConfirm={handleConfirmDelete}
                 title={currentDelete?.title} description={currentDelete?.description} confirmLabel={currentDelete?.label} />
 
-            {/* Bulk Upload Modal */}
+            {/* Bulk Upload Modal — YouTube / Cloudflare */}
             {bulkUploadModuleId && (
                 <BulkUploadModal
                     open={bulkUploadOpen}
@@ -311,6 +333,27 @@ export function CourseModificationPage() {
                     onComplete={handleBulkUploadComplete}
                 />
             )}
+
+            {/* VTurb Bulk Modal */}
+            {vturbBulkModuleId && (
+                <VTurbBulkModal
+                    open={vturbBulkOpen}
+                    onOpenChange={setVturbBulkOpen}
+                    moduleId={vturbBulkModuleId}
+                    moduleName={
+                        course.modules.find((m) => m.id === vturbBulkModuleId)?.name ?? "Módulo"
+                    }
+                    onComplete={handleBulkVturbComplete}
+                />
+            )}
+
+            {/* Auto Description Modal */}
+            <AutoDescriptionModal
+                open={autoDescriptionOpen}
+                onOpenChange={setAutoDescriptionOpen}
+                courseId={courseId!}
+                onComplete={refetch}
+            />
         </div>
     );
 }

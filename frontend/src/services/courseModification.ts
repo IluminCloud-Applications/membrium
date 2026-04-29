@@ -51,6 +51,22 @@ export interface MenuItemResponse {
     order: number;
 }
 
+export interface BannerPromptVariant {
+    objective: string;
+    design_style: string;
+    lighting_and_atmosphere: string;
+    background: string;
+    ui_ux_elements: string;
+    main_subject_instruction: string;
+    parameters: {
+        Module_Title: string;
+        Course_Name: string;
+        Color_Palette: string;
+        Aspect_Ratio: string;
+    };
+    midjourney_ready_prompt: string;
+}
+
 /* ============================================
    Service
    ============================================ */
@@ -95,6 +111,15 @@ export const courseModificationService = {
 
     reorderModules: (order: number[]) =>
         apiClient.post<{ success: boolean }>(`${BASE}/modules/reorder`, { order }),
+
+    generateBannerPrompt: (moduleName: string, moduleDescription: string, courseName?: string, provider?: string, model?: string) =>
+        apiClient.post<{
+            success: boolean;
+            prompts: {
+                with_expert: BannerPromptVariant;
+                without_expert: BannerPromptVariant;
+            };
+        }>(`${BASE}/banner-prompt`, { module_name: moduleName, module_description: moduleDescription, course_name: courseName, provider, model }),
 
     /* ---------- Lessons ---------- */
 
@@ -142,4 +167,65 @@ export const courseModificationService = {
             { method: 'POST', body: formData, headers: {} }
         );
     },
+
+    /** Auto-fill all lesson info with AI (transcript → metadata + FAQ + description in parallel) */
+    autoFillLesson: (
+        lessonId: number,
+        options: { provider?: string; model?: string; num_questions?: number; skip_if_exists?: boolean } = {}
+    ) =>
+        apiClient.post<AutoFillLessonResponse>(`${BASE}/lessons/${lessonId}/auto-fill`, options),
+
+    /** Pre-flight: get per-lesson status to decide which lessons need processing */
+    getAutoFillStatus: (courseId: number) =>
+        apiClient.get<AutoFillStatusResponse>(`${BASE}/courses/${courseId}/auto-fill-status`),
 };
+
+export interface AutoFillLessonResponse {
+    success: boolean;
+    lessonId: number;
+    lessonTitle: string;
+    message: string;
+    description: string;
+    faqCount: number;
+    steps: {
+        transcript?: string;
+        metadata?: string;
+        faq?: string;
+        description?: string;
+    };
+    errors: string[];
+}
+
+export interface LessonAutoFillStatus {
+    lessonId: number;
+    lessonTitle: string;
+    moduleId: number;
+    moduleName: string;
+    videoType: string;
+    isYoutube: boolean;
+    isCloudflare: boolean;
+    hasTranscript: boolean;
+    hasDescription: boolean;
+    hasFaq: boolean;
+    canProcess: boolean;
+    needsAssemblyAI: boolean;
+    assemblyAIOk: boolean;
+    needsAction: boolean;
+    skipReason: string | null;
+}
+
+export interface AutoFillStatusResponse {
+    success: boolean;
+    config: {
+        aiConfigured: boolean;
+        assemblyAIConfigured: boolean;
+    };
+    summary: {
+        total: number;
+        processable: number;
+        skippedHasDescription: number;
+        blocked: number;
+    };
+    lessons: LessonAutoFillStatus[];
+}
+

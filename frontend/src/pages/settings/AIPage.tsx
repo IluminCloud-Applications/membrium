@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SettingsHeader } from "@/components/settings";
 import { ChatbotTab } from "@/components/settings/ai/ChatbotTab";
-import { AIApiTab } from "@/components/settings/ai/AIApiTab";
+import { AIIntegrationSection } from "@/components/settings/ai/AIIntegrationSection";
 import { aiService, type AISettingsData } from "@/services/ai";
 
 const DEFAULT_SETTINGS: AISettingsData = {
@@ -85,12 +85,9 @@ export function AIPage() {
                     />
                 </TabsContent>
 
+                {/* Shared component — same routes/state as Integrations page */}
                 <TabsContent value="api" className="mt-4">
-                    <AIApiTab
-                        gemini={settings.gemini}
-                        openai={settings.openai}
-                        onUpdate={fetchSettings}
-                    />
+                    <AIIntegrationSection />
                 </TabsContent>
             </Tabs>
         </div>

@@ -26,8 +26,10 @@ interface ModuleCardProps {
     onDeleteLesson: (lessonId: number) => void;
     onReorderLessons?: (orderedIds: number[]) => void;
     onBulkUpload?: (platform: "youtube" | "cloudflare") => void;
+    onBulkVturb?: () => void;
     youtubeConnected?: boolean;
     cloudflareEnabled?: boolean;
+    vturbEnabled?: boolean;
 }
 
 export function ModuleCard({
@@ -40,8 +42,10 @@ export function ModuleCard({
     onDeleteLesson,
     onReorderLessons,
     onBulkUpload,
+    onBulkVturb,
     youtubeConnected,
     cloudflareEnabled,
+    vturbEnabled,
 }: ModuleCardProps) {
     const [isOpen, setIsOpen] = useState(false);
     const lessonsCount = module.lessons.length;
@@ -153,6 +157,18 @@ export function ModuleCard({
                                         <DropdownMenuItem onClick={() => onBulkUpload("cloudflare")} className="rounded-lg cursor-pointer">
                                             <i className="ri-cloud-line mr-2 text-base text-orange-600" />
                                             Upload em Massa (Cloudflare R2)
+                                        </DropdownMenuItem>
+                                    </>
+                                )}
+
+                                {/* Bulk upload — VTurb */}
+                                {vturbEnabled && onBulkVturb && (
+                                    <>
+                                        {!youtubeConnected && !cloudflareEnabled && <DropdownMenuSeparator />}
+                                        {(youtubeConnected || cloudflareEnabled) && <DropdownMenuSeparator />}
+                                        <DropdownMenuItem onClick={onBulkVturb} className="rounded-lg cursor-pointer">
+                                            <i className="ri-play-circle-fill mr-2 text-base text-orange-500" />
+                                            Upload em Massa (VTurb)
                                         </DropdownMenuItem>
                                     </>
                                 )}

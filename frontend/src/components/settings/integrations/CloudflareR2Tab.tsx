@@ -12,7 +12,7 @@ export function CloudflareR2Tab() {
     const [secretAccessKey, setSecretAccessKey] = useState("");
     const [bucket, setBucket] = useState("");
     const [customDomain, setCustomDomain] = useState("");
-    const [apiToken] = useState("");
+    const [apiToken, setApiToken] = useState("");
     const [showSecret, setShowSecret] = useState(false);
     const [saving, setSaving] = useState(false);
     const [testing, setTesting] = useState(false);

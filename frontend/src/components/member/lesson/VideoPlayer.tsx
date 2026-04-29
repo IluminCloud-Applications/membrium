@@ -214,7 +214,7 @@ function FullscreenIcon() {
         : <i className="ri-fullscreen-fill" />;
 }
 
-function getVideoSource(src: string, videoType: string, lessonId?: number): any {
+function getVideoSource(src: string, videoType: string, _lessonId?: number): any {
     if (videoType === "youtube") {
         const match = src.match(
             /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/

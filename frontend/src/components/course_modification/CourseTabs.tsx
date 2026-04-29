@@ -22,8 +22,11 @@ interface CourseTabsProps {
     onEditMenuItem: (item: CourseMenuItem) => void;
     onDeleteMenuItem: (item: CourseMenuItem) => void;
     onBulkUpload?: (moduleId: number, platform: "youtube" | "cloudflare") => void;
+    onBulkVturb?: (moduleId: number) => void;
+    onAutoDescription?: () => void;
     youtubeConnected?: boolean;
     cloudflareEnabled?: boolean;
+    vturbEnabled?: boolean;
 }
 
 export function CourseTabs({
@@ -44,8 +47,11 @@ export function CourseTabs({
     onEditMenuItem,
     onDeleteMenuItem,
     onBulkUpload,
+    onBulkVturb,
+    onAutoDescription,
     youtubeConnected,
     cloudflareEnabled,
+    vturbEnabled,
 }: CourseTabsProps) {
     return (
         <Tabs defaultValue="modules" className="w-full">
@@ -76,8 +82,11 @@ export function CourseTabs({
                     onReorderModules={onReorderModules}
                     onReorderLessons={onReorderLessons}
                     onBulkUpload={onBulkUpload}
+                    onBulkVturb={onBulkVturb}
+                    onAutoDescription={onAutoDescription}
                     youtubeConnected={youtubeConnected}
                     cloudflareEnabled={cloudflareEnabled}
+                    vturbEnabled={vturbEnabled}
                 />
             </TabsContent>
 
