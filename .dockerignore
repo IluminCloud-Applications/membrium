@@ -20,6 +20,7 @@ Thumbs.db
 # Docs
 *.md
 !frontend/README.md
+docs/
 
 # Dev files
 frontend/.env.local

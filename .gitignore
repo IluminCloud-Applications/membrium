@@ -24,3 +24,10 @@ backend/.env
 GEMINI.md
 GEMINI-backend.md
 git.md
+docs/
+
+# Pastas Ocultas
+.gemini
+.github
+.gemini/
+.github/
