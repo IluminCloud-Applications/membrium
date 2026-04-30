@@ -1,15 +1,15 @@
 <div align="center">
   <!-- Substitua pelo link da imagem do banner/logo do App -->
-  <img src="https://via.placeholder.com/800x200?text=Membrium+Banner" alt="Membrium Banner" />
+  <img src="/frontend/public/favicon.webp" alt="Membrium Banner" width="100" />
 
   <h1>Membrium</h1>
   <p>Uma área de membros premium para infoprodutores no estilo Netflix. Solução open source elegante e de alta conversão para o seu negócio digital.</p>
 
   <p>
-    <a href="#-instalação-em-1-clique-recomendado"><b>Deploy Automático</b></a> •
-    <a href="#-tutorial-de-instalação"><b>Vídeo Tutorial</b></a> •
-    <a href="#-instalação-manual-avançado"><b>Instalação Manual</b></a> •
-    <a href="#-licença"><b>Licença</b></a>
+    <a href="https://ilumin.app/?repo=ilumincloud-applications/membrium"><b>Deploy Automático</b></a> •
+    <a href="https://youtu.be/VIDEO_ID"><b>Vídeo Tutorial</b></a> •
+    <a href="#instalação-manual-avançado"><b>Instalação Manual</b></a> •
+    <a href="#licença"><b>Licença</b></a>
   </p>
 </div>
 
