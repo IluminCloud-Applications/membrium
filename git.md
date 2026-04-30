@@ -6,10 +6,10 @@
 
 ```bash
 git add -A
-git commit -m "v1.0.1"
-git tag v1.0.1
+git commit -m "v1.0.2"
+git tag v1.0.2
 git push
-git push origin v1.0.1
+git push origin v1.0.2
 ```
 
 ## Push simples (sem nova versão)

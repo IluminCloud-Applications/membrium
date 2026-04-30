@@ -8,8 +8,6 @@ services:
       - "3000:3000"
     environment:
       - DATABASE_URL=postgresql://postgres:Extreme123@postgres:5432/membriumwl
-      - FLASK_APP=app.py
-      - FLASK_ENV=development
       - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
       - GUNICORN_WORKERS=1
     volumes:

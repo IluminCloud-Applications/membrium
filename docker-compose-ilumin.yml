@@ -6,8 +6,6 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@postgres:5432/membriumwl
       - DB_PASSWORD=${DB_PASSWORD}
-      - FLASK_APP=app.py
-      - FLASK_ENV=production
       - SECRET_KEY=${SECRET_KEY}
     volumes:
       - uploads_data:/app/backend/static/uploads

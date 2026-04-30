@@ -1,9 +1,9 @@
 <div align="center">
   <!-- Substitua pelo link da imagem do banner/logo do App -->
-  <img src="https://via.placeholder.com/800x200?text=Banner+do+Seu+App+Aqui" alt="Banner do App" />
+  <img src="https://via.placeholder.com/800x200?text=Membrium+Banner" alt="Membrium Banner" />
 
-  <h1>Nome do App (ex: Área de Membros Pro)</h1>
-  <p>Uma solução open source elegante e de alta conversão para o seu negócio digital.</p>
+  <h1>Membrium</h1>
+  <p>Uma área de membros premium para infoprodutores no estilo Netflix. Solução open source elegante e de alta conversão para o seu negócio digital.</p>
 
   <p>
     <a href="#-instalação-em-1-clique-recomendado"><b>Deploy Automático</b></a> •
@@ -17,23 +17,27 @@
 
 ## Sobre o Projeto
 
-Descreva aqui o que o aplicativo faz e por que ele é incrível. Foque em como ele resolve as dores do mercado (ex: elimine taxas abusivas por aluno, tenha um design que vende mais, mantenha controle absoluto sobre os dados da sua operação).
+O **Membrium** é uma área de membros inovadora construída para infoprodutores que desejam oferecer a melhor experiência para seus alunos. Inspirada no estilo Netflix, o Membrium oferece uma interface moderna, fluída e extremamente otimizada, garantindo retenção, engajamento e alta percepção de valor para seus cursos. Tudo isso mantendo o controle absoluto sobre sua operação e dados, sem taxas de terceiros.
 
 ### Principais Recursos
-- **Recurso 1:** (ex: Design imersivo estilo Netflix)
-- **Recurso 2:** (ex: Infraestrutura própria sem taxas de terceiros)
-- **Recurso 3:** (ex: Painel de gestão rápido e intuitivo)
+- **Alunos e Cursos Ilimitados:** Escale sua operação sem amarras. Hospede o app e não pague nenhuma mensalidade abusiva ou taxa por aluno matriculado. O controle absoluto da plataforma é seu.
+- **Vídeos Híbridos (Economia Extrema):** Player nativo moderno com suporte a múltiplos provedores. Hospede gratuitamente no YouTube, utilize o **Cloudflare R2** para armazenamento premium quase sem custo, ou integre facilmente ao **VTurb**.
+- **Inteligência Artificial & Chatbots:** Uma revolução para o seu suporte. Transcrição automática de vídeos e geração de resumos, descrições e FAQs com apenas um clique. Integração nativa com **OpenAI e Gemini** para Chatbots inteligentes dentro da área de membros.
+- **Motor de Conversões (Upsell & Showcase):** O Membrium é feito para gerar lucro (LTV). Categorize seus cursos como *Principal, Order Bump, Upsell ou Bônus*. Utilize o recurso **Showcase (Vitrine)** para mostrar aos alunos os cursos que eles ainda não possuem e crie **Promoções Internas** interativas que convertem organicamente enquanto o aluno assiste à aula.
+- **Ecossistema de Integrações Ativo:** Comunicação poderosa. Notifique alunos diretamente no WhatsApp via **Evolution API**, envie sequências de e-mails via **Brevo** e garanta a liberação imediata e automática de acessos com nossos Webhooks preparados para qualquer checkout (Kiwify, Hotmart, Yampi, PerfectPay, etc.).
+- **Design Estilo Netflix & Customização:** Entregue uma experiência premium (UX/UI) construída com React e ShadCN. Ofereça opções de Layout ("Standard" ou imersivo "Netflix"), temas nativos Claro e Escuro, e tenha liberdade total para customizar a Página de Login com a identidade visual do seu negócio.
+- **Gestão Veloz (Drag & Drop):** Painel administrativo incrivelmente rápido e intuitivo. Reorganize módulos e aulas facilmente apenas arrastando os itens, crie aulas em lote e acompanhe o progresso exato de cada aluno em tempo real.
 
 ---
 
 ## Instalação em 1 Clique (Recomendado)
 
-A maneira mais rápida e segura de colocar o **[Nome do App]** no ar. Essa opção configura automaticamente seu banco de dados, gera os certificados de segurança (SSL) e roteia o seu domínio personalizado em poucos segundos, colocando o app em ambiente de produção sem dor de cabeça.
+A maneira mais rápida e segura de colocar o **Membrium** no ar. Essa opção configura automaticamente seu banco de dados, gera os certificados de segurança (SSL) e roteia o seu domínio personalizado em poucos segundos, colocando o app em ambiente de produção sem dor de cabeça.
 
-[![Deploy to Ilumin](https://via.placeholder.com/250x55?text=Deploy+1-Click+to+Ilumin+Cloud)](https://ilumin.app/deploy?repo=LINK_DO_SEU_REPO)
+[![Deploy to Ilumin](https://cdn.ilumin.app/static/banner-git.webp)](https://ilumin.app/?repo=ilumincloud-applications/membrium)
 
 > **Por que recomendamos o Deploy Automático?**
-> A infraestrutura em nuvem lida com a parte pesada (proxy reverso, criação de redes isoladas e renovação de certificados). Você foca apenas em usar o aplicativo e escalar o seu negócio.
+> A infraestrutura em nuvem lida com a parte pesada (proxy reverso, criação de redes isoladas e renovação de certificados). Você foca apenas em usar o aplicativo, cadastrar seus alunos e escalar o seu negócio digital.
 
 ---
 
@@ -41,7 +45,7 @@ A maneira mais rápida e segura de colocar o **[Nome do App]** no ar. Essa opç�
 
 Preparamos um guia passo a passo em vídeo. Mostramos o aplicativo por dentro e como você pode ter a sua própria estrutura rodando em menos de 5 minutos.
 
-[![Assista ao Tutorial](https://img.youtube.com/vi/ID_DO_VIDEO_AQUI/maxresdefault.jpg)](https://youtu.be/ID_DO_VIDEO_AQUI)
+[![Assista ao Tutorial](https://img.youtube.com/vi/SEU_ID_AQUI/maxresdefault.jpg)](https://youtu.be/SEU_ID_AQUI)
 
 ---
 
@@ -61,43 +65,45 @@ Se você tem experiência com infraestrutura cloud, gerenciamento de servidores 
 Se você usa a stack da Ilumin ou Traefik, este arquivo já vem com as labels e redes configuradas corretamente.
 
 ```yaml
-version: '3.8'
-
 services:
-  app:
-    image: ghcr.io/seu-usuario/seu-app:${APP_VERSION}
+  membrium:
+    image: ghcr.io/ilumincloud-applications/membrium:${APP_VERSION}
+    depends_on:
+      - postgres
     environment:
-      - NODE_ENV=production
-      - DATABASE_URL=postgres://user:${DB_PASSWORD}@db:5432/app
+      - DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@postgres:5432/membriumwl
+      - DB_PASSWORD=${DB_PASSWORD}
+      - SECRET_KEY=${SECRET_KEY}
+    volumes:
+      - uploads_data:/app/backend/static/uploads
     networks:
       - traefik
       - internal
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik
-      - traefik.http.routers.nomeapp.rule=Host(`${BASE_DOMAIN}`)${CUSTOM_DOMAIN:+ || Host(`${CUSTOM_DOMAIN}`)}
-      - traefik.http.routers.nomeapp.entrypoints=websecure
-      - traefik.http.routers.nomeapp.tls=true
-      - traefik.http.routers.nomeapp.tls.certresolver=letsencrypt
-      - traefik.http.services.nomeapp.loadbalancer.server.port=3000
-    depends_on:
-      - db
+      - traefik.http.routers.membrium.rule=Host(`${BASE_DOMAIN}`)${CUSTOM_DOMAIN:+ || Host(`${CUSTOM_DOMAIN}`)}
+      - traefik.http.routers.membrium.entrypoints=websecure
+      - traefik.http.routers.membrium.tls=true
+      - traefik.http.routers.membrium.tls.certresolver=letsencrypt
+      - traefik.http.services.membrium.loadbalancer.server.port=80
     restart: unless-stopped
 
-  db:
-    image: postgres:15-alpine
+  postgres:
+    image: postgres:14
     environment:
-      - POSTGRES_USER=user
+      - POSTGRES_DB=membriumwl
+      - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=app
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - membrium_data:/var/lib/postgresql/data
     networks:
       - internal
     restart: unless-stopped
 
 volumes:
-  db_data:
+  membrium_data:
+  uploads_data:
 
 networks:
   traefik:
@@ -109,35 +115,38 @@ networks:
 <details>
 <summary><b>Opção B: docker-compose.yml (Padrão / Quick Start)</b></summary>
 
-Arquivo docker padrão para você usar atrás do seu próprio proxy reverso (Nginx, Apache, etc).
+Arquivo docker padrão com imagem unificada (Frontend no Nginx + Backend no Gunicorn). Ideal para testes ou atrás do seu próprio proxy reverso.
 
 ```yaml
-version: '3.8'
-
 services:
-  app:
-    image: ghcr.io/seu-usuario/seu-app:latest
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=postgres://user:pass@db:5432/app
+  membrium:
+    image: ghcr.io/ilumincloud-applications/membrium:latest
     ports:
-      - "3000:3000" # Lembre-se de configurar o Nginx para apontar para cá
+      - "80:80"
+    environment:
+      - DATABASE_URL=postgresql://postgres:Extreme123@postgres:5432/membriumwl
+      - SECRET_KEY=${SECRET_KEY:-super-secret-key-change-me}
+    volumes:
+      - uploads_data:/app/backend/static/uploads
     depends_on:
-      - db
+      - postgres
     restart: unless-stopped
 
-  db:
-    image: postgres:15-alpine
+  postgres:
+    image: postgres:14
+    restart: always
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=pass
-      - POSTGRES_DB=app
+      POSTGRES_DB: membriumwl
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Extreme123
+    ports:
+      - "5432:5432"
     volumes:
-      - db_data:/var/lib/postgresql/data
-    restart: unless-stopped
+      - membrium_data:/var/lib/postgresql/data
 
 volumes:
-  db_data:
+  membrium_data:
+  uploads_data:
 ```
 </details>
 
@@ -145,6 +154,15 @@ volumes:
 2. Edite as variáveis de ambiente com suas credenciais seguras.
 3. Configure o bloco de servidor no Nginx apontando o seu domínio para a porta exposta.
 4. Execute `docker compose up -d`.
+
+---
+
+## Tecnologias Utilizadas
+
+- **Frontend:** React, Vite, ShadCN UI, Tailwind CSS, Remix Icons
+- **Backend:** Python, Flask, Gunicorn
+- **Banco de Dados:** PostgreSQL
+- **Infraestrutura:** Docker, Docker Compose
 
 ---
 
