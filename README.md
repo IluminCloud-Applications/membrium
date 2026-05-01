@@ -115,8 +115,6 @@ networks:
 <details>
 <summary><b>Opção B: docker-compose.yml (Padrão / Quick Start)</b></summary>
 
-Arquivo docker padrão com imagem unificada (Frontend no Nginx + Backend no Gunicorn). Ideal para testes ou atrás do seu próprio proxy reverso.
-
 ```yaml
 services:
   membrium:
@@ -124,12 +122,14 @@ services:
     ports:
       - "80:80"
     environment:
-      - DATABASE_URL=postgresql://postgres:Extreme123@postgres:5432/membriumwl
-      - SECRET_KEY=${SECRET_KEY:-super-secret-key-change-me}
+      - DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@postgres:5432/membriumwl
+      - SECRET_KEY=${SECRET_KEY}
     volumes:
       - uploads_data:/app/backend/static/uploads
     depends_on:
       - postgres
+    networks:
+      - internal
     restart: unless-stopped
 
   postgres:
@@ -138,20 +138,28 @@ services:
     environment:
       POSTGRES_DB: membriumwl
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Extreme123
-    ports:
-      - "5432:5432"
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - membrium_data:/var/lib/postgresql/data
+    networks:
+      - internal
 
 volumes:
   membrium_data:
   uploads_data:
+
+networks:
+  internal:
 ```
 </details>
 
-1. Clone este repositório em seu servidor.
-2. Edite as variáveis de ambiente com suas credenciais seguras.
+```env
+DB_PASSWORD=sua_senha_segura_aqui
+SECRET_KEY=sua_chave_secreta_aqui
+```
+
+> ⚠️ **Atenção:** A autenticação do PostgreSQL falha se `DB_PASSWORD` estiver vazio ou incorreto no `.env`. Certifique-se de definir o valor antes de subir os containers pela primeira vez.
+
 3. Configure o bloco de servidor no Nginx apontando o seu domínio para a porta exposta.
 4. Execute `docker compose up -d`.
 

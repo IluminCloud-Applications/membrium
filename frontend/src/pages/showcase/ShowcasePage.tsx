@@ -33,11 +33,29 @@ export function ShowcasePage() {
     const loadData = useCallback(async () => {
         try {
             setLoading(true);
-            const [showcaseData, coursesData] = await Promise.all([
+            const [showcaseData, coursesData, analyticsResponse] = await Promise.all([
                 showcaseService.getAll(),
                 coursesService.listSimple(),
+                showcaseService.getAnalyticsTotal().catch(() => ({ success: false, analytics: [] })),
             ]);
-            setItems(showcaseData.map(mapShowcaseItem));
+
+            // Build a lookup map: showcase_id -> { views, clicks }
+            const analyticsMap = new Map<number, { views: number; clicks: number }>();
+            if (analyticsResponse.analytics) {
+                for (const a of analyticsResponse.analytics) {
+                    analyticsMap.set(a.showcase_id, {
+                        views: a.total_views ?? 0,
+                        clicks: a.total_conversions ?? 0,
+                    });
+                }
+            }
+
+            setItems(
+                showcaseData.map((raw) => {
+                    const stats = analyticsMap.get(raw.id);
+                    return mapShowcaseItem(raw, stats?.views ?? 0, stats?.clicks ?? 0);
+                })
+            );
             setAvailableCourses(
                 coursesData.map((c: { id: number; name: string }) => ({
                     id: c.id,

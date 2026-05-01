@@ -188,7 +188,7 @@ class ChatbotAI:
         """Formata transcrições para inserção no prompt."""
         parts = []
         for t in transcripts:
-            lesson_url = f"{base_url}/course/{t.course_id}/module/{t.module_id}/lesson/{t.lesson_id}"
+            lesson_url = f"{base_url}/member/{t.course_id}/{t.module_id}?lesson={t.lesson_id}"
             parts.append(
                 f"AULA: {t.lesson_title}\n"
                 f"MÓDULO: {t.module_name}\n"

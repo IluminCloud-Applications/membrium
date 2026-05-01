@@ -56,7 +56,7 @@ export function NavUser({ user, onLogout }: NavUserProps) {
                             <div className="grid flex-1 text-left text-sm leading-tight">
                                 <span className="truncate font-medium">{user.name}</span>
                                 <span className="truncate text-[10px] text-muted-foreground/60">
-                                    v2.1.4
+                                    v1.0.2
                                 </span>
                             </div>
                             <i className="ri-arrow-up-down-line text-base text-muted-foreground" />
@@ -78,7 +78,7 @@ export function NavUser({ user, onLogout }: NavUserProps) {
                                 <div className="grid flex-1 text-left text-sm leading-tight">
                                     <span className="truncate font-medium">{user.name}</span>
                                     <span className="truncate text-[10px] text-muted-foreground/60">
-                                        v2.1.4
+                                        v1.0.2
                                     </span>
                                 </div>
                             </div>

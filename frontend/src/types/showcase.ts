@@ -24,17 +24,21 @@ export interface ShowcaseItem {
 }
 
 /** Maps API response to frontend ShowcaseItem shape */
-export function mapShowcaseItem(raw: {
-    id: number;
-    name: string;
-    description: string;
-    image: string | null;
-    url: string;
-    status: string;
-    priority: number;
-    courses: { id: number; name: string }[];
-    created_at: string | null;
-}): ShowcaseItem {
+export function mapShowcaseItem(
+    raw: {
+        id: number;
+        name: string;
+        description: string;
+        image: string | null;
+        url: string;
+        status: string;
+        priority: number;
+        courses: { id: number; name: string }[];
+        created_at: string | null;
+    },
+    views = 0,
+    clicks = 0,
+): ShowcaseItem {
     return {
         id: raw.id,
         title: raw.name,
@@ -44,8 +48,8 @@ export function mapShowcaseItem(raw: {
         courses: raw.courses,
         priority: raw.priority,
         status: raw.status as ShowcaseStatus,
-        views: 0,
-        clicks: 0,
+        views,
+        clicks,
         createdAt: raw.created_at || new Date().toISOString(),
     };
 }

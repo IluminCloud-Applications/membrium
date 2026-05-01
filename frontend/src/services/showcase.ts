@@ -80,4 +80,11 @@ export const showcaseService = {
     /** Delete a showcase item */
     delete: (id: number) =>
         apiClient.delete<{ success: boolean }>(`/showcase/items/${id}`),
+
+    /** Get total analytics (views + clicks) for all showcase items */
+    getAnalyticsTotal: () =>
+        apiClient.get<{
+            success: boolean;
+            analytics: { showcase_id: number; total_views: number; total_conversions: number }[];
+        }>("/showcase/analytics/total"),
 };
