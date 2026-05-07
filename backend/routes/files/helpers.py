@@ -2,7 +2,7 @@
 Shared helpers for file manager routes.
 """
 import os
-from models import Course, Module, Document, Showcase, Promotion
+from models import Course, Module, Document, Showcase, Promotion, Customization
 
 
 def get_referenced_filenames():
@@ -20,6 +20,22 @@ def get_referenced_filenames():
     showcase_images = {s.image for s in Showcase.query.filter(Showcase.image.isnot(None)).all()}
     promo_images = {p.media_url for p in Promotion.query.filter(Promotion.media_type == 'image').all()}
 
+    # Login page customization — schema:
+    #   login_page.logo                        -> logo image
+    #   login_page.desktop.background_image   -> desktop bg
+    #   login_page.mobile.background_image    -> mobile bg
+    login_images = set()
+    for custom in Customization.query.all():
+        lp = custom.login_page or {}
+        if lp.get('logo'):
+            login_images.add(lp['logo'])
+        desktop = lp.get('desktop') or {}
+        if desktop.get('background_image'):
+            login_images.add(desktop['background_image'])
+        mobile = lp.get('mobile') or {}
+        if mobile.get('background_image'):
+            login_images.add(mobile['background_image'])
+
     return {
         'course_images': course_images,
         'course_covers_desktop': course_covers_desktop,
@@ -28,6 +44,7 @@ def get_referenced_filenames():
         'db_filenames': db_filenames,
         'showcase_images': showcase_images,
         'promo_images': promo_images,
+        'login_images': login_images,
     }
 
 
@@ -67,8 +84,11 @@ def check_file_usage(filename, refs):
         is_used = True
         used_in.append('Imagem de promoção')
 
+    if filename in refs['login_images']:
+        is_used = True
+        used_in.append('Fundo da página de login')
+
     return is_used, used_in
 
 
 UPLOADS_DIR = os.path.join('static', 'uploads')
-

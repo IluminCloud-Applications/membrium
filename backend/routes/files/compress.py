@@ -14,6 +14,7 @@ from flask import Blueprint, jsonify, session
 from functools import wraps
 
 from db.database import db
+from sqlalchemy.orm.attributes import flag_modified
 from models import Admin, Course, Module, Showcase, Promotion, Customization
 from routes.files.helpers import UPLOADS_DIR
 from services.image_compress import compress_image, is_compressed, is_image
@@ -90,17 +91,30 @@ def _update_db_references(original_filename: str, new_filename: str) -> None:
         changed = True
 
     # --- Customization (login_page JSON) ---
+    # Schema: login_page.logo | login_page.desktop.background_image | login_page.mobile.background_image
     for custom in Customization.query.all():
         lp = custom.login_page or {}
         updated = False
-        if lp.get("bg_desktop") == original_filename:
-            lp["bg_desktop"] = new_filename
+
+        if lp.get("logo") == original_filename:
+            lp["logo"] = new_filename
             updated = True
-        if lp.get("bg_mobile") == original_filename:
-            lp["bg_mobile"] = new_filename
+
+        desktop = lp.get("desktop") or {}
+        if desktop.get("background_image") == original_filename:
+            desktop["background_image"] = new_filename
+            lp["desktop"] = desktop
             updated = True
+
+        mobile = lp.get("mobile") or {}
+        if mobile.get("background_image") == original_filename:
+            mobile["background_image"] = new_filename
+            lp["mobile"] = mobile
+            updated = True
+
         if updated:
             custom.login_page = lp
+            flag_modified(custom, "login_page")
             changed = True
 
     if changed:
