@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ModulesTab } from "./ModulesTab";
 import { CoverTab } from "./CoverTab";
@@ -53,8 +54,11 @@ export function CourseTabs({
     cloudflareEnabled,
     vturbEnabled,
 }: CourseTabsProps) {
+    // Controlled tab state — persists across refetches (e.g. after cover upload)
+    const [activeTab, setActiveTab] = useState("modules");
+
     return (
-        <Tabs defaultValue="modules" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3 h-11">
                 <TabsTrigger value="modules" className="gap-2 text-sm">
                     <i className="ri-folder-3-line" />

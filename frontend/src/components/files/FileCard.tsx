@@ -56,6 +56,17 @@ export function FileCard({ file, onView, onDelete }: FileCardProps) {
                 >
                     {file.is_used ? "Em uso" : "Não utilizado"}
                 </Badge>
+
+                {/* Compress badge — only for images not yet compressed */}
+                {isImage && file.is_compressed === false && (
+                    <Badge
+                        className="absolute bottom-2 right-2 text-xs bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                        variant="secondary"
+                    >
+                        <i className="ri-image-edit-line mr-1" />
+                        Não comprimido
+                    </Badge>
+                )}
             </div>
 
             {/* Info */}

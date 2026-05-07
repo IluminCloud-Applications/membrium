@@ -8,6 +8,7 @@ import {
 } from "@/components/files";
 import { CleanUnusedModal } from "@/components/modals/files/CleanUnusedModal";
 import { FilePreviewModal } from "@/components/modals/files/FilePreviewModal";
+import { CompressAllModal } from "@/components/modals/files/CompressAllModal";
 import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModal";
 import { FileLoadingSkeleton } from "@/components/files/FileLoadingSkeleton";
 import type { FileItem } from "@/types/file";
@@ -22,6 +23,8 @@ export function FilesPage() {
         isLoading,
         isCleanLoading,
         isDeleteLoading,
+        pendingCompress,
+        fetchCompressStatus,
         search,
         fileType,
         status,
@@ -33,10 +36,12 @@ export function FilesPage() {
         hasActiveFilters,
         deleteFile,
         cleanUnusedFiles,
+        refresh,
     } = useFilesPage();
 
     // Modals
     const [cleanModalOpen, setCleanModalOpen] = useState(false);
+    const [compressModalOpen, setCompressModalOpen] = useState(false);
     const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<FileItem | null>(null);
 
@@ -50,6 +55,10 @@ export function FilesPage() {
         if (!deleteTarget) return;
         await deleteFile(deleteTarget);
         setDeleteTarget(null);
+    }
+
+    function handleCompressDone() {
+        refresh();
     }
 
     function handlePageChange(page: number) {
@@ -89,6 +98,8 @@ export function FilesPage() {
                 onStatusChange={setStatus}
                 unusedCount={stats.unusedFiles}
                 onCleanUnused={() => setCleanModalOpen(true)}
+                pendingCompress={pendingCompress}
+                onCompressAll={() => setCompressModalOpen(true)}
             />
 
             {/* Content */}
@@ -118,6 +129,16 @@ export function FilesPage() {
                 onConfirm={handleCleanConfirm}
                 unusedCount={stats.unusedFiles}
                 isLoading={isCleanLoading}
+            />
+
+            <CompressAllModal
+                open={compressModalOpen}
+                onOpenChange={(v) => {
+                    setCompressModalOpen(v);
+                    if (!v) fetchCompressStatus();
+                }}
+                pendingCount={pendingCompress}
+                onDone={handleCompressDone}
             />
 
             <FilePreviewModal

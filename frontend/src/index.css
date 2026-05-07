@@ -4182,3 +4182,174 @@
 .chatbot-message-content th {
   background: hsl(var(--muted));
 }
+
+/* ============================================
+   ADMIN MOBILE BOTTOM NAV
+   Theme-aware: uses CSS variables (light/dark)
+   ============================================ */
+
+/* Hidden on desktop — only shown on mobile */
+.admin-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .admin-bottom-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    position: fixed;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    z-index: 200;
+    height: 62px;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    box-shadow: 0 8px 32px oklch(0 0 0 / 15%);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  }
+
+  .dark .admin-bottom-nav {
+    background: oklch(0.15 0 0 / 85%);
+    border-color: oklch(1 0 0 / 10%);
+    box-shadow: 0 8px 32px oklch(0 0 0 / 50%);
+  }
+
+  .admin-bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    flex: 1;
+    padding: 0.5rem 0;
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: var(--muted-foreground);
+    text-decoration: none;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: color 0.2s;
+    font-family: inherit;
+  }
+
+  .admin-bottom-nav-item i {
+    font-size: 1.25rem;
+  }
+
+  .admin-bottom-nav-item:active {
+    transform: scale(0.92);
+  }
+
+  .admin-bottom-nav-active {
+    color: var(--primary);
+  }
+
+  .admin-bottom-nav-active i {
+    filter: drop-shadow(0 0 4px color-mix(in oklch, var(--primary) 40%, transparent));
+  }
+
+  /* Recursos dropdown wrapper */
+  .admin-bottom-nav-recursos {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .admin-bottom-nav-dropdown {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 0.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    box-shadow: 0 8px 24px oklch(0 0 0 / 18%);
+    min-width: 150px;
+    animation: adminDropdownIn 0.18s ease;
+  }
+
+  /* Anchored to the right edge — prevents clipping on the right side of the screen */
+  .admin-bottom-nav-dropdown--right {
+    left: auto;
+    right: 0;
+    transform: none;
+    animation: adminDropdownInRight 0.18s ease;
+  }
+
+  .dark .admin-bottom-nav-dropdown {
+    background: oklch(0.18 0 0);
+    border-color: oklch(1 0 0 / 10%);
+    box-shadow: 0 8px 32px oklch(0 0 0 / 45%);
+  }
+
+  @keyframes adminDropdownIn {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(8px) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0) scale(1);
+    }
+  }
+
+  @keyframes adminDropdownInRight {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .admin-bottom-nav-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    padding: 0.6rem 0.85rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--foreground);
+    border-radius: 0.6rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, color 0.15s;
+    text-align: left;
+  }
+
+  .admin-bottom-nav-dropdown-item i {
+    font-size: 1.1rem;
+    color: var(--muted-foreground);
+    flex-shrink: 0;
+  }
+
+  .admin-bottom-nav-dropdown-item:hover {
+    background: var(--accent);
+    color: var(--accent-foreground);
+  }
+
+  .admin-bottom-nav-dropdown-active {
+    color: var(--primary);
+    background: color-mix(in oklch, var(--primary) 10%, transparent);
+  }
+
+  .admin-bottom-nav-dropdown-active i {
+    color: var(--primary);
+  }
+}

@@ -591,30 +591,6 @@ def update_cloudflare_r2():
                 config[f] = str(incoming).strip()
 
     set_integration('cloudflare_r2', enabled, config)
-
-    if enabled:
-        # Auto-configure bucket CORS via Cloudflare REST API (requires api_token)
-        from integrations.cloudflare_r2 import apply_cors
-        api_token = config.get('api_token') or config.get('access_key_id')
-        cors_ok, cors_msg = apply_cors(
-            config['account_id'],
-            api_token,
-            config['secret_access_key'],
-            config['bucket'],
-        )
-        if cors_ok:
-            return jsonify({
-                'success': True,
-                'message': 'Configurações do Cloudflare R2 salvas e CORS configurado automaticamente no bucket.'
-            })
-        else:
-            # Non-fatal — credentials saved, but CORS needs manual setup
-            return jsonify({
-                'success': True,
-                'cors_warning': cors_msg,
-                'message': f'Configurações salvas. {cors_msg}'
-            })
-
     return jsonify({'success': True, 'message': 'Configurações do Cloudflare R2 atualizadas com sucesso'})
 
 
@@ -634,30 +610,6 @@ def test_cloudflare_r2():
         return jsonify({'success': False, 'message': 'Preencha todos os campos antes de testar.'}), 400
 
     ok, message = test_connection(account_id, access_key_id, secret_access_key, bucket)
-    status_code = 200 if ok else 400
-    return jsonify({'success': ok, 'message': message}), status_code
-
-
-@integrations_bp.route('/api/settings/cloudflare-r2/apply-cors', methods=['POST'])
-@admin_required
-def apply_cors_cloudflare_r2():
-    """Apply (or refresh) CORS policy on the saved R2 bucket.
-
-    Useful when the user changes the bucket or the automatic apply during save failed.
-    Uses the credentials already stored in the database.
-    """
-    from integrations.cloudflare_r2 import get_client_from_config, apply_cors
-
-    client, cfg = get_client_from_config()
-    if client is None:
-        return jsonify({'success': False, 'message': cfg}), 400  # cfg is error message here
-
-    ok, message = apply_cors(
-        cfg['account_id'],
-        cfg['access_key_id'],
-        cfg['secret_access_key'],
-        cfg['bucket'],
-    )
     status_code = 200 if ok else 400
     return jsonify({'success': ok, 'message': message}), status_code
 

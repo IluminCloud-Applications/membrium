@@ -9,6 +9,8 @@ export interface FileItem {
     used_in: string[];
     size: number;
     upload_date: string;
+    /** null = not an image; true = compressed; false = not yet compressed */
+    is_compressed: boolean | null;
 }
 
 export interface FileStats {

@@ -77,7 +77,6 @@ export interface CloudflareR2Settings {
     secret_access_key: string;
     bucket: string;
     custom_domain: string;
-    /** Cloudflare API Token (opcional) — necessário para configurar CORS automaticamente via REST API */
     api_token: string;
 }
 
@@ -241,8 +240,5 @@ export const integrationsService = {
             content_type,
         }),
 
-    /** Apply (or refresh) CORS policy on the saved bucket so the browser can upload directly */
-    applyCorsCloudflareR2: () =>
-        apiClient.post<ApiResponse>("/settings/cloudflare-r2/apply-cors", {}),
 };
 

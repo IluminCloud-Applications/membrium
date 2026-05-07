@@ -95,22 +95,23 @@ export function ModulesTab({
 
     return (
         <div className="space-y-4">
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
                 {onAutoDescription && (
                     <Button
                         variant="outline"
                         onClick={onAutoDescription}
-                        className="gap-2 rounded-lg border-primary/30 text-primary hover:bg-primary/5"
+                        className="gap-2 rounded-lg border-primary/30 text-primary hover:bg-primary/5 h-9 text-sm"
                     >
                         <i className="ri-magic-line" />
                         Descrição Automática
                     </Button>
                 )}
-                <Button onClick={onAddModule} className="btn-brand gap-2 rounded-lg">
+                <Button onClick={onAddModule} className="btn-brand gap-2 rounded-lg h-9 text-sm ml-auto">
                     <i className="ri-folder-add-line" />
                     Adicionar Módulo
                 </Button>
             </div>
+
 
             <div className="space-y-4">
                 {modules.map((mod, index) => (

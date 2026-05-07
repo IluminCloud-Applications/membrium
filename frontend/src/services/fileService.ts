@@ -36,4 +36,15 @@ export const fileService = {
     async getDiskUsage(): Promise<DiskUsage> {
         return apiClient.get<DiskUsage>("/files/disk-usage");
     },
+
+    async compressStatus(): Promise<{ total: number; pending: number }> {
+        return apiClient.get<{ total: number; pending: number }>("/files/compress-status");
+    },
+
+    async compressNext(): Promise<
+        | { compressed: true; original: string; new_filename: string; message: string }
+        | { compressed: false; done: boolean; error?: string }
+    > {
+        return apiClient.post("/files/compress-next", {});
+    },
 };

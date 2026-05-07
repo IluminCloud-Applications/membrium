@@ -19,6 +19,8 @@ interface FileFiltersProps {
     onStatusChange: (value: FileStatus) => void;
     unusedCount: number;
     onCleanUnused: () => void;
+    pendingCompress: number;
+    onCompressAll: () => void;
 }
 
 const fileTypes: { value: FileType; label: string }[] = [
@@ -36,6 +38,8 @@ export function FileFilters({
     onStatusChange,
     unusedCount,
     onCleanUnused,
+    pendingCompress,
+    onCompressAll,
 }: FileFiltersProps) {
     return (
         <div className="space-y-4">
@@ -72,6 +76,18 @@ export function FileFilters({
                             </SelectItem>
                         </SelectContent>
                     </Select>
+
+                    {/* Compress all */}
+                    {pendingCompress > 0 && (
+                        <Button
+                            variant="outline"
+                            onClick={onCompressAll}
+                            className="h-9 text-sm text-orange-600 border-orange-300 hover:bg-orange-50 dark:hover:bg-orange-950/20"
+                        >
+                            <i className="ri-image-edit-line mr-1" />
+                            Comprimir ({pendingCompress})
+                        </Button>
+                    )}
 
                     {/* Clean unused */}
                     {unusedCount > 0 && (

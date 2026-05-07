@@ -18,6 +18,10 @@ interface UseFilesPageReturn {
     isCleanLoading: boolean;
     isDeleteLoading: boolean;
 
+    /* Compress */
+    pendingCompress: number;
+    fetchCompressStatus: () => Promise<void>;
+
     /* Filters */
     search: string;
     fileType: FileType;
@@ -50,6 +54,7 @@ export function useFilesPage(): UseFilesPageReturn {
     const [isLoading, setIsLoading] = useState(true);
     const [isCleanLoading, setIsCleanLoading] = useState(false);
     const [isDeleteLoading, setIsDeleteLoading] = useState(false);
+    const [pendingCompress, setPendingCompress] = useState(0);
 
     // Filters
     const [search, setSearch] = useState("");
@@ -107,13 +112,24 @@ export function useFilesPage(): UseFilesPageReturn {
         }
     }, []);
 
+    /* ---- Fetch compress status ---- */
+    const fetchCompressStatus = useCallback(async () => {
+        try {
+            const data = await fileService.compressStatus();
+            setPendingCompress(data.pending);
+        } catch (err) {
+            console.error("Erro ao buscar status de compressão:", err);
+        }
+    }, []);
+
     useEffect(() => {
         fetchFiles();
     }, [fetchFiles]);
 
     useEffect(() => {
         fetchDiskUsage();
-    }, [fetchDiskUsage]);
+        fetchCompressStatus();
+    }, [fetchDiskUsage, fetchCompressStatus]);
 
     /* ---- Actions ---- */
     const deleteFile = async (file: FileItem) => {
@@ -147,6 +163,7 @@ export function useFilesPage(): UseFilesPageReturn {
     const refresh = () => {
         fetchFiles();
         fetchDiskUsage();
+        fetchCompressStatus();
     };
 
     return {
@@ -157,6 +174,8 @@ export function useFilesPage(): UseFilesPageReturn {
         isLoading,
         isCleanLoading,
         isDeleteLoading,
+        pendingCompress,
+        fetchCompressStatus,
         search,
         fileType,
         status,

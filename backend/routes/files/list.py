@@ -8,6 +8,7 @@ import os
 import re
 
 from routes.files.helpers import get_referenced_filenames, check_file_usage, UPLOADS_DIR
+from services.image_compress import is_compressed as _is_compressed, is_image as _is_image_file
 from models import Admin
 
 list_bp = Blueprint('files_list', __name__)
@@ -91,7 +92,8 @@ def get_files():
             'is_used': is_used,
             'used_in': used_in,
             'size': size,
-            'upload_date': upload_date.strftime('%Y-%m-%d')
+            'upload_date': upload_date.strftime('%Y-%m-%d'),
+            'is_compressed': _is_compressed(filename) if _is_image_file(filename) else None,
         })
 
     all_files.sort(key=lambda x: x['upload_date'], reverse=True)

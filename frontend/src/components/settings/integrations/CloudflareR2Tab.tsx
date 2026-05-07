@@ -16,7 +16,6 @@ export function CloudflareR2Tab() {
     const [showSecret, setShowSecret] = useState(false);
     const [saving, setSaving] = useState(false);
     const [testing, setTesting] = useState(false);
-    const [corsTesting, setCorsTesting] = useState(false);
     const [feedback, setFeedback] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
     const loadData = useCallback(async () => {
@@ -71,11 +70,25 @@ export function CloudflareR2Tab() {
         }
     }
 
-    async function handleSave() {
-        setSaving(true);
+    async function handleTest() {
+        setTesting(true);
         setFeedback(null);
         try {
-            const res = await integrationsService.updateCloudflareR2({
+            const testRes = await integrationsService.testCloudflareR2({
+                account_id: accountId,
+                access_key_id: accessKeyId,
+                secret_access_key: secretAccessKey,
+                bucket,
+            });
+
+            if (!testRes.success) {
+                showFeedback(testRes.message, "error");
+                return;
+            }
+
+            // Conexão OK → salva automaticamente
+            setSaving(true);
+            const saveRes = await integrationsService.updateCloudflareR2({
                 enabled,
                 account_id: accountId,
                 access_key_id: accessKeyId,
@@ -84,45 +97,13 @@ export function CloudflareR2Tab() {
                 custom_domain: customDomain ? `https://${customDomain}` : "",
                 api_token: apiToken,
             });
-            showFeedback(res.message, "success", 5000);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : "Erro ao salvar configurações do Cloudflare R2";
-            showFeedback(message, "error");
-        } finally {
-            setSaving(false);
-        }
-    }
-
-    async function handleTest() {
-        setTesting(true);
-        setFeedback(null);
-        try {
-            const res = await integrationsService.testCloudflareR2({
-                account_id: accountId,
-                access_key_id: accessKeyId,
-                secret_access_key: secretAccessKey,
-                bucket,
-            });
-            showFeedback(res.message, res.success ? "success" : "error");
+            showFeedback(saveRes.message, "success", 5000);
         } catch (err) {
             const message = err instanceof Error ? err.message : "Erro ao testar conexão";
             showFeedback(message, "error");
         } finally {
             setTesting(false);
-        }
-    }
-
-    async function handleApplyCors() {
-        setCorsTesting(true);
-        setFeedback(null);
-        try {
-            const res = await integrationsService.applyCorsCloudflareR2();
-            showFeedback(res.message, res.success ? "success" : "error", 5000);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : "Erro ao aplicar CORS";
-            showFeedback(message, "error");
-        } finally {
-            setCorsTesting(false);
+            setSaving(false);
         }
     }
 
@@ -133,8 +114,8 @@ export function CloudflareR2Tab() {
         bucket.trim().length > 0 &&
         customDomain.trim().length > 0;
 
-    const canTest = accountId && accessKeyId && secretAccessKey && bucket;
-    const isBusy = saving || testing || corsTesting;
+    const canTest = accountId && accessKeyId && secretAccessKey && bucket && customDomain;
+    const isBusy = saving || testing;
 
     return (
         <IntegrationToggle
@@ -239,62 +220,28 @@ export function CloudflareR2Tab() {
                     </span>
                 )}
 
-                {/* Test connection */}
+                {/* Test + Save */}
                 <Button
                     type="button"
-                    variant="outline"
                     onClick={handleTest}
                     disabled={isBusy || !canTest}
+                    className="btn-brand"
                 >
                     {testing ? (
                         <>
                             <i className="ri-loader-4-line animate-spin mr-2" />
                             Testando...
                         </>
-                    ) : (
-                        <>
-                            <i className="ri-plug-line mr-2" />
-                            Testar Conexão
-                        </>
-                    )}
-                </Button>
-
-                {/* Apply CORS — shown when already saved (enabled + bucket filled) */}
-                {enabled && bucket && (
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleApplyCors}
-                        disabled={isBusy}
-                        title="Aplica a política de CORS no bucket para permitir uploads diretos do navegador"
-                    >
-                        {corsTesting ? (
-                            <>
-                                <i className="ri-loader-4-line animate-spin mr-2" />
-                                Aplicando CORS...
-                            </>
-                        ) : (
-                            <>
-                                <i className="ri-shield-check-line mr-2" />
-                                Aplicar CORS
-                            </>
-                        )}
-                    </Button>
-                )}
-
-                {/* Save */}
-                <Button
-                    onClick={handleSave}
-                    disabled={isBusy || !canSave}
-                    className="btn-brand"
-                >
-                    {saving ? (
+                    ) : saving ? (
                         <>
                             <i className="ri-loader-4-line animate-spin mr-2" />
                             Salvando...
                         </>
                     ) : (
-                        "Salvar Configurações"
+                        <>
+                            <i className="ri-plug-line mr-2" />
+                            Testar e Salvar
+                        </>
                     )}
                 </Button>
             </div>
