@@ -6,8 +6,8 @@
   <p>Uma área de membros premium para infoprodutores no estilo Netflix. Solução open source elegante e de alta conversão para o seu negócio digital.</p>
 
   <p>
-    <a href="https://ilumin.app/?repo=ilumincloud-applications/membrium"><b>Deploy Automático</b></a> •
-    <a href="https://youtu.be/VIDEO_ID"><b>Vídeo Tutorial</b></a> •
+    <a href="https://ilumin.app/?src=membrium"><b>Deploy Automático</b></a> •
+    <a href="https://youtu.be/rORgTqN-3uA"><b>Vídeo Tutorial</b></a> •
     <a href="#instalação-manual-avançado"><b>Instalação Manual</b></a> •
     <a href="#licença"><b>Licença</b></a>
   </p>
@@ -34,7 +34,7 @@ O **Membrium** é uma área de membros inovadora construída para infoprodutores
 
 A maneira mais rápida e segura de colocar o **Membrium** no ar. Essa opção configura automaticamente seu banco de dados, gera os certificados de segurança (SSL) e roteia o seu domínio personalizado em poucos segundos, colocando o app em ambiente de produção sem dor de cabeça.
 
-[![Deploy to Ilumin](https://cdn.ilumin.app/static/banner-git.webp)](https://ilumin.app/?repo=ilumincloud-applications/membrium)
+[![Deploy to Ilumin](https://cdn.ilumin.app/static/banner-git.webp)](https://ilumin.app/?src=membrium)
 
 > **Por que recomendamos o Deploy Automático?**
 > A infraestrutura em nuvem lida com a parte pesada (proxy reverso, criação de redes isoladas e renovação de certificados). Você foca apenas em usar o aplicativo, cadastrar seus alunos e escalar o seu negócio digital.
@@ -45,7 +45,7 @@ A maneira mais rápida e segura de colocar o **Membrium** no ar. Essa opção co
 
 Preparamos um guia passo a passo em vídeo. Mostramos o aplicativo por dentro e como você pode ter a sua própria estrutura rodando em menos de 5 minutos.
 
-[![Assista ao Tutorial](https://img.youtube.com/vi/SEU_ID_AQUI/maxresdefault.jpg)](https://youtu.be/SEU_ID_AQUI)
+[![Assista ao Tutorial](https://img.youtube.com/vi/rORgTqN-3uA/maxresdefault.jpg)](https://youtu.be/rORgTqN-3uA)
 
 ---
 

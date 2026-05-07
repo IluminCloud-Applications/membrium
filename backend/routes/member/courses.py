@@ -77,11 +77,11 @@ def get_student_courses(student):
     if student is None:
         # Admin preview: return ALL published courses
         all_courses = Course.query.filter_by(is_published=True).all()
-        return jsonify([_build_course_data(c, None) for c in all_courses])
+        return jsonify([_build_course_data(c, None) for c in all_courses if len(c.modules) > 0])
 
     courses_data = []
     for course in student.courses:
-        if not course.is_published:
+        if not course.is_published or len(course.modules) == 0:
             continue
         courses_data.append(_build_course_data(course, student))
 
@@ -97,18 +97,78 @@ def get_student_courses_grouped(student):
     from models import CourseGroup, Course, course_group_courses
     from db.database import db
 
+    all_published_query = Course.query.filter_by(is_published=True).order_by(Course.id).all()
+    all_published = [c for c in all_published_query if len(c.modules) > 0]
+
     # Admin preview: all published courses are "accessible"
     if student is None:
-        all_published = Course.query.filter_by(is_published=True).all()
         student_course_ids = set(c.id for c in all_published)
     else:
         student_course_ids = set(
-            c.id for c in student.courses if c.is_published
+            c.id for c in student.courses if c.is_published and len(c.modules) > 0
         )
 
-    all_groups = CourseGroup.query.all()
+    all_groups = CourseGroup.query.order_by(CourseGroup.id).all()
     groups_data = []
     grouped_course_ids = set()
+
+    if not all_groups:
+        group_courses = []
+        principal_course_id = None
+        
+        for course in all_published:
+            has_access = course.id in student_course_ids
+            
+            if has_access:
+                course_data = _build_course_data(course, student)
+            else:
+                locked_modules = []
+                for module in course.modules:
+                    locked_modules.append({
+                        'id': module.id,
+                        'name': module.name,
+                        'image': module.image,
+                        'order': module.order,
+                        'totalLessons': len(module.lessons),
+                        'completedLessons': 0,
+                        'unlockAfterDays': 0,
+                        'isLocked': True,
+                        'unlockDaysRemaining': 0,
+                    })
+                course_data = {
+                    'id': course.id,
+                    'uuid': course.uuid,
+                    'name': course.name,
+                    'description': course.description,
+                    'image': course.image,
+                    'category': course.category,
+                    'moduleFormat': course.module_format,
+                    'coverDesktop': course.cover_desktop,
+                    'coverMobile': course.cover_mobile,
+                    'menuItems': [],
+                    'modules': locked_modules,
+                }
+            course_data['hasAccess'] = has_access
+            group_courses.append(course_data)
+            
+            if principal_course_id is None and (course.cover_desktop or course.cover_mobile):
+                principal_course_id = course.id
+
+        if not principal_course_id and group_courses:
+            principal_course_id = group_courses[0]['id']
+            
+        if group_courses:
+            groups_data.append({
+                'id': 999999,
+                'name': 'Todos os Cursos',
+                'principalCourseId': principal_course_id,
+                'courses': group_courses,
+            })
+            
+        return jsonify({
+            'groups': groups_data,
+            'ungrouped': []
+        })
 
     for group in all_groups:
         rows = db.session.query(
@@ -129,7 +189,7 @@ def get_student_courses_grouped(student):
         group_courses = []
         for cid in group_course_ids:
             course = Course.query.get(cid)
-            if not course or not course.is_published:
+            if not course or not course.is_published or len(course.modules) == 0:
                 continue
 
             has_access = cid in student_course_ids
@@ -176,7 +236,6 @@ def get_student_courses_grouped(student):
 
     # Ungrouped
     if student is None:
-        all_published = Course.query.filter_by(is_published=True).all()
         ungrouped = [
             _build_course_data(c, None) for c in all_published
             if c.id not in grouped_course_ids
@@ -184,7 +243,7 @@ def get_student_courses_grouped(student):
     else:
         ungrouped = []
         for course in student.courses:
-            if not course.is_published:
+            if not course.is_published or len(course.modules) == 0:
                 continue
             if course.id not in grouped_course_ids:
                 ungrouped.append(_build_course_data(course, student))
