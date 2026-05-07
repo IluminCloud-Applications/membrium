@@ -107,14 +107,15 @@ export function CloudflareR2Tab() {
         }
     }
 
-    const canSave =
-        accountId.trim().length > 0 &&
-        accessKeyId.trim().length > 0 &&
-        secretAccessKey.trim().length > 0 &&
-        bucket.trim().length > 0 &&
+
+    const canTest = 
+        accountId.trim().length > 0 && 
+        accessKeyId.trim().length > 0 && 
+        secretAccessKey.trim().length > 0 && 
+        bucket.trim().length > 0 && 
         customDomain.trim().length > 0;
 
-    const canTest = accountId && accessKeyId && secretAccessKey && bucket && customDomain;
+
     const isBusy = saving || testing;
 
     return (
