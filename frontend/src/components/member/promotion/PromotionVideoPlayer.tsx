@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import {
     MediaPlayer,
     MediaProvider,
@@ -7,11 +7,14 @@ import {
     MuteButton,
     FullscreenButton,
     Spinner,
+    Poster,
     useMediaState,
     useMediaPlayer,
     type MediaPlayerInstance,
 } from "@vidstack/react";
 import "@vidstack/react/player/styles/base.css";
+import { VTurbPlayer } from "../lesson/VTurbPlayer";
+import { integrationsService } from "@/services/integrations";
 
 interface PromotionVideoPlayerProps {
     src: string;
@@ -42,6 +45,10 @@ export function PromotionVideoPlayer({
         );
     }
 
+    if (videoSource === "vturb") {
+        return <VTurbPromoLoader videoId={src} />;
+    }
+
     const videoSrc = getVideoSource(src, videoSource);
 
     return (
@@ -50,11 +57,11 @@ export function PromotionVideoPlayer({
                 ref={playerRef}
                 title="Promoção"
                 src={videoSrc}
-                autoPlay
                 playsinline
                 className="promo-media-player"
             >
                 <MediaProvider className="promo-media-provider" />
+                <Poster className="vds-poster absolute inset-0 w-full h-full object-cover bg-black/50 transition-opacity duration-300 opacity-0 data-[visible]:opacity-100" />
                 <PromoLoadingIndicator />
                 <ClickToPlay />
                 <PromoControls />
@@ -112,9 +119,19 @@ function PromoControls() {
             {/* Big center play button — only visible when paused */}
             {paused && (
                 <div className="promo-play-overlay">
-                    <PlayButton className="promo-big-play-btn">
+                    <PlayButton 
+                        className="promo-big-play-btn" 
+                        style={{ animation: "promoPulseScale 2s infinite" }}
+                    >
                         <i className="ri-play-fill" />
                     </PlayButton>
+                    <style>{`
+                        @keyframes promoPulseScale {
+                            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
+                            70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(255, 255, 255, 0); }
+                            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+                        }
+                    `}</style>
                 </div>
             )}
 
@@ -172,4 +189,18 @@ function getVideoSource(src: string, videoSource: string | null): string {
         return src;
     }
     return src;
+}
+
+/* ---- VTurb embed loader ---- */
+
+function VTurbPromoLoader({ videoId }: { videoId: string }) {
+    const [orgId, setOrgId] = useState("");
+
+    useEffect(() => {
+        integrationsService.getAll()
+            .then((data) => setOrgId(data.vturb?.org_id || ""))
+            .catch(() => { /* ignore */ });
+    }, []);
+
+    return <VTurbPlayer videoId={videoId} orgId={orgId} />;
 }
