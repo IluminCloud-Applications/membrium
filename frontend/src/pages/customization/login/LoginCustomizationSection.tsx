@@ -69,7 +69,6 @@ export function LoginCustomizationSection() {
         <SettingsSection
             icon="ri-lock-line"
             title="Personalização de Login"
-            description="Escolha o layout e personalize a aparência da página de login."
         >
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                 {/* Left: Controls */}

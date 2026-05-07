@@ -1,4 +1,6 @@
+import { useRef, useState, useEffect } from "react";
 import { DEFAULT_DEVICE_CONFIG, type LoginPageConfig, type DeviceMode } from "@/services/customization";
+
 import { cn } from "@/lib/utils";
 
 interface LoginPreviewProps {
@@ -36,11 +38,13 @@ export function LoginPreview({ config, deviceMode, onDeviceModeChange, platformN
                 <div
                     className={cn(
                         "relative rounded-xl border border-border overflow-hidden shadow-lg transition-all duration-300",
-                        isMobile ? "w-[200px] h-[360px]" : "w-full h-[280px]"
+                        isMobile ? "w-[200px] h-[360px]" : "w-full aspect-video"
                     )}
                 >
                     {config.layout === "simple" ? (
                         <SimplePreview {...{ bgImage, bgc, cc, tc, bc, btc, logoUrl, platformName, subtitle, isMobile, overlay: dc.overlay_opacity }} />
+                    ) : config.layout === "html" ? (
+                        <HtmlPreview html={config.custom_html || ""} css={config.custom_css_html || ""} js={config.custom_js_html || ""} isMobile={isMobile} />
                     ) : (
                         <ModernPreview {...{ bgImage, bgc, tc, bc, btc, logoUrl, platformName, subtitle, isMobile, overlay: dc.overlay_opacity }} />
                     )}
@@ -209,6 +213,57 @@ function FormSkeleton({ h, tc, bc, btc }: { h: string; tc: string; bc: string; b
             <div className="rounded-sm mt-1 flex items-center justify-center" style={{ height: h, background: bc }}>
                 <span style={{ fontSize: "5px", color: btc, fontWeight: 600 }}>Entrar</span>
             </div>
+        </div>
+    );
+}
+/* ─── HTML Layout Preview ───────────────────────────────── */
+
+function HtmlPreview({ html, css, js, isMobile }: { html: string; css: string; js: string; isMobile: boolean }) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [containerW, setContainerW] = useState(0);
+
+    useEffect(() => {
+        if (!containerRef.current) return;
+        const ro = new ResizeObserver(([e]) => setContainerW(e.contentRect.width));
+        ro.observe(containerRef.current);
+        return () => ro.disconnect();
+    }, []);
+
+    if (!html.trim()) {
+        return (
+            <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                <i className="ri-code-box-line text-2xl opacity-30" />
+                <p style={{ fontSize: "8px" }} className="opacity-50 text-center px-2">
+                    Cole seu HTML na aba acima para ver a preview
+                </p>
+            </div>
+        );
+    }
+
+    const srcdoc = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><style>*{box-sizing:border-box}body{margin:0;overflow:hidden}${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
+
+    const realW  = isMobile ? 390  : 1280;
+    const realH  = isMobile ? 700  : 800;
+    const refW   = isMobile ? 200  : (containerW || 600);
+    const scale  = refW / realW;
+
+    return (
+        <div ref={containerRef} className="w-full h-full overflow-hidden relative">
+            {containerW > 0 || isMobile ? (
+                <iframe
+                    srcDoc={srcdoc}
+                    title="HTML Preview"
+                    sandbox="allow-scripts"
+                    style={{
+                        width:  `${realW}px`,
+                        height: `${realH}px`,
+                        border: "none",
+                        transformOrigin: "top left",
+                        transform: `scale(${scale})`,
+                        pointerEvents: "none",
+                    }}
+                />
+            ) : null}
         </div>
     );
 }

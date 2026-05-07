@@ -30,39 +30,24 @@ const layouts: { id: LoginLayout; label: string; icon: string; description: stri
 
 export function LayoutSelector({ value, onChange }: LayoutSelectorProps) {
     return (
-        <div className="space-y-2">
-            <label className="text-sm font-medium">Layout</label>
-            <div className="grid grid-cols-3 gap-3">
-                {layouts.map((layout) => (
-                    <button
-                        key={layout.id}
-                        type="button"
-                        onClick={() => onChange(layout.id)}
-                        className={cn(
-                            "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer",
-                            "hover:border-primary/40 hover:bg-accent/50",
-                            value === layout.id
-                                ? "border-primary bg-primary/5 shadow-sm"
-                                : "border-border bg-card"
-                        )}
-                    >
-                        <i className={cn(
-                            layout.icon,
-                            "text-2xl transition-colors",
-                            value === layout.id ? "text-primary" : "text-muted-foreground"
-                        )} />
-                        <span className={cn(
-                            "text-sm font-medium",
-                            value === layout.id ? "text-foreground" : "text-muted-foreground"
-                        )}>
-                            {layout.label}
-                        </span>
-                        <span className="text-xs text-muted-foreground text-center">
-                            {layout.description}
-                        </span>
-                    </button>
-                ))}
-            </div>
+        <div className="flex items-center gap-1 bg-muted/60 rounded-lg p-1">
+            {layouts.map((layout) => (
+                <button
+                    key={layout.id}
+                    type="button"
+                    title={layout.description}
+                    onClick={() => onChange(layout.id)}
+                    className={cn(
+                        "flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200",
+                        value === layout.id
+                            ? "bg-background text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                    )}
+                >
+                    <i className={cn(layout.icon, "text-sm")} />
+                    {layout.label}
+                </button>
+            ))}
         </div>
     );
 }
