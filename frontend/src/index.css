@@ -1109,67 +1109,70 @@
   border-top: 1px solid oklch(1 0 0 / 5%);
 }
 
-/* ---- PREVIEW BANNER — Admin Preview Mode ---- */
+/* ---- PREVIEW BANNER — Admin Preview Mode (floating bottom-center badge) ---- */
 .preview-banner {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 200;
-  background: linear-gradient(135deg, #E62020, #F06422);
-  color: white;
-  font-size: 0.85rem;
-  font-weight: 500;
-  animation: slideDown 0.3s ease-out;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  pointer-events: none;
+  animation: previewBadgeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .preview-banner-inner {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 0.6rem;
-  padding: 0.5rem 1rem;
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 0.55rem 1rem 0.55rem 1.1rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #E62020, #F06422);
+  color: white;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 8px 32px oklch(0 0 0 / 40%), 0 2px 8px oklch(0.6 0.22 25 / 35%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  pointer-events: all;
+  letter-spacing: 0.01em;
 }
 
 .preview-banner-inner i {
-  font-size: 1.1rem;
+  font-size: 1rem;
+  opacity: 0.9;
 }
 
 .preview-banner-close {
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  margin-left: 1.5rem;
-  padding: 0.25rem 0.75rem;
+  margin-left: 0.6rem;
+  padding: 0.22rem 0.7rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.18);
   color: white;
-  font-size: 0.8rem;
-  font-weight: 500;
+  font-size: 0.78rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  font-family: inherit;
 }
 
 .preview-banner-close:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.32);
+  border-color: rgba(255, 255, 255, 0.65);
 }
 
-/* When preview banner is visible, push member header down */
-.preview-banner+.member-header {
-  top: 36px;
-}
-
-@keyframes slideDown {
+@keyframes previewBadgeIn {
   from {
-    transform: translateY(-100%);
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
   }
 
   to {
-    transform: translateY(0);
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
   }
 }
 

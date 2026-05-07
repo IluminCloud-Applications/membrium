@@ -54,29 +54,29 @@ export function AuthLayoutModern({
                         </div>
                     )}
 
-                    {/* Brand top-left */}
-                    <div className="relative z-10 flex justify-center gap-2 md:justify-start">
-                        <a href="#" className="flex items-center gap-2 font-medium">
-                            {logoSrc ? (
-                                <img
-                                    src={logoSrc}
-                                    alt={platformName}
-                                    className="h-8 object-contain"
-                                />
-                            ) : (
-                                <>
-                                    <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                                        <i className="ri-graduation-cap-line text-sm" />
-                                    </div>
-                                    <span className="text-sm font-semibold">{platformName}</span>
-                                </>
-                            )}
-                        </a>
-                    </div>
-
-                    {/* Centered content */}
+                    {/* Centered content — logo + form share the same max-w-sm block */}
                     <div className="relative z-10 flex flex-1 items-center justify-center">
                         <div className="w-full max-w-sm animate-scale-in">
+                            {/* Brand — aligned to the left edge of the form */}
+                            <div className="mb-6 flex justify-center md:justify-start">
+                                <a href="#" className="flex items-center gap-2 font-medium">
+                                    {logoSrc ? (
+                                        <img
+                                            src={logoSrc}
+                                            alt={platformName}
+                                            className="h-8 object-contain"
+                                        />
+                                    ) : (
+                                        <>
+                                            <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                                                <i className="ri-graduation-cap-line text-sm" />
+                                            </div>
+                                            <span className="text-sm font-semibold">{platformName}</span>
+                                        </>
+                                    )}
+                                </a>
+                            </div>
+
                             {children}
                         </div>
                     </div>
