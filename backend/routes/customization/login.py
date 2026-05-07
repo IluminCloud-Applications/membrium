@@ -34,11 +34,14 @@ DEFAULT_LOGIN_PAGE = {
     'logo': None,
     'subtitle': 'Faça login para acessar sua área de membros',
     'custom_css': None,
+    'custom_html': None,
+    'custom_css_html': None,
+    'custom_js_html': None,
     'desktop': {**DEFAULT_DEVICE_CONFIG},
     'mobile': {**DEFAULT_DEVICE_CONFIG},
 }
 
-GLOBAL_ALLOWED = {'layout', 'logo', 'subtitle', 'custom_css'}
+GLOBAL_ALLOWED = {'layout', 'logo', 'subtitle', 'custom_css', 'custom_html', 'custom_css_html', 'custom_js_html'}
 DEVICE_ALLOWED = set(DEFAULT_DEVICE_CONFIG.keys())
 
 

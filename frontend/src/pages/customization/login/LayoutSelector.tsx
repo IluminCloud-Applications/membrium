@@ -19,13 +19,20 @@ const layouts: { id: LoginLayout; label: string; icon: string; description: stri
         icon: "ri-layout-column-line",
         description: "Login com imagem lateral",
     },
+    {
+        id: "html",
+        label: "HTML Livre",
+        icon: "ri-code-box-line",
+        description: "Página 100% personalizada",
+    },
 ];
+
 
 export function LayoutSelector({ value, onChange }: LayoutSelectorProps) {
     return (
         <div className="space-y-2">
             <label className="text-sm font-medium">Layout</label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
                 {layouts.map((layout) => (
                     <button
                         key={layout.id}

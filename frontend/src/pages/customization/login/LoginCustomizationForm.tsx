@@ -11,6 +11,7 @@ import {
 import { ImageUploadField } from "./ImageUploadField";
 import { AdvancedCssAccordion } from "./AdvancedCssAccordion";
 import { ColorPickerField } from "./ColorPickerField";
+import { HtmlModeEditor } from "./HtmlModeEditor";
 
 interface LoginCustomizationFormProps {
     config: LoginPageConfig;
@@ -34,84 +35,101 @@ export function LoginCustomizationForm({
     onSave,
 }: LoginCustomizationFormProps) {
     const isModern = config.layout === "modern";
+    const isHtml   = config.layout === "html";
     const label = deviceMode === "mobile" ? "Mobile" : "Desktop";
 
     return (
         <div className="space-y-5">
-            {/* ── Global fields ─────────────────────────── */}
 
-            <ImageUploadField
-                label="Logo"
-                hint="Substitui o nome da plataforma quando presente"
-                currentFile={config.logo}
-                onUploaded={(f) => updateGlobal("logo", f)}
-                onRemoved={() => updateGlobal("logo", null)}
-            />
-
-            <div className="space-y-2">
-                <Label htmlFor="loginSubtitle">Subtítulo</Label>
-                <Input
-                    id="loginSubtitle"
-                    value={config.subtitle || ""}
-                    onChange={(e) => updateGlobal("subtitle", e.target.value)}
-                    placeholder="Faça login para acessar sua área de membros"
+            {/* ── HTML mode editor ───────────────────────── */}
+            {isHtml && (
+                <HtmlModeEditor
+                    html={config.custom_html || ""}
+                    css={config.custom_css_html || ""}
+                    js={config.custom_js_html || ""}
+                    onChangeHtml={(v) => updateGlobal("custom_html", v || null)}
+                    onChangeCss={(v)  => updateGlobal("custom_css_html", v || null)}
+                    onChangeJs={(v)   => updateGlobal("custom_js_html", v || null)}
                 />
-                <p className="text-xs text-muted-foreground">
-                    Texto abaixo do nome da plataforma
-                </p>
-            </div>
+            )}
 
-            {/* ── Device-specific fields ────────────────── */}
+            {/* ── Traditional controls (hidden in HTML mode) ── */}
+            {!isHtml && (
+                <>
+                    <ImageUploadField
+                        label="Logo"
+                        hint="Substitui o nome da plataforma quando presente"
+                        currentFile={config.logo}
+                        onUploaded={(f) => updateGlobal("logo", f)}
+                        onRemoved={() => updateGlobal("logo", null)}
+                    />
 
-            <div className="rounded-lg border border-border p-4 space-y-5">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <i className={deviceMode === "mobile" ? "ri-smartphone-line" : "ri-computer-line"} />
-                    <span>Configurações — {label}</span>
-                </div>
-
-                <ImageUploadField
-                    label={`Imagem de Fundo (${label})`}
-                    hint={
-                        isModern
-                            ? "Exibida na lateral (desktop) ou como fundo (mobile)"
-                            : "Fundo atrás do login"
-                    }
-                    currentFile={deviceConfig.background_image}
-                    onUploaded={(f) => updateDevice("background_image", f)}
-                    onRemoved={() => updateDevice("background_image", null)}
-                />
-
-                <DeviceColorPickers
-                    deviceConfig={deviceConfig}
-                    updateDevice={updateDevice}
-                    isModern={isModern}
-                />
-
-                {deviceConfig.background_image && (
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                            <Label>Escurecer Fundo</Label>
-                            <span className="text-xs text-muted-foreground font-mono">
-                                {deviceConfig.overlay_opacity}%
-                            </span>
-                        </div>
-                        <Slider
-                            value={[deviceConfig.overlay_opacity]}
-                            onValueChange={([v]) => updateDevice("overlay_opacity", v)}
-                            min={0}
-                            max={100}
-                            step={5}
+                    <div className="space-y-2">
+                        <Label htmlFor="loginSubtitle">Subtítulo</Label>
+                        <Input
+                            id="loginSubtitle"
+                            value={config.subtitle || ""}
+                            onChange={(e) => updateGlobal("subtitle", e.target.value)}
+                            placeholder="Faça login para acessar sua área de membros"
                         />
+                        <p className="text-xs text-muted-foreground">
+                            Texto abaixo do nome da plataforma
+                        </p>
                     </div>
-                )}
-            </div>
 
-            {/* ── Advanced CSS (global) ──────────────────── */}
+                    {/* ── Device-specific fields ────────────────── */}
 
-            <AdvancedCssAccordion
-                value={config.custom_css || ""}
-                onChange={(css: string) => updateGlobal("custom_css", css || null)}
-            />
+                    <div className="rounded-lg border border-border p-4 space-y-5">
+                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                            <i className={deviceMode === "mobile" ? "ri-smartphone-line" : "ri-computer-line"} />
+                            <span>Configurações — {label}</span>
+                        </div>
+
+                        <ImageUploadField
+                            label={`Imagem de Fundo (${label})`}
+                            hint={
+                                isModern
+                                    ? "Exibida na lateral (desktop) ou como fundo (mobile)"
+                                    : "Fundo atrás do login"
+                            }
+                            currentFile={deviceConfig.background_image}
+                            onUploaded={(f) => updateDevice("background_image", f)}
+                            onRemoved={() => updateDevice("background_image", null)}
+                        />
+
+                        <DeviceColorPickers
+                            deviceConfig={deviceConfig}
+                            updateDevice={updateDevice}
+                            isModern={isModern}
+                        />
+
+                        {deviceConfig.background_image && (
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <Label>Escurecer Fundo</Label>
+                                    <span className="text-xs text-muted-foreground font-mono">
+                                        {deviceConfig.overlay_opacity}%
+                                    </span>
+                                </div>
+                                <Slider
+                                    value={[deviceConfig.overlay_opacity]}
+                                    onValueChange={([v]) => updateDevice("overlay_opacity", v)}
+                                    min={0}
+                                    max={100}
+                                    step={5}
+                                />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* ── Advanced CSS (global) ──────────────────── */}
+
+                    <AdvancedCssAccordion
+                        value={config.custom_css || ""}
+                        onChange={(css: string) => updateGlobal("custom_css", css || null)}
+                    />
+                </>
+            )}
 
             {/* ── Save ──────────────────────────────────── */}
 
@@ -133,6 +151,7 @@ export function LoginCustomizationForm({
 }
 
 /* ─── Device Color Pickers ──────────────────────────────── */
+
 
 interface DeviceColorPickersProps {
     deviceConfig: DeviceConfig;

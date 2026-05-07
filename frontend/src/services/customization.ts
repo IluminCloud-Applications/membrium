@@ -4,7 +4,7 @@ import { apiClient } from "./apiClient";
    TYPES
    ============================================ */
 
-export type LoginLayout = "simple" | "modern";
+export type LoginLayout = "simple" | "modern" | "html";
 export type DeviceMode = "desktop" | "mobile";
 
 /** Per-device visual config */
@@ -24,6 +24,10 @@ export interface LoginPageConfig {
     logo: string | null;
     subtitle: string | null;
     custom_css: string | null;
+    /** HTML mode fields */
+    custom_html: string | null;
+    custom_css_html: string | null;
+    custom_js_html: string | null;
     desktop: DeviceConfig;
     mobile: DeviceConfig;
 }
@@ -47,6 +51,9 @@ export const DEFAULT_LOGIN_CONFIG: LoginPageConfig = {
     logo: null,
     subtitle: "Faça login para acessar sua área de membros",
     custom_css: null,
+    custom_html: null,
+    custom_css_html: null,
+    custom_js_html: null,
     desktop: { ...DEFAULT_DEVICE_CONFIG },
     mobile: { ...DEFAULT_DEVICE_CONFIG },
 };

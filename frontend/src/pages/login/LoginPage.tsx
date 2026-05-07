@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { AuthLayoutModern } from "@/components/auth/AuthLayoutModern";
+import { HtmlLoginRenderer } from "@/components/auth/HtmlLoginRenderer";
 import { LoginForm } from "./LoginForm";
 import { ForgotPasswordModal } from "@/components/modals/auth/ForgotPasswordModal";
 import {
@@ -44,6 +45,18 @@ export function LoginPage({ platformName }: LoginPageProps) {
     const subtitle = config.subtitle || "Faça login para acessar sua área de membros";
     const logoUrl = config.logo ? `/static/uploads/${config.logo}` : null;
     const customStyles = buildCustomStyles(dc, config.custom_css);
+
+    // ─── HTML layout (full custom) ───────────────────────────
+
+    if (config.layout === "html" && config.custom_html) {
+        return (
+            <HtmlLoginRenderer
+                html={config.custom_html}
+                css={config.custom_css_html || ""}
+                js={config.custom_js_html || ""}
+            />
+        );
+    }
 
     // ─── Modern layout ──────────────────────────────────────
 
