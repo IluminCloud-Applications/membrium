@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { memberService } from "@/services/member";
+import { customizationService } from "@/services/customization";
 import { MemberHeader } from "@/components/member";
 import { ChatWidget } from "@/components/member/chatbot";
 import { ProfileForm } from "./ProfileForm";
@@ -18,6 +19,9 @@ export function MemberProfilePage() {
 
     useEffect(() => {
         loadProfile();
+        customizationService.getMemberConfig()
+            .then((d) => injectMemberCss(d.member_custom_css || ""))
+            .catch(() => {});
     }, []);
 
     async function loadProfile() {
@@ -108,3 +112,12 @@ export function MemberProfilePage() {
     );
 }
 
+function injectMemberCss(css: string) {
+    const id = "member-custom-css";
+    document.getElementById(id)?.remove();
+    if (!css.trim()) return;
+    const style = document.createElement("style");
+    style.id = id;
+    style.textContent = css;
+    document.head.appendChild(style);
+}

@@ -7,11 +7,12 @@ interface ModuleCarouselProps {
     onModuleClick: (moduleId: number) => void;
     externalTrackRef?: React.RefObject<HTMLDivElement | null>;
     onScrollStateChange?: (canLeft: boolean, canRight: boolean) => void;
+    hideModuleInfo?: boolean;
 }
 
 const DRAG_THRESHOLD = 8; // px — minimum movement to consider a drag
 
-export function ModuleGrid({ modules, onModuleClick, externalTrackRef, onScrollStateChange }: ModuleCarouselProps) {
+export function ModuleGrid({ modules, onModuleClick, externalTrackRef, onScrollStateChange, hideModuleInfo }: ModuleCarouselProps) {
     const internalRef = useRef<HTMLDivElement>(null);
     const trackRef = externalTrackRef || internalRef;
     const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -155,6 +156,7 @@ export function ModuleGrid({ modules, onModuleClick, externalTrackRef, onScrollS
                         module={mod}
                         index={index}
                         onClick={() => handleCardClick(mod.id)}
+                        hideModuleInfo={hideModuleInfo}
                     />
                 ))}
             </div>

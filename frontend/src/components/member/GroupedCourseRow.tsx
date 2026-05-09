@@ -6,9 +6,10 @@ import { LazySection } from "@/components/ui/LazySectionContext";
 interface GroupedCourseRowProps {
     course: MemberCourse;
     onModuleClick: (courseId: number, moduleId: number) => void;
+    hideModuleInfo?: boolean;
 }
 
-export function GroupedCourseRow({ course, onModuleClick }: GroupedCourseRowProps) {
+export function GroupedCourseRow({ course, onModuleClick, hideModuleInfo }: GroupedCourseRowProps) {
     const trackRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
@@ -84,6 +85,7 @@ export function GroupedCourseRow({ course, onModuleClick }: GroupedCourseRowProp
                     }}
                     externalTrackRef={trackRef}
                     onScrollStateChange={handleScrollState}
+                    hideModuleInfo={hideModuleInfo}
                 />
             </div>
         </LazySection>

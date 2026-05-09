@@ -5,9 +5,10 @@ interface ModuleCardProps {
     module: MemberModule;
     index: number;
     onClick: () => void;
+    hideModuleInfo?: boolean;
 }
 
-export function ModuleCard({ module, index, onClick }: ModuleCardProps) {
+export function ModuleCard({ module, index, onClick, hideModuleInfo }: ModuleCardProps) {
     const progress = module.totalLessons > 0
         ? Math.round((module.completedLessons / module.totalLessons) * 100)
         : 0;
@@ -67,27 +68,36 @@ export function ModuleCard({ module, index, onClick }: ModuleCardProps) {
                         <i className="ri-check-line" />
                     </div>
                 )}
+
+                {/* Play icon overlay — visible on hover, fully themeable */}
+                {!isLocked && (
+                    <div className="member-module-play-overlay">
+                        <i className="ri-play-fill" />
+                    </div>
+                )}
             </div>
 
-            <div className="member-module-info">
-                <h3 className="member-module-name">{module.name}</h3>
-                <p className="member-module-meta">
-                    {isLocked ? (
-                        <span className="member-module-lock-text">
-                            <i className="ri-lock-line" />
-                            {daysRemaining > 0
-                                ? `Libera em ${daysRemaining} dia${daysRemaining !== 1 ? "s" : ""}`
-                                : "Adquira para liberar"
-                            }
-                        </span>
-                    ) : (
-                        <>
-                            {module.completedLessons}/{module.totalLessons} aulas
-                            {progress > 0 && !isCompleted && ` · ${progress}%`}
-                        </>
-                    )}
-                </p>
-            </div>
+            {!hideModuleInfo && (
+                <div className="member-module-info">
+                    <h3 className="member-module-name">{module.name}</h3>
+                    <p className="member-module-meta">
+                        {isLocked ? (
+                            <span className="member-module-lock-text">
+                                <i className="ri-lock-line" />
+                                {daysRemaining > 0
+                                    ? `Libera em ${daysRemaining} dia${daysRemaining !== 1 ? "s" : ""}`
+                                    : "Adquira para liberar"
+                                }
+                            </span>
+                        ) : (
+                            <>
+                                {module.completedLessons}/{module.totalLessons} aulas
+                                {progress > 0 && !isCompleted && ` · ${progress}%`}
+                            </>
+                        )}
+                    </p>
+                </div>
+            )}
         </button>
     );
 }

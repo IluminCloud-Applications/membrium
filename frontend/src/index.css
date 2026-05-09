@@ -834,6 +834,42 @@
   box-shadow: 0 2px 8px oklch(0 0 0 / 30%);
 }
 
+/* Play icon overlay — hover reveal */
+.member-module-play-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: oklch(0 0 0 / 35%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.member-module-play-overlay i {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #E62020, #F06422);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  box-shadow: 0 4px 16px oklch(0 0 0 / 40%);
+  transform: scale(0.85);
+  transition: transform 0.3s ease;
+}
+
+.member-module-card:hover .member-module-play-overlay {
+  opacity: 1;
+}
+
+.member-module-card:hover .member-module-play-overlay i {
+  transform: scale(1);
+}
+
 /* Module info */
 .member-module-info {
   padding: 0.65rem 0.25rem 0;

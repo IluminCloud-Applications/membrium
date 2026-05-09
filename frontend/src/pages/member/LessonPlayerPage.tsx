@@ -5,6 +5,7 @@ import { MemberHeader } from "@/components/member";
 import { ChatWidget } from "@/components/member/chatbot";
 import { PreviewBanner } from "@/components/member/PreviewBanner";
 import { usePreview } from "@/contexts/PreviewContext";
+import { customizationService } from "@/services/customization";
 import {
     VideoPlayer,
     LessonSidebar,
@@ -45,7 +46,12 @@ export function LessonPlayerPage() {
 
     useEffect(() => {
         memberService.getShowcases(isPreview).then(setShowcases).catch(() => { });
+        customizationService.getMemberConfig()
+            .then((d) => injectMemberCss(d.member_custom_css || ""))
+            .catch(() => {});
+        return () => { document.getElementById("member-custom-css")?.remove(); };
     }, []);
+
 
     if (loading) return <LessonSkeleton />;
 
@@ -186,4 +192,14 @@ function LessonSkeleton() {
             </div>
         </div>
     );
+}
+
+function injectMemberCss(css: string) {
+    const id = "member-custom-css";
+    document.getElementById(id)?.remove();
+    if (!css.trim()) return;
+    const style = document.createElement("style");
+    style.id = id;
+    style.textContent = css;
+    document.head.appendChild(style);
 }

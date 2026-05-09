@@ -7,6 +7,7 @@ import { getContinueWatching } from "@/utils/continueWatching";
 import { usePreview } from "@/contexts/PreviewContext";
 import { PreviewBanner } from "@/components/member/PreviewBanner";
 import { useAutoScrollPastBanner } from "@/hooks/useAutoScrollPastBanner";
+import { customizationService, type MemberAreaConfig } from "@/services/customization";
 import type { MemberCourse, MemberCourseGroup, MemberMenuItem, MemberShowcaseItem, MemberActivePromotion } from "@/types/member";
 
 export function MemberHomePage() {
@@ -20,9 +21,16 @@ export function MemberHomePage() {
     const [platformName, setPlatformName] = useState("Área de Membros");
     const [showcases, setShowcases] = useState<MemberShowcaseItem[]>([]);
     const [promotions, setPromotions] = useState<MemberActivePromotion[]>([]);
+    const [config, setConfig] = useState<MemberAreaConfig | null>(null);
 
     useEffect(() => {
         loadData();
+        customizationService.getMemberConfig()
+            .then((d) => {
+                setConfig(d);
+                injectMemberCss(d.member_custom_css || "");
+            })
+            .catch(() => {});
     }, []);
 
     async function loadData() {
@@ -97,6 +105,9 @@ export function MemberHomePage() {
         window.location.href = url;
     }
 
+
+    const hideModuleInfo = config?.hide_module_info || false;
+
     if (loading) {
         return <MemberLoadingSkeleton />;
     }
@@ -155,6 +166,7 @@ export function MemberHomePage() {
                         onModuleClick={handleModuleClick}
                         onBackToSelector={groups.length > 1 ? () => setSelectedGroupId(null) : undefined}
                         showBack={groups.length > 1}
+                        hideModuleInfo={hideModuleInfo}
                     />
 
                     {ungrouped.map((course) => (
@@ -162,6 +174,7 @@ export function MemberHomePage() {
                             key={course.id}
                             course={course}
                             onModuleClick={handleModuleClick}
+                            hideModuleInfo={hideModuleInfo}
                         />
                     ))}
 
@@ -195,6 +208,7 @@ export function MemberHomePage() {
                         isPrimary
                         onModuleClick={handleModuleClick}
                         courseHeaderRef={courseHeaderRef}
+                        hideModuleInfo={hideModuleInfo}
                     />
                 )}
 
@@ -203,6 +217,7 @@ export function MemberHomePage() {
                         key={course.id}
                         course={course}
                         onModuleClick={handleModuleClick}
+                        hideModuleInfo={hideModuleInfo}
                     />
                 ))}
 
@@ -218,6 +233,16 @@ export function MemberHomePage() {
     );
 }
 
+/** Injects (or replaces) the member custom CSS <style> tag in <head>. */
+function injectMemberCss(css: string) {
+    const id = "member-custom-css";
+    document.getElementById(id)?.remove();
+    if (!css.trim()) return;
+    const style = document.createElement("style");
+    style.id = id;
+    style.textContent = css;
+    document.head.appendChild(style);
+}
 
 function MemberLoadingSkeleton() {
     return (

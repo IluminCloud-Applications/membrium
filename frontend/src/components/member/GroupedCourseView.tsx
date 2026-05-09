@@ -7,6 +7,7 @@ interface GroupedCourseViewProps {
     onModuleClick: (courseId: number, moduleId: number) => void;
     onBackToSelector?: () => void;
     showBack?: boolean;
+    hideModuleInfo?: boolean;
 }
 
 export function GroupedCourseView({
@@ -14,6 +15,7 @@ export function GroupedCourseView({
     onModuleClick,
     onBackToSelector,
     showBack = false,
+    hideModuleInfo,
 }: GroupedCourseViewProps) {
     const principal = group.courses.find((c) => c.id === group.principalCourseId);
     const otherCourses = group.courses.filter((c) => c.id !== group.principalCourseId);
@@ -52,6 +54,7 @@ export function GroupedCourseView({
                     <GroupedCourseRow
                         course={principal}
                         onModuleClick={onModuleClick}
+                        hideModuleInfo={hideModuleInfo}
                     />
                 )}
 
@@ -61,6 +64,7 @@ export function GroupedCourseView({
                         key={course.id}
                         course={course}
                         onModuleClick={onModuleClick}
+                        hideModuleInfo={hideModuleInfo}
                     />
                 ))}
             </div>

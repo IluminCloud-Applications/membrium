@@ -58,6 +58,16 @@ export const DEFAULT_LOGIN_CONFIG: LoginPageConfig = {
     mobile: { ...DEFAULT_DEVICE_CONFIG },
 };
 
+export interface MemberAreaConfig {
+    member_custom_css: string;
+    hide_module_info: boolean;
+}
+
+export const DEFAULT_MEMBER_CONFIG: MemberAreaConfig = {
+    member_custom_css: "",
+    hide_module_info: false,
+};
+
 /* ============================================
    API TYPES
    ============================================ */
@@ -101,4 +111,12 @@ export const customizationService = {
     /** Delete an uploaded image by filename */
     deleteImage: (filename: string) =>
         apiClient.delete<ApiResponse>(`/customization/login/image/${filename}`),
+
+    /** Get member area CSS config (public) */
+    getMemberConfig: () =>
+        apiClient.get<MemberAreaConfig>("/customization/member"),
+
+    /** Update member area config (admin only) */
+    updateMemberConfig: (data: Partial<MemberAreaConfig>) =>
+        apiClient.put<{ success: boolean; message: string; data: MemberAreaConfig }>("/customization/member", data),
 };

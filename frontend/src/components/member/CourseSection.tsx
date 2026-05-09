@@ -10,9 +10,10 @@ interface CourseSectionProps {
     onModuleClick: (courseId: number, moduleId: number) => void;
     /** Ref forwarded to the course header element (below the banner) */
     courseHeaderRef?: React.Ref<HTMLDivElement>;
+    hideModuleInfo?: boolean;
 }
 
-export function CourseSection({ course, isPrimary = false, onModuleClick, courseHeaderRef }: CourseSectionProps) {
+export function CourseSection({ course, isPrimary = false, onModuleClick, courseHeaderRef, hideModuleInfo }: CourseSectionProps) {
     const trackRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
@@ -90,6 +91,7 @@ export function CourseSection({ course, isPrimary = false, onModuleClick, course
                     onModuleClick={(moduleId) => onModuleClick(course.id, moduleId)}
                     externalTrackRef={trackRef}
                     onScrollStateChange={handleScrollState}
+                    hideModuleInfo={hideModuleInfo}
                 />
             </div>
         </LazySection>
