@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { customizationService } from "@/services/customization";
+import { toast } from "sonner";
 
 interface MemberCssEditorProps {
     value: string;
@@ -76,6 +79,28 @@ const CLASS_REFERENCE = [
 ];
 
 export function MemberCssEditor({ value, onChange }: MemberCssEditorProps) {
+    const [isOptimizing, setIsOptimizing] = useState(false);
+
+    async function handleOptimize() {
+        if (!value.trim() || isOptimizing) return;
+        
+        setIsOptimizing(true);
+        try {
+            const res = await customizationService.minifyCss(value);
+            if (res.css !== undefined) {
+                onChange(res.css);
+                toast.success("CSS otimizado com sucesso!");
+            }
+        } catch (error: any) {
+            console.error("Failed to minify CSS:", error);
+            toast.error("Erro ao otimizar CSS", {
+                description: error.message || "Tente novamente mais tarde."
+            });
+        } finally {
+            setIsOptimizing(false);
+        }
+    }
+
     return (
         <div className="space-y-4">
             {/* Editor */}
@@ -85,11 +110,23 @@ export function MemberCssEditor({ value, onChange }: MemberCssEditorProps) {
                         <i className="ri-code-s-slash-line text-primary" />
                         CSS Personalizado
                     </label>
-                    {value.trim() && (
-                        <Badge variant="secondary" className="text-xs">
-                            {value.split("\n").length} linhas
-                        </Badge>
-                    )}
+                    <div className="flex items-center gap-2">
+                        {value.trim() && (
+                            <Badge variant="secondary" className="text-xs">
+                                {value.split("\n").length} linhas
+                            </Badge>
+                        )}
+                        {value.trim() && (
+                            <button
+                                type="button"
+                                onClick={handleOptimize}
+                                disabled={isOptimizing}
+                                className="text-xs text-primary hover:text-primary/80 underline underline-offset-2 transition-colors disabled:opacity-50 disabled:no-underline"
+                            >
+                                {isOptimizing ? "Otimizando..." : "Otimizar"}
+                            </button>
+                        )}
+                    </div>
                 </div>
                 <Textarea
                     value={value}

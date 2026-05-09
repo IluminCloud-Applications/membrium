@@ -80,7 +80,7 @@ export function MemberCustomizationSection() {
                             <div className="space-y-0.5 pr-4">
                                 <Label className="text-sm font-medium">Ocultar Informações do Módulo</Label>
                                 <p className="text-xs text-muted-foreground">
-                                    Remove a quantidade de aulas e o título nos cards da vitrine, exibindo apenas a capa.
+                                    Remove a quantidade de aulas e o título nos cards da vitrine, exibindo apenas a capa dos módulos.
                                 </p>
                             </div>
                             <Switch
@@ -95,14 +95,6 @@ export function MemberCustomizationSection() {
                         <MemberCssEditor value={config.member_custom_css} onChange={(css) => updateConfig({ member_custom_css: css })} />
                         <MemberAiPrompt css={config.member_custom_css} />
 
-                        {/* Info box */}
-                        <div className="flex gap-3 p-3 bg-blue-500/8 border border-blue-500/20 rounded-lg text-xs text-blue-400/80">
-                            <i className="ri-information-line shrink-0 mt-0.5" />
-                            <span>
-                                O CSS é injetado como <code className="bg-blue-500/15 px-1 rounded font-mono">&lt;style&gt;</code> global na área de membros (home + player de aula).
-                                O tema padrão continua funcionando — você apenas sobrescreve as classes que quiser.
-                            </span>
-                        </div>
                     </div>
 
                     {/* Action bar */}
@@ -126,8 +118,8 @@ export function MemberCustomizationSection() {
                                 onClick={handleClear}
                                 className="text-muted-foreground hover:text-destructive gap-1.5"
                             >
-                                <i className="ri-delete-bin-line" />
-                                Limpar
+                                <i className="ri-arrow-go-back-line" />
+                                Voltar ao Original
                             </Button>
                         )}
                     </div>
@@ -146,7 +138,7 @@ export function MemberCustomizationSection() {
                 </div>
 
                 {/* Right — preview */}
-                <MemberThemePreview css={config.member_custom_css} />
+                <MemberThemePreview css={config.member_custom_css} hideModuleInfo={config.hide_module_info} />
             </div>
         </SettingsSection>
     );

@@ -3,11 +3,12 @@ import { cn } from "@/lib/utils";
 
 interface MemberThemePreviewProps {
     css: string;
+    hideModuleInfo?: boolean;
 }
 
 type PreviewTab = "home" | "lesson";
 
-export function MemberThemePreview({ css }: MemberThemePreviewProps) {
+export function MemberThemePreview({ css, hideModuleInfo = false }: MemberThemePreviewProps) {
     const [tab, setTab] = useState<PreviewTab>("home");
 
     return (
@@ -38,48 +39,48 @@ export function MemberThemePreview({ css }: MemberThemePreviewProps) {
                 </div>
             </div>
 
-            {/* Preview frame */}
-            <div className="rounded-xl border border-border overflow-hidden shadow-lg w-full aspect-video">
-                <ScaledIframe css={css} tab={tab} />
+            {/* Preview frame — taller for member home */}
+            <div className="rounded-xl border border-border overflow-hidden shadow-lg w-full" style={{ height: "780px" }}>
+                <ScaledIframe css={css} tab={tab} hideModuleInfo={hideModuleInfo} />
             </div>
-
-            <p className="text-xs text-center text-muted-foreground">
-                Visualização em miniatura — a página real será em tela cheia.
-            </p>
         </div>
     );
 }
 
 /* ─── Scaled iframe ─────────────────────────────────────────────── */
 
-function ScaledIframe({ css, tab }: { css: string; tab: PreviewTab }) {
+function ScaledIframe({ css, tab, hideModuleInfo }: { css: string; tab: PreviewTab; hideModuleInfo: boolean }) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [containerW, setContainerW] = useState(0);
+    const [containerH, setContainerH] = useState(0);
 
     useEffect(() => {
         if (!containerRef.current) return;
-        const ro = new ResizeObserver(([e]) => setContainerW(e.contentRect.width));
+        const ro = new ResizeObserver(([e]) => {
+            setContainerW(e.contentRect.width);
+            setContainerH(e.contentRect.height);
+        });
         ro.observe(containerRef.current);
         return () => ro.disconnect();
     }, []);
 
     const realW = 1280;
-    const realH = 720;
+    const realH = 800;
     const scale = containerW > 0 ? containerW / realW : 1;
 
-    const html = tab === "home" ? buildHomeHtml(css) : buildLessonHtml(css);
+    const html = tab === "home" ? buildHomeHtml(css, hideModuleInfo) : buildLessonHtml(css);
 
     return (
         <div ref={containerRef} className="w-full h-full overflow-hidden relative">
             {containerW > 0 && (
                 <iframe
-                    key={tab + css}
+                    key={tab + css + hideModuleInfo}
                     srcDoc={html}
                     title={`Preview ${tab}`}
                     sandbox="allow-scripts"
                     style={{
                         width: `${realW}px`,
-                        height: `${realH}px`,
+                        height: `${containerH > 0 ? Math.ceil(containerH / scale) : realH}px`,
                         border: "none",
                         transformOrigin: "top left",
                         transform: `scale(${scale})`,
@@ -93,8 +94,16 @@ function ScaledIframe({ css, tab }: { css: string; tab: PreviewTab }) {
 
 /* ─── HTML builders ─────────────────────────────────────────────── */
 
-function buildHomeHtml(css: string): string {
+function buildHomeHtml(css: string, hideModuleInfo = false): string {
     const BASE_CSS = getBaseCss();
+    // Beautiful 9:16 nature/landscape images from Unsplash
+    const moduleImages = [
+        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=711&fit=crop",
+        "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400&h=711&fit=crop",
+        "https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?w=400&h=711&fit=crop",
+        "https://images.unsplash.com/photo-1470770903676-69b98201ea1c?w=400&h=711&fit=crop",
+        "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=400&h=711&fit=crop",
+    ];
     return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -136,24 +145,25 @@ ${css}
       <div class="member-carousel">
         <div class="member-carousel-track" style="display:flex;gap:14px;overflow:hidden">
           ${[
-              ["Introdução ao Marketing", "8 aulas", "100%"],
-              ["SEO e Tráfego Orgânico", "12 aulas", "65%"],
-              ["Tráfego Pago", "10 aulas", "30%"],
-              ["Email Marketing", "6 aulas", "0%"],
-              ["Redes Sociais", "9 aulas", "0%"],
-          ].map(([title, lessons, progress]) => `
-          <div class="member-module-card" style="min-width:180px;flex-shrink:0;cursor:pointer;overflow:hidden;border-radius:10px">
-            <div class="member-module-image-wrap" style="position:relative;height:100px;overflow:hidden">
-              <div class="member-module-image" style="height:100%;background:linear-gradient(135deg,#333,#1a1a1a)"></div>
+              ["Introdução ao Marketing", "8 aulas", "100%", moduleImages[0]],
+              ["SEO e Tráfego Orgânico", "12 aulas", "65%", moduleImages[1]],
+              ["Tráfego Pago", "10 aulas", "30%", moduleImages[2]],
+              ["Email Marketing", "6 aulas", "0%", moduleImages[3]],
+              ["Redes Sociais", "9 aulas", "0%", moduleImages[4]],
+          ].map(([title, lessons, progress, img]) => `
+          <div class="member-module-card" style="min-width:160px;flex-shrink:0;cursor:pointer;overflow:hidden;border-radius:10px">
+            <div class="member-module-image-wrap" style="position:relative;overflow:hidden;aspect-ratio:9/16">
+              <img src="${img}" alt="" style="width:100%;height:100%;object-fit:cover;display:block" />
               <div class="member-module-play-overlay"><i style="display:flex;align-items:center;justify-content:center">▶</i></div>
               <div class="member-module-progress-bar" style="position:absolute;bottom:0;left:0;right:0;height:4px">
                 <div class="member-module-progress-fill" style="width:${progress};height:100%;border-radius:2px"></div>
               </div>
             </div>
+            ${hideModuleInfo ? "" : `
             <div class="member-module-info" style="padding:10px">
               <p class="member-module-name" style="margin:0 0 4px;font-size:12px;font-weight:600">${title}</p>
               <p class="member-module-meta" style="margin:0;font-size:11px">${lessons}</p>
-            </div>
+            </div>`}
           </div>`).join("")}
         </div>
       </div>

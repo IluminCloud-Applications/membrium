@@ -28,4 +28,7 @@ google-api-python-client
 
 # Cloudflare R2 (S3-compatible) — direct browser-to-R2 uploads via presigned PUT
 boto3
+
+# CSS minification
+rcssmin
 

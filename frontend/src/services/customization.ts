@@ -119,4 +119,11 @@ export const customizationService = {
     /** Update member area config (admin only) */
     updateMemberConfig: (data: Partial<MemberAreaConfig>) =>
         apiClient.put<{ success: boolean; message: string; data: MemberAreaConfig }>("/customization/member", data),
+
+    /** Minify CSS using backend API */
+    minifyCss: (css: string) =>
+        apiClient.request<{ css: string }>("/customization/css/minify", {
+            method: "POST",
+            body: JSON.stringify({ css }),
+        }),
 };
