@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, session, redirect, url_for
+from flask import Blueprint, request, jsonify, session
 from functools import wraps
 from db.database import db
 from models import Admin
@@ -11,7 +11,7 @@ def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session or not Admin.query.get(session['user_id']):
-            return redirect(url_for('auth.login'))
+            return jsonify({'success': False, 'message': 'Não autorizado'}), 401
         return f(*args, **kwargs)
     return decorated_function
 
@@ -517,6 +517,19 @@ def get_chatwoot_embed():
     return jsonify({
         'embed_enabled': bool(embed_enabled),
         'embed_script': embed_script if embed_enabled else '',
+    })
+
+
+# ─── VTurb — Public config endpoint (for member video player) ─────
+
+@integrations_bp.route('/api/public/vturb-config', methods=['GET'])
+def get_vturb_public_config():
+    """Public endpoint: returns only the org_id needed by the member-area VTurb player.
+    The API key is NEVER exposed here."""
+    vturb_enabled, vturb = get_integration('vturb')
+    return jsonify({
+        'enabled': vturb_enabled,
+        'org_id': vturb.get('org_id', ''),
     })
 
 # ─── AssemblyAI ──────────────────────────────────────────────────

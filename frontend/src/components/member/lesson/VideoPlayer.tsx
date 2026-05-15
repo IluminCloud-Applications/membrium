@@ -14,9 +14,9 @@ import {
     useMediaPlayer,
     type MediaPlayerInstance,
 } from "@vidstack/react";
+
 import "@vidstack/react/player/styles/base.css";
 import { VTurbPlayer } from "./VTurbPlayer";
-import { integrationsService } from "@/services/integrations";
 
 interface VideoPlayerProps {
     title: string;
@@ -232,8 +232,9 @@ function VTurbEmbedLoader({ videoId }: { videoId: string }) {
     const [orgId, setOrgId] = useState("");
 
     useEffect(() => {
-        integrationsService.getAll()
-            .then((data) => setOrgId(data.vturb?.org_id || ""))
+        fetch("/api/public/vturb-config")
+            .then((r) => r.json())
+            .then((data) => setOrgId(data.org_id || ""))
             .catch(() => { /* ignore */ });
     }, []);
 

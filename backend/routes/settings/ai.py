@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, session, redirect, url_for
+from flask import Blueprint, request, jsonify, session
 from functools import wraps
 from models import Admin
 from db.integration_helpers import get_integration, set_integration
@@ -11,7 +11,7 @@ def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session or not Admin.query.get(session['user_id']):
-            return redirect(url_for('auth.login'))
+            return jsonify({'success': False, 'message': 'Não autorizado'}), 401
         return f(*args, **kwargs)
     return decorated_function
 

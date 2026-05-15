@@ -14,7 +14,7 @@ import {
 } from "@vidstack/react";
 import "@vidstack/react/player/styles/base.css";
 import { VTurbPlayer } from "../lesson/VTurbPlayer";
-import { integrationsService } from "@/services/integrations";
+
 
 interface PromotionVideoPlayerProps {
     src: string;
@@ -197,8 +197,9 @@ function VTurbPromoLoader({ videoId }: { videoId: string }) {
     const [orgId, setOrgId] = useState("");
 
     useEffect(() => {
-        integrationsService.getAll()
-            .then((data) => setOrgId(data.vturb?.org_id || ""))
+        fetch("/api/public/vturb-config")
+            .then((r) => r.json())
+            .then((data) => setOrgId(data.org_id || ""))
             .catch(() => { /* ignore */ });
     }, []);
 
