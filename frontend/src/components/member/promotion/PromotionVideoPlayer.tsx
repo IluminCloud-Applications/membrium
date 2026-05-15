@@ -195,13 +195,23 @@ function getVideoSource(src: string, videoSource: string | null): string {
 
 function VTurbPromoLoader({ videoId }: { videoId: string }) {
     const [orgId, setOrgId] = useState("");
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetch("/api/public/vturb-config")
             .then((r) => r.json())
             .then((data) => setOrgId(data.org_id || ""))
-            .catch(() => { /* ignore */ });
+            .catch(() => { /* ignore */ })
+            .finally(() => setLoading(false));
     }, []);
+
+    if (loading) {
+        return (
+            <div className="promo-video-container promo-video-custom flex items-center justify-center">
+                <i className="ri-loader-4-line animate-spin text-2xl text-muted-foreground" />
+            </div>
+        );
+    }
 
     return <VTurbPlayer videoId={videoId} orgId={orgId} />;
 }
