@@ -5,3 +5,6 @@ export { LessonNavBar } from "./LessonNavBar";
 export { LessonFAQ } from "./LessonFAQ";
 export { LessonDocuments } from "./LessonDocuments";
 export { LessonCTA } from "./LessonCTA";
+export { LessonMiniSidebar } from "./LessonMiniSidebar";
+export { LessonModulesDrawer } from "./LessonModulesDrawer";
+export { LessonMobileNav } from "./LessonMobileNav";

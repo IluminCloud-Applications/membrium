@@ -22,18 +22,20 @@ export function MobileBottomNav({ onSearchClick, menuItems }: MobileBottomNavPro
             </a>
 
             {/* Dynamic menu items from API */}
-            {menuItems.map((item, i) => (
-                <a
-                    key={i}
-                    href={item.url}
-                    target={item.url.startsWith("http") ? "_blank" : undefined}
-                    rel={item.url.startsWith("http") ? "noopener noreferrer" : undefined}
-                    className="member-bottom-nav-item"
-                >
-                    <i className={item.icon || "ri-links-line"} />
-                    <span>{item.name}</span>
-                </a>
-            ))}
+            {menuItems
+                .filter((item) => item.url !== "/member" && item.url !== "/member/")
+                .map((item, i) => (
+                    <a
+                        key={i}
+                        href={item.url}
+                        target={item.url.startsWith("http") ? "_blank" : undefined}
+                        rel={item.url.startsWith("http") ? "noopener noreferrer" : undefined}
+                        className="member-bottom-nav-item"
+                    >
+                        <i className={item.icon || "ri-links-line"} />
+                        <span>{item.name}</span>
+                    </a>
+                ))}
 
             {/* Buscar */}
             <button
