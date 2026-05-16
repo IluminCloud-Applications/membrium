@@ -54,6 +54,7 @@ export interface MemberLesson {
     description: string | null;
     videoUrl: string | null;
     videoType: string;
+    thumbnailUrl: string | null;
     order: number;
     hasButton: boolean;
     buttonText: string | null;
@@ -133,6 +134,7 @@ export interface MemberLessonDetail {
     description: string | null;
     videoUrl: string | null;
     videoType: string;
+    thumbnailUrl: string | null;
     order: number;
     hasButton: boolean;
     buttonText: string | null;

@@ -69,6 +69,7 @@ class Lesson(db.Model):
     description = db.Column(db.Text, nullable=True)
     video_url = db.Column(db.Text, nullable=True)
     video_type = db.Column(db.String(50), default='youtube')  # 'youtube', 'vturb', 'cloudflare', ou 'custom'
+    thumbnail_url = db.Column(db.Text, nullable=True)  # Pre-generated thumbnail: YouTube img URL or /static/uploads/... for R2
     order = db.Column(db.Integer, nullable=False)
     has_button = db.Column(db.Boolean, default=False)
     button_text = db.Column(db.String(100))

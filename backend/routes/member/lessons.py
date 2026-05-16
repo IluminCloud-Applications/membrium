@@ -51,6 +51,7 @@ def get_module_lessons(student, course_id, module_id):
             'description': lesson.description,
             'videoUrl': lesson.video_url,
             'videoType': lesson.video_type,
+            'thumbnailUrl': lesson.thumbnail_url,
             'order': lesson.order,
             'hasButton': lesson.has_button,
             'buttonText': lesson.button_text,

@@ -6,6 +6,7 @@ from db.database import db
 from db.utils import ensure_upload_directory
 from models import Admin, Module, Lesson, Document, FAQ, LessonTranscript
 from .transcript_sync import auto_fetch_transcript
+from services.lesson_thumbnail import youtube_thumbnail_url, extract_r2_thumbnail
 import os
 import logging
 
@@ -43,11 +44,17 @@ def create_lesson(module_id):
     if not title:
         return jsonify({'success': False, 'message': 'Título é obrigatório'}), 400
 
+    # Derive YouTube thumbnail immediately from URL (no extra work needed)
+    thumbnail = None
+    if video_type == 'youtube' and video_url:
+        thumbnail = youtube_thumbnail_url(video_url)
+
     new_lesson = Lesson(
         title=title,
         description=description,
         video_url=video_url,
         video_type=video_type,
+        thumbnail_url=thumbnail,
         module=module,
         order=len(module.lessons) + 1,
         has_button=has_button,
@@ -61,6 +68,13 @@ def create_lesson(module_id):
     _handle_document_uploads(request, new_lesson)
 
     db.session.commit()
+
+    # For R2 videos: extract thumbnail from the uploaded video (runs after commit so lesson.id exists)
+    if video_type == 'cloudflare' and video_url and not thumbnail:
+        r2_thumb = extract_r2_thumbnail(video_url, new_lesson.id)
+        if r2_thumb:
+            new_lesson.thumbnail_url = r2_thumb
+            db.session.commit()
 
     # Auto-fetch transcript: synchronous for YouTube, background for Cloudflare/AssemblyAI
     transcript_result = {"success": False, "message": "Skipped"}
@@ -82,6 +96,9 @@ def update_lesson(lesson_id):
     """Update a lesson."""
     lesson = Lesson.query.get_or_404(lesson_id)
 
+    old_video_url = lesson.video_url
+    old_video_type = lesson.video_type
+
     lesson.title = request.form.get('title', lesson.title)
     lesson.description = request.form.get('description', lesson.description)
     lesson.video_url = request.form.get('video_url', lesson.video_url)
@@ -93,9 +110,27 @@ def update_lesson(lesson_id):
     lesson.button_link = request.form.get('cta_url') if has_button else None
     lesson.button_delay = _parse_int(request.form.get('cta_delay'))
 
-    _handle_document_uploads(request, lesson)
+    # Regenerate thumbnail only when video URL or type changed
+    video_changed = (lesson.video_url != old_video_url or lesson.video_type != old_video_type)
+    if video_changed:
+        if lesson.video_type == 'youtube' and lesson.video_url:
+            lesson.thumbnail_url = youtube_thumbnail_url(lesson.video_url)
+        elif lesson.video_type == 'cloudflare' and lesson.video_url:
+            lesson.thumbnail_url = None  # will be set after commit
+        else:
+            lesson.thumbnail_url = None
 
+    _handle_document_uploads(request, lesson)
     db.session.commit()
+
+    # Extract R2 thumbnail after commit (needs lesson.id in filename)
+    if video_changed and lesson.video_type == 'cloudflare' and lesson.video_url:
+        _delete_old_thumbnail(lesson)  # remove old local file if any
+        r2_thumb = extract_r2_thumbnail(lesson.video_url, lesson.id)
+        if r2_thumb:
+            lesson.thumbnail_url = r2_thumb
+            db.session.commit()
+
     return jsonify({
         'success': True,
         'lesson': _serialize_lesson(lesson),
@@ -174,6 +209,17 @@ def _parse_int(value):
     return None
 
 
+def _delete_old_thumbnail(lesson: Lesson):
+    """Remove the locally stored thumbnail file when the video is replaced."""
+    if lesson.thumbnail_url and lesson.thumbnail_url.startswith('/static/uploads/'):
+        filepath = lesson.thumbnail_url.lstrip('/')
+        if os.path.exists(filepath):
+            try:
+                os.remove(filepath)
+            except Exception:
+                pass
+
+
 def _delete_file(filename):
     """Safely delete a file from uploads."""
     try:
@@ -207,6 +253,7 @@ def _serialize_lesson(lesson):
         'description': lesson.description or '',
         'video_platform': lesson.video_type or 'youtube',
         'video_url': lesson.video_url or '',
+        'thumbnail_url': lesson.thumbnail_url or '',
         'order': lesson.order,
         'has_cta': lesson.has_button or False,
         'cta_text': lesson.button_text or '',

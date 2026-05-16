@@ -29,6 +29,10 @@ google-api-python-client
 # Cloudflare R2 (S3-compatible) — direct browser-to-R2 uploads via presigned PUT
 boto3
 
+# Video thumbnail extraction — grabs 1 frame from R2 video for lesson preview
+# Headless: no GUI/display dependencies (safe for server/Docker environments)
+opencv-python-headless
+
 # CSS minification
 rcssmin
 

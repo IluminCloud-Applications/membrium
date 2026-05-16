@@ -286,6 +286,7 @@ def get_course_detail(student, course_id):
                 'description': lesson.description,
                 'videoUrl': lesson.video_url,
                 'videoType': lesson.video_type,
+                'thumbnailUrl': lesson.thumbnail_url,
                 'order': lesson.order,
                 'hasButton': lesson.has_button,
                 'buttonText': lesson.button_text,

@@ -38,6 +38,8 @@ export function LessonPlayerPage() {
         platformName,
         initialVideoTime,
         courseModules,
+        hasNextLesson,
+        hasPreviousLesson,
         selectLesson,
         goToPrevious,
         goToNext,
@@ -123,7 +125,7 @@ export function LessonPlayerPage() {
                                     src={currentLesson.videoUrl}
                                     videoType={currentLesson.videoType}
                                     lessonId={currentLesson.id}
-                                    hasNextLesson={lessons.findIndex((l) => l.id === currentLesson.id) < lessons.length - 1}
+                                    hasNextLesson={hasNextLesson}
                                     initialTime={initialVideoTime}
                                     onNextLesson={goToNext}
                                     onTimeUpdate={handleVideoTime}
@@ -203,8 +205,8 @@ export function LessonPlayerPage() {
                 onOpenModules={() => setDrawerOpen(true)}
                 onPrevious={goToPrevious}
                 onNext={goToNext}
-                hasPrevious={lessons.findIndex((l) => l.id === currentLesson.id) > 0}
-                hasNext={lessons.findIndex((l) => l.id === currentLesson.id) < lessons.length - 1}
+                hasPrevious={hasPreviousLesson}
+                hasNext={hasNextLesson}
                 hasDocuments={(currentLesson.documents?.length || 0) > 0}
                 onOpenDocuments={() => {
                     setInitialDoc(undefined);

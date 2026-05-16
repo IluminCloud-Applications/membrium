@@ -135,8 +135,11 @@ function getYoutubeThumbnail(url: string): string | null {
 }
 
 function getLessonThumbnail(lesson: AnyLesson): string | null {
-    if (!lesson.videoUrl) return null;
-    if (lesson.videoType === "youtube") return getYoutubeThumbnail(lesson.videoUrl);
+    // 1. Always prefer the pre-generated URL stored in the database (covers both YouTube & R2)
+    if (lesson.thumbnailUrl) return lesson.thumbnailUrl;
+    // 2. Fallback: derive YouTube thumbnail client-side (legacy lessons without stored thumbnail)
+    if (lesson.videoType === "youtube" && lesson.videoUrl)
+        return getYoutubeThumbnail(lesson.videoUrl);
     return null;
 }
 

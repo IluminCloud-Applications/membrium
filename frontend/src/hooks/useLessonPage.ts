@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { memberService } from "@/services/member";
 import { usePreview } from "@/contexts/PreviewContext";
 import { getContinueWatching, saveContinueWatching } from "@/utils/continueWatching";
@@ -11,6 +11,8 @@ import type {
 } from "@/types/member";
 
 interface UseLessonPageReturn {
+    hasNextLesson: boolean;
+    hasPreviousLesson: boolean;
     loading: boolean;
     error: string | null;
     courseName: string;
@@ -41,6 +43,7 @@ export function useLessonPage(): UseLessonPageReturn {
         moduleId: string;
     }>();
     const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
 
     const { isPreview } = usePreview();
 
@@ -130,8 +133,27 @@ export function useLessonPage(): UseLessonPageReturn {
     const goToNext = useCallback(() => {
         if (!data || !currentLesson) return;
         const idx = data.lessons.findIndex((l) => l.id === currentLesson.id);
-        if (idx < data.lessons.length - 1) selectLesson(data.lessons[idx + 1].id);
-    }, [data, currentLesson, selectLesson]);
+
+        // Still has lessons in the current module
+        if (idx < data.lessons.length - 1) {
+            selectLesson(data.lessons[idx + 1].id);
+            return;
+        }
+
+        // Last lesson in module — try next module
+        const sortedModules = [...courseModules].sort((a, b) => a.order - b.order);
+        const currentModuleIdx = sortedModules.findIndex((m) => m.id === moduleId);
+        if (currentModuleIdx < 0) return;
+
+        for (let i = currentModuleIdx + 1; i < sortedModules.length; i++) {
+            const nextModule = sortedModules[i];
+            if (nextModule.lessons.length > 0) {
+                const firstLesson = [...nextModule.lessons].sort((a, b) => a.order - b.order)[0];
+                navigate(`/member/${courseId}/${nextModule.id}?lesson=${firstLesson.id}`);
+                return;
+            }
+        }
+    }, [data, currentLesson, selectLesson, courseModules, moduleId, courseId, navigate]);
 
     /** Mark/unmark the current lesson as complete (updates local + API). */
     const markLessonComplete = useCallback(async (lessonId: number, markComplete: boolean) => {
@@ -209,6 +231,26 @@ export function useLessonPage(): UseLessonPageReturn {
         };
     }, [courseId, moduleId, currentLessonId]);
 
+    // Compute hasNextLesson considering cross-module navigation
+    const hasNextLesson = useMemo(() => {
+        if (!data || !currentLesson) return false;
+        const idx = data.lessons.findIndex((l) => l.id === currentLesson.id);
+        // Still has lessons in this module
+        if (idx < data.lessons.length - 1) return true;
+        // Check if there's a next module with lessons
+        const sortedModules = [...courseModules].sort((a, b) => a.order - b.order);
+        const currentModuleIdx = sortedModules.findIndex((m) => m.id === moduleId);
+        if (currentModuleIdx < 0) return false;
+        return sortedModules.slice(currentModuleIdx + 1).some((m) => m.lessons.length > 0);
+    }, [data, currentLesson, courseModules, moduleId]);
+
+    // Compute hasPreviousLesson (within current module only for now)
+    const hasPreviousLesson = useMemo(() => {
+        if (!data || !currentLesson) return false;
+        const idx = data.lessons.findIndex((l) => l.id === currentLesson.id);
+        return idx > 0;
+    }, [data, currentLesson]);
+
     return {
         loading,
         error,
@@ -227,6 +269,8 @@ export function useLessonPage(): UseLessonPageReturn {
         platformName,
         initialVideoTime,
         courseModules,
+        hasNextLesson,
+        hasPreviousLesson,
         selectLesson,
         goToPrevious,
         goToNext,
