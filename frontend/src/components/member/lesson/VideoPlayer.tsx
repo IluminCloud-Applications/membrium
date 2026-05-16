@@ -17,6 +17,7 @@ import {
 
 import "@vidstack/react/player/styles/base.css";
 import { VTurbPlayer } from "./VTurbPlayer";
+import { NextLessonBanner } from "./NextLessonBanner";
 
 interface VideoPlayerProps {
     title: string;
@@ -79,6 +80,12 @@ export function VideoPlayer({
                     hasNextLesson={hasNextLesson}
                     onNextLesson={onNextLesson}
                 />
+                {hasNextLesson && onNextLesson && (
+                    <NextLessonBanner
+                        hasNextLesson={hasNextLesson}
+                        onNextLesson={onNextLesson}
+                    />
+                )}
             </MediaPlayer>
         </div>
     );

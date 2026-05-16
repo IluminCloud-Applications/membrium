@@ -2656,6 +2656,109 @@
   font-size: 1rem;
 }
 
+/* ---- FLOATING NEXT LESSON BANNER ---- */
+.next-lesson-banner {
+  position: absolute;
+  bottom: 80px;
+  right: 1.25rem;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: oklch(0.1 0 0 / 85%);
+  border: 1px solid oklch(1 0 0 / 15%);
+  border-radius: 0.75rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px oklch(0 0 0 / 50%), 0 0 0 1px oklch(1 0 0 / 5%);
+  cursor: pointer;
+  overflow: hidden;
+  animation: nextLessonSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.next-lesson-banner:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 12px 40px oklch(0 0 0 / 60%), 0 0 0 1px oklch(0.6 0.18 25 / 30%);
+  border-color: oklch(0.6 0.18 25 / 50%);
+}
+
+.next-lesson-banner-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.65rem 0.9rem 0.65rem 1rem;
+}
+
+.next-lesson-banner-icon {
+  font-size: 1.1rem;
+  color: oklch(0.7 0.18 25);
+  flex-shrink: 0;
+}
+
+.next-lesson-banner-text {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: oklch(0.95 0 0);
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.next-lesson-banner-dismiss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 100%;
+  min-height: 44px;
+  border: none;
+  background: oklch(1 0 0 / 4%);
+  border-left: 1px solid oklch(1 0 0 / 8%);
+  cursor: pointer;
+  padding: 0.35rem 0.5rem;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.next-lesson-banner-dismiss:hover {
+  background: oklch(1 0 0 / 10%);
+}
+
+/* SVG ring countdown */
+.next-lesson-countdown-svg {
+  display: block;
+  overflow: visible;
+}
+
+.next-lesson-countdown-track {
+  stroke: oklch(1 0 0 / 12%);
+}
+
+.next-lesson-countdown-fill {
+  stroke: oklch(0.7 0.18 25);
+  transition: stroke-dashoffset 0.9s linear;
+}
+
+.next-lesson-countdown-label {
+  fill: oklch(0.8 0 0);
+  font-size: 10px;
+  font-weight: 700;
+  font-family: inherit;
+}
+
+@keyframes nextLessonSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(30px) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+
+
 /* Controls container */
 .lesson-controls {
   position: absolute;
