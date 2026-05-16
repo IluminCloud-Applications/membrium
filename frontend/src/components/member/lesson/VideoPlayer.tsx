@@ -40,11 +40,53 @@ export function VideoPlayer({
     onNextLesson,
     onTimeUpdate,
 }: VideoPlayerProps) {
+    // If it's vturb, use the dedicated VTurb player (no vidstack)
+    if (videoType === "vturb") {
+        return <VTurbEmbedLoader videoId={src} />;
+    }
+
+    // Key forces a clean remount when source changes - prevents stale provider errors
+    const playerKey = `${videoType}-${src}-${lessonId ?? 0}`;
+
+    return (
+        <VidstackPlayer
+            key={playerKey}
+            title={title}
+            src={src}
+            videoType={videoType}
+            hasNextLesson={hasNextLesson}
+            initialTime={initialTime}
+            onNextLesson={onNextLesson}
+            onTimeUpdate={onTimeUpdate}
+        />
+    );
+}
+
+/* ---- Inner vidstack player (keyed mount) ---- */
+
+interface VidstackPlayerProps {
+    title: string;
+    src: string;
+    videoType: string;
+    hasNextLesson?: boolean;
+    initialTime?: number;
+    onNextLesson?: () => void;
+    onTimeUpdate?: (currentTime: number, duration: number) => void;
+}
+
+function VidstackPlayer({
+    title,
+    src,
+    videoType,
+    hasNextLesson,
+    initialTime,
+    onNextLesson,
+    onTimeUpdate,
+}: VidstackPlayerProps) {
     const playerRef = useRef<MediaPlayerInstance>(null);
     const seekedRef = useRef(false);
 
-    // For YouTube, convert to proper src format.
-    const videoSrc = getVideoSource(src, videoType, lessonId);
+    const videoSrc = buildVideoSource(src, videoType);
 
     useEffect(() => {
         if (!playerRef.current || !onTimeUpdate) return;
@@ -59,18 +101,13 @@ export function VideoPlayer({
         });
     }, [onTimeUpdate, initialTime]);
 
-    // If it's vturb, use the dedicated VTurb player
-    if (videoType === "vturb") {
-        return <VTurbEmbedLoader videoId={src} />;
-    }
-
     return (
         <div className="lesson-video-container">
             <MediaPlayer
                 ref={playerRef}
                 title={title}
                 src={videoSrc}
-                playsinline
+                playsInline
                 className="lesson-media-player"
             >
                 <MediaProvider className="lesson-media-provider" />
@@ -90,6 +127,36 @@ export function VideoPlayer({
         </div>
     );
 }
+
+/* ---- Source builder ---- */
+
+function buildVideoSource(src: string, videoType: string): any {
+    // YouTube: vidstack expects "youtube/{videoId}" string
+    if (videoType === "youtube") {
+        const match = src.match(
+            /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/
+        );
+        if (match) return `youtube/${match[1]}`;
+        if (src.startsWith("youtube/")) return src;
+        return `youtube/${src}`;
+    }
+
+    // Direct video URL (R2 Cloudflare, S3, etc): use explicit type object
+    // This prevents vidstack from guessing the type and failing with HLS checks
+    return { src, type: resolveVideoMime(src) };
+}
+
+function resolveVideoMime(url: string): string {
+    const lower = url.toLowerCase();
+    if (lower.includes(".m3u8")) return "application/x-mpegurl";
+    if (lower.includes(".mpd")) return "application/dash+xml";
+    if (lower.includes(".webm")) return "video/webm";
+    if (lower.includes(".ogg") || lower.includes(".ogv")) return "video/ogg";
+    // Default to mp4 — R2/CDN links usually serve mp4
+    return "video/mp4";
+}
+
+/* ---- Sub-components ---- */
 
 function VideoLoadingIndicator() {
     const isWaiting = useMediaState("waiting");
@@ -114,13 +181,15 @@ function VideoLoadingIndicator() {
 /** Invisible overlay — click anywhere on the video to toggle play/pause */
 function ClickToPlay() {
     const player = useMediaPlayer();
+    const canPlay = useMediaState("canPlay");
 
     function handleClick() {
-        if (!player) return;
+        if (!player || !canPlay) return;
+
         if (player.paused) {
-            player.play();
+            player.play().catch(() => {});
         } else {
-            player.pause();
+            player.pause().catch(() => {});
         }
     }
 
@@ -129,12 +198,7 @@ function ClickToPlay() {
     );
 }
 
-interface VideoControlsProps {
-    hasNextLesson?: boolean;
-    onNextLesson?: () => void;
-}
-
-function VideoControls({ hasNextLesson, onNextLesson }: VideoControlsProps) {
+function VideoControls({ hasNextLesson, onNextLesson }: { hasNextLesson?: boolean; onNextLesson?: () => void }) {
     const paused = useMediaState("paused");
 
     return (
@@ -219,18 +283,6 @@ function FullscreenIcon() {
     return fullscreen
         ? <i className="ri-fullscreen-exit-fill" />
         : <i className="ri-fullscreen-fill" />;
-}
-
-function getVideoSource(src: string, videoType: string, _lessonId?: number): any {
-    if (videoType === "youtube") {
-        const match = src.match(
-            /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/
-        );
-        if (match) return `youtube/${match[1]}`;
-        if (src.startsWith("youtube/")) return src;
-        return `youtube/${src}`;
-    }
-    return src;
 }
 
 /* ---- VTurb embed loader ---- */

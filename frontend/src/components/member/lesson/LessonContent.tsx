@@ -3,9 +3,10 @@ import type { MemberLessonDetail, MemberLessonDocument, MemberLessonFAQ } from "
 
 interface LessonContentProps {
     lesson: MemberLessonDetail;
+    onViewDocument?: (doc: MemberLessonDocument) => void;
 }
 
-export function LessonContent({ lesson }: LessonContentProps) {
+export function LessonContent({ lesson, onViewDocument }: LessonContentProps) {
     const documents = lesson.documents ?? [];
     const faqs = lesson.faqs ?? [];
 
@@ -35,7 +36,7 @@ export function LessonContent({ lesson }: LessonContentProps) {
                     </p>
                     <div className="lesson-documents-list">
                         {documents.map((doc) => (
-                            <DocumentRow key={doc.id} doc={doc} />
+                            <DocumentRow key={doc.id} doc={doc} onViewDocument={onViewDocument} />
                         ))}
                     </div>
                 </div>
@@ -61,7 +62,7 @@ export function LessonContent({ lesson }: LessonContentProps) {
 }
 
 /* ---- Document row ---- */
-function DocumentRow({ doc }: { doc: MemberLessonDocument }) {
+function DocumentRow({ doc, onViewDocument }: { doc: MemberLessonDocument, onViewDocument?: (doc: MemberLessonDocument) => void }) {
     return (
         <div className="lesson-document-item">
             <div className="lesson-document-info">
@@ -69,15 +70,25 @@ function DocumentRow({ doc }: { doc: MemberLessonDocument }) {
                 <span className="lesson-document-name">{doc.filename}</span>
             </div>
             <div className="lesson-document-actions">
-                <a
-                    href={`/static/uploads/${doc.filename}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="lesson-doc-btn lesson-doc-btn-view"
-                    title="Visualizar"
-                >
-                    <i className="ri-eye-line" />
-                </a>
+                {onViewDocument ? (
+                    <button
+                        onClick={() => onViewDocument(doc)}
+                        className="lesson-doc-btn lesson-doc-btn-view"
+                        title="Visualizar"
+                    >
+                        <i className="ri-eye-line" />
+                    </button>
+                ) : (
+                    <a
+                        href={`/static/uploads/${doc.filename}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="lesson-doc-btn lesson-doc-btn-view"
+                        title="Visualizar"
+                    >
+                        <i className="ri-eye-line" />
+                    </a>
+                )}
                 <a
                     href={`/static/uploads/${doc.filename}`}
                     download={doc.filename}

@@ -179,7 +179,7 @@
 
   .platform-name {
     @apply text-5xl font-extrabold tracking-tight;
-    background: linear-gradient(135deg, #E62020 0%, #F06422 100%);
+    background: #E62020;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -660,7 +660,7 @@
   font-weight: 600;
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
-  background: linear-gradient(135deg, #E62020, #F06422);
+  background: #E62020;
   color: white;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -812,7 +812,7 @@
 
 .member-module-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #E62020, #F06422);
+  background: #E62020;
   border-radius: 0 2px 0 0;
   transition: width 0.5s ease;
 }
@@ -851,7 +851,7 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #E62020, #F06422);
+  background: #E62020;
   color: white;
   display: flex;
   align-items: center;
@@ -1162,7 +1162,7 @@
   gap: 0.6rem;
   padding: 0.55rem 1rem 0.55rem 1.1rem;
   border-radius: 999px;
-  background: linear-gradient(135deg, #E62020, #F06422);
+  background: #E62020;
   color: white;
   font-size: 0.82rem;
   font-weight: 600;
@@ -1690,7 +1690,7 @@
   font-weight: 700;
   border: none;
   border-radius: 0.7rem;
-  background: linear-gradient(135deg, #E62020, #F06422);
+  background: #E62020;
   color: white;
   cursor: pointer;
   font-family: inherit;
@@ -2348,7 +2348,7 @@
   font-size: 0.9rem;
   font-weight: 600;
   color: white;
-  background: linear-gradient(135deg, #E62020, #F06422);
+  background: #E62020;
   border: none;
   border-radius: 0.6rem;
   cursor: pointer;
@@ -2991,7 +2991,7 @@
   position: absolute;
   height: 100%;
   border-radius: 2px;
-  background: linear-gradient(90deg, #E62020, #F06422);
+  background: #E62020;
   width: var(--slider-fill);
   will-change: width;
 }
@@ -3096,7 +3096,7 @@
   font-size: 1.1rem;
   font-weight: 700;
   color: white;
-  background: linear-gradient(135deg, #E62020, #C72020);
+  background: #E62020;
   border: none;
   border-radius: 0.75rem;
   text-decoration: none;
@@ -3177,7 +3177,7 @@
   font-size: 0.85rem;
   font-weight: 600;
   color: white;
-  background: linear-gradient(135deg, #E62020, #F06422);
+  background: #E62020;
   border: none;
   border-radius: 0.5rem;
   cursor: pointer;
@@ -3534,7 +3534,7 @@
 
 .lesson-sidebar-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #E62020, #F06422);
+  background: #E62020;
   border-radius: 2px;
   transition: width 0.4s ease;
 }
@@ -3928,7 +3928,7 @@
   font-size: 0.88rem;
   font-weight: 500;
   color: white;
-  background: linear-gradient(135deg, #E62020, #F06422);
+  background: #E62020;
   border-radius: 0.5rem;
   text-decoration: none;
   transition: all 0.2s;
@@ -5070,4 +5070,225 @@
 
 .lesson-drawer-lesson-completed .lesson-drawer-lesson-icon {
   color: oklch(0.65 0.15 150);
+}
+
+/* ============================================
+   ATTACHMENTS / PDF VIEWER MODAL
+   ============================================ */
+
+.pdf-viewer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: oklch(0 0 0 / 70%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.pdf-viewer-modal {
+  width: 100%;
+  max-width: 1000px;
+  height: 90vh;
+  background: oklch(0.12 0 0);
+  border: 1px solid oklch(1 0 0 / 10%);
+  border-radius: 1rem;
+  box-shadow: 0 20px 60px oklch(0 0 0 / 60%);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: pdfViewerScaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes pdfViewerScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.pdf-viewer-header {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  background: linear-gradient(135deg, oklch(0.18 0 0), oklch(0.14 0 0));
+  border-bottom: 1px solid oklch(1 0 0 / 8%);
+}
+
+.pdf-viewer-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: oklch(0.95 0 0);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 70%;
+}
+
+.pdf-viewer-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: oklch(0.6 0 0);
+  font-size: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.pdf-viewer-close:hover {
+  background: oklch(1 0 0 / 10%);
+  color: oklch(0.95 0 0);
+}
+
+.pdf-viewer-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.pdf-viewer-footer {
+  height: 60px;
+  background: oklch(0.1 0 0);
+  border-top: 1px solid oklch(1 0 0 / 8%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 0 1rem;
+}
+
+.pdf-viewer-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: oklch(0.16 0 0);
+  border: 1px solid oklch(1 0 0 / 8%);
+  color: oklch(0.85 0 0);
+  padding: 0.5rem 1rem;
+  border-radius: 99px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pdf-viewer-nav-btn:hover:not(:disabled) {
+  background: oklch(0.2 0.05 25);
+  color: #E62020;
+  border-color: #E62020;
+}
+
+.pdf-viewer-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pdf-viewer-counter {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: oklch(0.6 0 0);
+}
+
+.pdf-viewer-content {
+  flex: 1;
+  background: oklch(0.08 0 0);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-viewer-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #f5f5f5;
+}
+
+.pdf-viewer-fallback {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: oklch(0.6 0 0);
+  padding: 2rem;
+  text-align: center;
+}
+
+.pdf-viewer-fallback > i {
+  font-size: 3rem;
+  color: oklch(0.4 0 0);
+  margin-bottom: 0.5rem;
+}
+
+.pdf-viewer-fallback-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: oklch(0.9 0 0);
+  margin: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 100%;
+}
+
+.pdf-viewer-download-btn {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: #E62020;
+  color: white;
+  border-radius: 99px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pdf-viewer-download-btn:hover {
+  background: #c81a1a;
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.pdf-viewer-download-btn i {
+  font-size: 1.25rem;
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .pdf-viewer-modal {
+    height: 100vh;
+    height: 100dvh;
+    border-radius: 0;
+    border: none;
+  }
+  .pdf-viewer-backdrop {
+    padding: 0;
+  }
+  .pdf-viewer-body {
+    flex-direction: column;
+  }
+  .pdf-viewer-nav-btn span {
+    display: none; /* Hide text on mobile to save space */
+  }
+  .pdf-viewer-title {
+    max-width: 60%;
+  }
 }

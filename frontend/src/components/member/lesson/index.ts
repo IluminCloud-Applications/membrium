@@ -8,3 +8,4 @@ export { LessonCTA } from "./LessonCTA";
 export { LessonMiniSidebar } from "./LessonMiniSidebar";
 export { LessonModulesDrawer } from "./LessonModulesDrawer";
 export { LessonMobileNav } from "./LessonMobileNav";
+export { LessonAttachmentsModal } from "./LessonAttachmentsModal";

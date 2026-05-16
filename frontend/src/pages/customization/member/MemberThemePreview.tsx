@@ -349,13 +349,13 @@ function getBaseCss(): string {
 .member-module-image-wrap { position:relative; width:100%; overflow:hidden; background:#2a2a2a; }
 .member-module-image { width:100%; background:#2a2a2a; }
 .member-module-play-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); opacity:0; transition:opacity 0.3s; }
-.member-module-play-overlay i { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#E62020,#F06422); color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; transform:scale(0.85); transition:transform 0.3s; }
+.member-module-play-overlay i { width:36px; height:36px; border-radius:50%; background:#E62020; color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; transform:scale(0.85); transition:transform 0.3s; }
 .member-module-card:hover .member-module-play-overlay { opacity:1; }
 .member-module-card:hover .member-module-play-overlay i { transform:scale(1); }
 .member-module-name { color:#f2f2f2; font-weight:600; }
 .member-module-meta { color:#888; font-size:12px; }
 .member-module-progress-bar { background:#2a2a2a; height:4px; border-radius:2px; }
-.member-module-progress-fill { height:100%; background:linear-gradient(90deg,#E62020,#F06422); border-radius:2px; }
+.member-module-progress-fill { height:100%; background:#E62020; border-radius:2px; }
 .member-module-completed-badge { position:absolute; top:6px; right:6px; width:22px; height:22px; border-radius:50%; background:#3a7a3a; color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; }
 .member-footer { text-align:center; padding:20px; color:#666; font-size:13px; border-top:1px solid #222; }
 /* Lesson */

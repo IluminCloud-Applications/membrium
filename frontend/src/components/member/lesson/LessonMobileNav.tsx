@@ -4,6 +4,8 @@ interface LessonMobileNavProps {
     onNext: () => void;
     hasPrevious: boolean;
     hasNext: boolean;
+    hasDocuments?: boolean;
+    onOpenDocuments?: () => void;
 }
 
 export function LessonMobileNav({
@@ -12,6 +14,8 @@ export function LessonMobileNav({
     onNext,
     hasPrevious,
     hasNext,
+    hasDocuments,
+    onOpenDocuments,
 }: LessonMobileNavProps) {
     return (
         <nav className="lesson-mobile-nav">
@@ -53,11 +57,22 @@ export function LessonMobileNav({
                 <span>Próxima</span>
             </button>
 
-            {/* Profile */}
-            <a href="/member/perfil" className="lesson-mobile-nav-item" title="Perfil">
-                <i className="ri-user-line" />
-                <span>Perfil</span>
-            </a>
+            {/* Material / Anexos */}
+            {hasDocuments ? (
+                <button 
+                    className="lesson-mobile-nav-item" 
+                    onClick={onOpenDocuments} 
+                    title="Material"
+                >
+                    <i className="ri-attachment-2" />
+                    <span>Material</span>
+                </button>
+            ) : (
+                <a href="/member/perfil" className="lesson-mobile-nav-item" title="Perfil">
+                    <i className="ri-user-line" />
+                    <span>Perfil</span>
+                </a>
+            )}
         </nav>
     );
 }

@@ -181,7 +181,7 @@ function BgLayer({ src, overlay }: { src: string | null; overlay: number }) {
 function LogoOrName({ logoUrl, name, size, logoH }: { logoUrl: string | null; name: string; size: string; logoH: string }) {
     if (logoUrl) return <img src={logoUrl} alt="Logo" className="mx-auto mb-1.5 object-contain" style={{ height: logoH }} />;
     return (
-        <div className="font-extrabold mb-0.5" style={{ fontSize: size, background: "linear-gradient(135deg, #E62020, #F06422)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+        <div className="font-extrabold mb-0.5" style={{ fontSize: size, color: "#E62020" }}>
             {name}
         </div>
     );
@@ -199,7 +199,7 @@ function BrandBadge({ logoUrl, name, centered }: { logoUrl: string | null; name:
 
 function GradientTitle() {
     return (
-        <div className="text-[8px] font-bold" style={{ background: "linear-gradient(135deg, #E62020, #F06422)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+        <div className="text-[8px] font-bold" style={{ color: "#E62020" }}>
             Bem-vindo
         </div>
     );

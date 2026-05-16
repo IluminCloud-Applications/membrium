@@ -14,9 +14,10 @@ import {
     LessonMiniSidebar,
     LessonModulesDrawer,
     LessonMobileNav,
+    LessonAttachmentsModal,
 } from "@/components/member/lesson";
 import { MemberHeader } from "@/components/member";
-import type { MemberShowcaseItem } from "@/types/member";
+import type { MemberShowcaseItem, MemberLessonDocument } from "@/types/member";
 
 export function LessonPlayerPage() {
     const {
@@ -47,6 +48,8 @@ export function LessonPlayerPage() {
     const { isPreview } = usePreview();
     const [showcases, setShowcases] = useState<MemberShowcaseItem[]>([]);
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+    const [initialDoc, setInitialDoc] = useState<MemberLessonDocument | undefined>(undefined);
 
     useEffect(() => {
         memberService.getShowcases(isPreview).then(setShowcases).catch(() => { });
@@ -152,7 +155,13 @@ export function LessonPlayerPage() {
                             </div>
 
                             {/* Description, FAQ, Documents */}
-                            <LessonContent lesson={currentLesson} />
+                            <LessonContent 
+                                lesson={currentLesson} 
+                                onViewDocument={(doc) => {
+                                    setInitialDoc(doc);
+                                    setAttachmentsModalOpen(true);
+                                }} 
+                            />
                         </div>
 
                         {/* Sidebar */}
@@ -196,9 +205,24 @@ export function LessonPlayerPage() {
                 onNext={goToNext}
                 hasPrevious={lessons.findIndex((l) => l.id === currentLesson.id) > 0}
                 hasNext={lessons.findIndex((l) => l.id === currentLesson.id) < lessons.length - 1}
+                hasDocuments={(currentLesson.documents?.length || 0) > 0}
+                onOpenDocuments={() => {
+                    setInitialDoc(undefined);
+                    setAttachmentsModalOpen(true);
+                }}
             />
 
-            <ChatWidget />
+            {attachmentsModalOpen && currentLesson?.documents && (
+                <LessonAttachmentsModal 
+                    documents={currentLesson.documents} 
+                    initialDoc={initialDoc}
+                    onClose={() => setAttachmentsModalOpen(false)} 
+                />
+            )}
+
+            <div style={{ display: attachmentsModalOpen ? 'none' : 'block' }}>
+                <ChatWidget />
+            </div>
         </div>
     );
 }
