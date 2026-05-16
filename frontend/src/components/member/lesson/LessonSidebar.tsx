@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import type { MemberLessonDetail, MemberShowcaseItem, MemberModuleDetail } from "@/types/member";
+import type { MemberLessonDetail, MemberLesson, MemberShowcaseItem, MemberModuleDetail } from "@/types/member";
 import { memberService } from "@/services/member";
 import { LazyImage } from "@/components/ui/LazyImage";
 
@@ -30,32 +30,27 @@ export function LessonSidebar({
 }: LessonSidebarProps) {
     const navigate = useNavigate();
 
-    // Sort all modules by order
     const sortedModules = useMemo(() =>
         [...courseModules].sort((a, b) => a.order - b.order),
         [courseModules]
     );
 
-    // Next module (for the "go to next module" button)
     const nextModule = useMemo(() => {
         const currentIdx = sortedModules.findIndex((m) => m.id === currentModuleId);
         if (currentIdx < 0 || currentIdx >= sortedModules.length - 1) return null;
         return sortedModules[currentIdx + 1];
     }, [sortedModules, currentModuleId]);
 
-    // Only show "next module" button on the last lesson
     const isLastLesson = useMemo(() => {
         if (lessons.length === 0) return false;
         const sorted = [...lessons].sort((a, b) => a.order - b.order);
         return currentLessonId === sorted[sorted.length - 1].id;
     }, [lessons, currentLessonId]);
 
-    // Global progress
     const progress = totalLessons > 0
         ? Math.round((completedLessons / totalLessons) * 100)
         : 0;
 
-    // Pick up to 2 random showcases
     const selectedShowcases = useMemo(() => {
         if (showcases.length <= 2) return showcases;
         const shuffled = [...showcases].sort(() => Math.random() - 0.5);
@@ -70,19 +65,7 @@ export function LessonSidebar({
 
     return (
         <aside className="lesson-sidebar">
-            {/* Progress header */}
-            <div className="lesson-sidebar-header">
-                <div className="lesson-sidebar-meta">
-                    <span>{completedLessons}/{totalLessons} aulas</span>
-                    <span className="lesson-sidebar-progress-text">{progress}%</span>
-                </div>
-                <div className="lesson-sidebar-progress-bar">
-                    <div
-                        className="lesson-sidebar-progress-fill"
-                        style={{ width: `${progress}%` }}
-                    />
-                </div>
-            </div>
+
 
             {/* All modules as accordion */}
             <div className="lesson-sidebar-list">
@@ -104,7 +87,6 @@ export function LessonSidebar({
                         );
                     })
                 ) : (
-                    /* Fallback: no modules loaded, show lessons directly */
                     lessons.map((lesson) => (
                         <LessonItem
                             key={lesson.id}
@@ -115,7 +97,6 @@ export function LessonSidebar({
                     ))
                 )}
 
-                {/* Next module button */}
                 {nextModule && isLastLesson && (
                     <button
                         className="lesson-sidebar-next-module"
@@ -141,28 +122,75 @@ export function LessonSidebar({
 
 /* ============================================ */
 
+type AnyLesson = MemberLessonDetail | MemberLesson;
+
+function getYoutubeThumbnail(url: string): string | null {
+    const match = url.match(
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/
+    );
+    if (match) return `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg`;
+    if (/^[a-zA-Z0-9_-]{11}$/.test(url.trim()))
+        return `https://img.youtube.com/vi/${url.trim()}/mqdefault.jpg`;
+    return null;
+}
+
+function getLessonThumbnail(lesson: AnyLesson): string | null {
+    if (!lesson.videoUrl) return null;
+    if (lesson.videoType === "youtube") return getYoutubeThumbnail(lesson.videoUrl);
+    return null;
+}
+
+/* ============================================ */
+
 interface LessonItemProps {
-    lesson: MemberLessonDetail | { id: number; title: string; order: number; completed: boolean };
+    lesson: AnyLesson;
     isCurrent: boolean;
     onClick: () => void;
 }
 
 function LessonItem({ lesson, isCurrent, onClick }: LessonItemProps) {
+    const thumbnail = getLessonThumbnail(lesson);
+    const [imgError, setImgError] = useState(false);
+
     return (
         <button
             className={`lesson-sidebar-item ${isCurrent ? "lesson-sidebar-item-active" : ""} ${lesson.completed ? "lesson-sidebar-item-completed" : ""}`}
             onClick={onClick}
         >
-            <div className="lesson-sidebar-item-icon">
-                {lesson.completed ? (
-                    <i className="ri-check-line" />
-                ) : isCurrent ? (
-                    <i className="ri-play-fill" />
+            {/* Thumbnail */}
+            <div className="lesson-sidebar-thumb">
+                {thumbnail && !imgError ? (
+                    <img
+                        src={thumbnail}
+                        alt={lesson.title}
+                        className="lesson-sidebar-thumb-img"
+                        loading="lazy"
+                        onError={() => setImgError(true)}
+                    />
                 ) : (
-                    <span>{lesson.order}</span>
+                    <div className="lesson-sidebar-thumb-placeholder">
+                        <i className="ri-play-fill" />
+                    </div>
+                )}
+                {lesson.completed && (
+                    <div className="lesson-sidebar-thumb-check">
+                        <i className="ri-check-line" />
+                    </div>
+                )}
+                {isCurrent && !lesson.completed && (
+                    <div className="lesson-sidebar-thumb-playing">
+                        <i className="ri-play-fill" />
+                    </div>
                 )}
             </div>
-            <p className="lesson-sidebar-item-title">{lesson.title}</p>
+
+            {/* Info */}
+            <div className="lesson-sidebar-item-info">
+                <p className="lesson-sidebar-item-title">{lesson.title}</p>
+                {isCurrent && (
+                    <span className="lesson-sidebar-item-badge">Assistindo</span>
+                )}
+            </div>
         </button>
     );
 }
@@ -191,13 +219,13 @@ function ModuleAccordionItem({
     const [expanded, setExpanded] = useState(defaultExpanded);
     const navigate = useNavigate();
 
-    // Use currentModuleLessons (with real-time completion state) for the active module
     const lessonsToShow = isCurrent && currentModuleLessons
         ? currentModuleLessons
         : module.lessons;
 
     const completedCount = lessonsToShow.filter((l) => l.completed).length;
     const totalCount = lessonsToShow.length;
+    const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
     function handleLessonClick(lessonId: number) {
         if (isCurrent) {
@@ -213,13 +241,18 @@ function ModuleAccordionItem({
                 className="lesson-sidebar-module-header"
                 onClick={() => setExpanded(!expanded)}
             >
-                <div className="lesson-sidebar-module-info">
+                {/* Left: name + count */}
+                <div className="lesson-sidebar-module-header-info">
                     <span className="lesson-sidebar-module-name">{module.name}</span>
-                    <span className="lesson-sidebar-module-count">
-                        {completedCount}/{totalCount}
-                    </span>
+                    <span className="lesson-sidebar-module-count">{totalCount} conteúdo(s)</span>
                 </div>
-                <i className={`ri-arrow-${expanded ? "up" : "down"}-s-line`} />
+
+                {/* Right: donut ring + % + chevron */}
+                <div className="lesson-sidebar-module-right">
+                    <ModuleProgressRing pct={progressPct} />
+                    <span className="lesson-sidebar-module-progress-pct">{progressPct}%</span>
+                    <i className={`ri-arrow-${expanded ? "up" : "down"}-s-line lesson-sidebar-module-chevron`} />
+                </div>
             </button>
 
             {expanded && (
@@ -235,6 +268,30 @@ function ModuleAccordionItem({
                 </div>
             )}
         </div>
+    );
+}
+
+/* ============================================ */
+
+const RING_R = 8;
+const RING_C = 2 * Math.PI * RING_R;
+
+function ModuleProgressRing({ pct }: { pct: number }) {
+    const offset = RING_C * (1 - pct / 100);
+    return (
+        <svg width="20" height="20" viewBox="0 0 20 20" className="module-ring-svg">
+            <circle className="module-ring-track" cx="10" cy="10" r={RING_R} fill="none" strokeWidth="2" />
+            <circle
+                className="module-ring-fill"
+                cx="10" cy="10" r={RING_R}
+                fill="none"
+                strokeWidth="2"
+                strokeDasharray={RING_C}
+                strokeDashoffset={offset}
+                strokeLinecap="round"
+                transform="rotate(-90 10 10)"
+            />
+        </svg>
     );
 }
 

@@ -20,7 +20,6 @@ export function LessonCTA({ visible, text, link }: LessonCTAProps) {
                 <span>{text}</span>
                 <i className="ri-arrow-right-s-line" />
             </a>
-            <p className="lesson-cta-hint">Clique para acessar conteúdo exclusivo</p>
         </div>
     );
 }
