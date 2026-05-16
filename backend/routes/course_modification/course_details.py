@@ -72,6 +72,7 @@ def get_course_full(course_id):
         'id': course.id,
         'name': course.name,
         'description': course.description or '',
+        'is_published': course.is_published,
         'modules': [_serialize_module(m) for m in course.modules],
         'cover': {
             'desktop': _image_url(course.cover_desktop),

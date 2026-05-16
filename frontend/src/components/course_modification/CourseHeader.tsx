@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { courseModificationService } from "@/services/courseModification";
+import { coursesService } from "@/services/courses";
 import { toast } from "sonner";
 
 interface CourseHeaderProps {
@@ -10,11 +11,14 @@ interface CourseHeaderProps {
     courseId?: number;
     modulesCount: number;
     lessonsCount: number;
+    isPublished: boolean;
+    onPublished: () => void;
 }
 
-export function CourseHeader({ courseName, courseId, modulesCount, lessonsCount }: CourseHeaderProps) {
+export function CourseHeader({ courseName, courseId, modulesCount, lessonsCount, isPublished, onPublished }: CourseHeaderProps) {
     const navigate = useNavigate();
     const [exporting, setExporting] = useState(false);
+    const [publishing, setPublishing] = useState(false);
 
     function handlePreview() {
         if (!courseId) return;
@@ -32,6 +36,21 @@ export function CourseHeader({ courseName, courseId, modulesCount, lessonsCount 
             toast.error("Erro ao exportar curso");
         } finally {
             setExporting(false);
+        }
+    }
+
+    async function handlePublish() {
+        if (!courseId) return;
+        setPublishing(true);
+        try {
+            await coursesService.publish(courseId);
+            toast.success("Curso publicado com sucesso!");
+            onPublished();
+        } catch (err) {
+            console.error("Erro ao publicar curso:", err);
+            toast.error("Erro ao publicar curso");
+        } finally {
+            setPublishing(false);
         }
     }
 
@@ -62,10 +81,31 @@ export function CourseHeader({ courseName, courseId, modulesCount, lessonsCount 
                             <i className="ri-play-circle-line mr-1" />
                             {lessonsCount} {lessonsCount === 1 ? "aula" : "aulas"}
                         </Badge>
+                        {!isPublished && (
+                            <Badge className="text-xs bg-yellow-500/20 text-yellow-600 border border-yellow-500/40">
+                                <i className="ri-draft-line mr-1" />
+                                Rascunho
+                            </Badge>
+                        )}
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2">
+                    {!isPublished && (
+                        <Button
+                            size="sm"
+                            onClick={handlePublish}
+                            disabled={publishing}
+                            className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+                        >
+                            {publishing ? (
+                                <i className="ri-loader-4-line animate-spin" />
+                            ) : (
+                                <i className="ri-send-plane-line" />
+                            )}
+                            Publicar Curso
+                        </Button>
+                    )}
                     <Button
                         variant="outline"
                         size="sm"

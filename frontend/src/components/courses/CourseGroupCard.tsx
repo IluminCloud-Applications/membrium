@@ -218,6 +218,12 @@ function CourseRowItem({
                     >
                         {isPrincipal ? "Principal" : categoryLabels[course.category]}
                     </Badge>
+                    {!course.isPublished && (
+                        <Badge className="text-[10px] bg-yellow-500/20 text-yellow-600 border border-yellow-500/40" variant="secondary">
+                            <i className="ri-draft-line mr-1" />
+                            Rascunho
+                        </Badge>
+                    )}
                 </div>
                 {isPrincipal && course.description && (
                     <p className="text-xs text-muted-foreground truncate">{course.description}</p>

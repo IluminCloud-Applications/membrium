@@ -68,6 +68,7 @@ export function mapCourse(raw: CourseFullResponse): CourseModificationData {
         id: raw.id,
         name: raw.name,
         description: raw.description,
+        isPublished: raw.is_published,
         modules: raw.modules.map(mapModule),
         cover: {
             desktop: raw.cover?.desktop || null,

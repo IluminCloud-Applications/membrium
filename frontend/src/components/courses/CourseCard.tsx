@@ -43,7 +43,8 @@ export function CourseCard({ course, onEdit, onDelete, onWebhook }: CourseCardPr
                 </Badge>
 
                 {!course.isPublished && (
-                    <Badge className="absolute top-2 right-2 text-xs bg-muted text-muted-foreground" variant="secondary">
+                    <Badge className="absolute top-2 right-2 text-xs bg-yellow-500/20 text-yellow-600 border border-yellow-500/40" variant="secondary">
+                        <i className="ri-draft-line mr-1" />
                         Rascunho
                     </Badge>
                 )}

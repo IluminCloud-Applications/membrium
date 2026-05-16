@@ -71,6 +71,17 @@ export const coursesService = {
             headers: {},
         }),
 
+    /** Publish a draft course */
+    publish: (id: number) => {
+        const formData = new FormData();
+        formData.append("is_published", "true");
+        return apiClient.request<MutationResult>(`/courses/${id}`, {
+            method: "PUT",
+            body: formData,
+            headers: {},
+        });
+    },
+
     /** Delete a course */
     delete: (id: number) =>
         apiClient.request<MutationResult>(`/courses/${id}`, {

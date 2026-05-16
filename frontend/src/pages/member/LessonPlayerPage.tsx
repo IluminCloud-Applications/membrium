@@ -30,8 +30,6 @@ export function LessonPlayerPage() {
         menuItems,
         lessons,
         currentLesson,
-        totalLessons,
-        completedLessons,
         completing,
         ctaVisible,
         studentName,
@@ -170,9 +168,6 @@ export function LessonPlayerPage() {
                         <LessonSidebar
                             lessons={lessons}
                             currentLessonId={currentLesson.id}
-                            moduleName={moduleName}
-                            totalLessons={totalLessons}
-                            completedLessons={completedLessons}
                             onSelectLesson={selectLesson}
                             showcases={showcases}
                             courseModules={courseModules}

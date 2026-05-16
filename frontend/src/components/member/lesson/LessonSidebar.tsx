@@ -7,9 +7,6 @@ import { LazyImage } from "@/components/ui/LazyImage";
 interface LessonSidebarProps {
     lessons: MemberLessonDetail[];
     currentLessonId: number;
-    moduleName: string;
-    totalLessons: number;
-    completedLessons: number;
     onSelectLesson: (lessonId: number) => void;
     showcases?: MemberShowcaseItem[];
     courseModules?: MemberModuleDetail[];
@@ -20,8 +17,6 @@ interface LessonSidebarProps {
 export function LessonSidebar({
     lessons,
     currentLessonId,
-    totalLessons,
-    completedLessons,
     onSelectLesson,
     showcases = [],
     courseModules = [],
@@ -47,9 +42,6 @@ export function LessonSidebar({
         return currentLessonId === sorted[sorted.length - 1].id;
     }, [lessons, currentLessonId]);
 
-    const progress = totalLessons > 0
-        ? Math.round((completedLessons / totalLessons) * 100)
-        : 0;
 
     const selectedShowcases = useMemo(() => {
         if (showcases.length <= 2) return showcases;

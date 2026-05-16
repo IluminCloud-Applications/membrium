@@ -2,7 +2,7 @@ interface ActionButtonProps {
     icon: string;
     label: string;
     onClick: () => void;
-    variant?: "default" | "danger";
+    variant?: "default" | "danger" | "success";
 }
 
 /**
@@ -18,6 +18,8 @@ export function ActionButton({
     const variantClasses =
         variant === "danger"
             ? "bg-card shadow-sm hover:bg-destructive/10 text-destructive"
+            : variant === "success"
+            ? "bg-card shadow-sm hover:bg-green-500/10 text-green-600"
             : "bg-card shadow-sm hover:bg-accent";
 
     return (

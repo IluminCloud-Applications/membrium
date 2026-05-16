@@ -301,7 +301,7 @@ export function CourseModificationPage() {
 
     return (
         <div className="space-y-6 animate-fade-in">
-            <CourseHeader courseName={course.name} courseId={courseId} modulesCount={course.modules.length} lessonsCount={totalLessons} />
+            <CourseHeader courseName={course.name} courseId={courseId} modulesCount={course.modules.length} lessonsCount={totalLessons} isPublished={course.isPublished} onPublished={refetch} />
             <CourseTabs
                 modules={course.modules} cover={course.cover} menuItems={course.menuItems}
                 onAddModule={handleAddModule} onEditModule={handleEditModule} onDeleteModule={handleDeleteModule}

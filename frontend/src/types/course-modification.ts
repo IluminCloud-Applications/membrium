@@ -60,6 +60,7 @@ export interface CourseModificationData {
     id: number;
     name: string;
     description: string;
+    isPublished: boolean;
     modules: CourseModule[];
     cover: CourseCover;
     menuItems: CourseMenuItem[];

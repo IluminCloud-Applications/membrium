@@ -49,7 +49,8 @@ export function CourseListItem({ course, onEdit, onDelete, onWebhook }: CourseLi
                         {categoryLabels[course.category]}
                     </Badge>
                     {!course.isPublished && (
-                        <Badge className="text-[10px] bg-muted text-muted-foreground" variant="secondary">
+                        <Badge className="text-[10px] bg-yellow-500/20 text-yellow-600 border border-yellow-500/40" variant="secondary">
+                            <i className="ri-draft-line mr-1" />
                             Rascunho
                         </Badge>
                     )}
