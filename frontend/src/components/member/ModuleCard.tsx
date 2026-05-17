@@ -6,9 +6,11 @@ interface ModuleCardProps {
     index: number;
     onClick: () => void;
     hideModuleInfo?: boolean;
+    hasAccess?: boolean;
+    checkoutUrl?: string | null;
 }
 
-export function ModuleCard({ module, index, onClick, hideModuleInfo }: ModuleCardProps) {
+export function ModuleCard({ module, index, onClick, hideModuleInfo, hasAccess, checkoutUrl }: ModuleCardProps) {
     const progress = module.totalLessons > 0
         ? Math.round((module.completedLessons / module.totalLessons) * 100)
         : 0;
@@ -18,6 +20,10 @@ export function ModuleCard({ module, index, onClick, hideModuleInfo }: ModuleCar
     const daysRemaining = module.unlockDaysRemaining ?? 0;
 
     function handleClick() {
+        if (hasAccess === false && checkoutUrl) {
+            window.open(checkoutUrl, "_blank", "noopener,noreferrer");
+            return;
+        }
         if (isLocked) return; // Don't navigate if locked
         onClick();
     }
@@ -27,7 +33,7 @@ export function ModuleCard({ module, index, onClick, hideModuleInfo }: ModuleCar
             className={`member-module-card ${isLocked ? "member-module-locked" : ""}`}
             onClick={handleClick}
             style={{ animationDelay: `${index * 0.05}s` }}
-            title={isLocked ? (daysRemaining > 0 ? `Libera em ${daysRemaining} dia${daysRemaining !== 1 ? "s" : ""}` : "Adquira para liberar") : module.name}
+            title={hasAccess === false && checkoutUrl ? "Clique para adquirir este curso" : (isLocked ? (daysRemaining > 0 ? `Libera em ${daysRemaining} dia${daysRemaining !== 1 ? "s" : ""}` : "Adquira para liberar") : module.name)}
         >
             <div className="member-module-image-wrap">
                 {module.image ? (
@@ -83,11 +89,20 @@ export function ModuleCard({ module, index, onClick, hideModuleInfo }: ModuleCar
                     <p className="member-module-meta">
                         {isLocked ? (
                             <span className="member-module-lock-text">
-                                <i className="ri-lock-line" />
-                                {daysRemaining > 0
-                                    ? `Libera em ${daysRemaining} dia${daysRemaining !== 1 ? "s" : ""}`
-                                    : "Adquira para liberar"
-                                }
+                                {hasAccess === false && checkoutUrl ? (
+                                    <>
+                                        <i className="ri-shopping-cart-2-line" />
+                                        Adquirir Curso
+                                    </>
+                                ) : (
+                                    <>
+                                        <i className="ri-lock-line" />
+                                        {daysRemaining > 0
+                                            ? `Libera em ${daysRemaining} dia${daysRemaining !== 1 ? "s" : ""}`
+                                            : "Adquira para liberar"
+                                        }
+                                    </>
+                                )}
                             </span>
                         ) : (
                             <>

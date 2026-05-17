@@ -10,6 +10,7 @@ export interface Course {
     name: string;
     description: string;
     image: string | null;
+    checkoutUrl?: string | null;
     category: CourseCategory;
     studentsCount: number;
     lessonsCount: number;

@@ -10,14 +10,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { ShowcaseFormInfo } from "./ShowcaseFormInfo";
 import { ShowcaseFormConfig } from "./ShowcaseFormConfig";
-import type { ShowcaseItem, ShowcaseCourse } from "@/types/showcase";
+import type { ShowcaseItem } from "@/types/showcase";
 
 export interface ShowcaseFormData {
     title: string;
     description: string;
     url: string;
     image: File | null;
-    courseIds: number[];
     priority: number;
 }
 
@@ -25,7 +24,6 @@ interface ShowcaseModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     editItem: ShowcaseItem | null;
-    availableCourses: ShowcaseCourse[];
     onSubmit: (data: ShowcaseFormData) => void;
 }
 
@@ -34,7 +32,6 @@ const emptyForm: ShowcaseFormData = {
     description: "",
     url: "",
     image: null,
-    courseIds: [],
     priority: 5,
 };
 
@@ -42,7 +39,6 @@ export function ShowcaseModal({
     open,
     onOpenChange,
     editItem,
-    availableCourses,
     onSubmit,
 }: ShowcaseModalProps) {
     const [form, setForm] = useState<ShowcaseFormData>(emptyForm);
@@ -57,7 +53,6 @@ export function ShowcaseModal({
                 description: editItem.description,
                 url: editItem.url,
                 image: null,
-                courseIds: editItem.courses.map((c) => c.id),
                 priority: editItem.priority,
             });
             setImagePreview(editItem.imageUrl || null);
@@ -84,15 +79,6 @@ export function ShowcaseModal({
         setForm((prev) => ({ ...prev, image: null }));
         setImagePreview(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-
-    function toggleCourse(courseId: number) {
-        setForm((prev) => ({
-            ...prev,
-            courseIds: prev.courseIds.includes(courseId)
-                ? prev.courseIds.filter((id) => id !== courseId)
-                : [...prev.courseIds, courseId],
-        }));
     }
 
     function handleSubmit(e: React.FormEvent) {
@@ -130,11 +116,8 @@ export function ShowcaseModal({
                         <ShowcaseFormConfig
                             url={form.url}
                             priority={form.priority}
-                            courseIds={form.courseIds}
-                            availableCourses={availableCourses}
                             onUrlChange={(v) => handleChange("url", v)}
                             onPriorityChange={(v) => handleChange("priority", v)}
-                            onToggleCourse={toggleCourse}
                         />
                     </div>
 

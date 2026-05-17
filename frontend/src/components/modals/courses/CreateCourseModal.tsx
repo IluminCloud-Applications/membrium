@@ -35,6 +35,7 @@ export interface CourseFormData {
     description: string;
     category: CourseCategory;
     image: File | null;
+    checkoutUrl: string;
     /** When editing, true means image was removed */
     imageRemoved: boolean;
 }
@@ -56,6 +57,7 @@ export function CourseModal({
 }: CourseModalProps) {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
+    const [checkoutUrl, setCheckoutUrl] = useState("");
     const [category, setCategory] = useState<CourseCategory>("principal");
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
@@ -74,6 +76,7 @@ export function CourseModal({
         if (editCourse) {
             setName(editCourse.name);
             setDescription(editCourse.description || "");
+            setCheckoutUrl(editCourse.checkoutUrl || "");
             setCategory(editCourse.category);
             setPreview(editCourse.image || null);
             setImageFile(null);
@@ -109,12 +112,13 @@ export function CourseModal({
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        onSubmit({ name, description, category, image: imageFile, imageRemoved });
+        onSubmit({ name, description, category, image: imageFile, imageRemoved, checkoutUrl });
     }
 
     function resetForm() {
         setName("");
         setDescription("");
+        setCheckoutUrl("");
         setCategory(principalBlocked ? "bonus" : "principal");
         setImageFile(null);
         setPreview(null);
@@ -211,6 +215,26 @@ export function CourseModal({
                             placeholder="Descreva o conteúdo do curso... (opcional)"
                             rows={3}
                         />
+                    </div>
+
+                    {/* Checkout URL */}
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <Label htmlFor="checkout-url" className="text-sm font-medium">
+                                Link de Compra (Checkout) <span className="text-muted-foreground font-normal">(Opcional)</span>
+                            </Label>
+                        </div>
+                        <Input
+                            id="checkout-url"
+                            value={checkoutUrl}
+                            onChange={(e) => setCheckoutUrl(e.target.value)}
+                            placeholder="Ex: https://pay.kiwify.com.br/1234"
+                            type="url"
+                        />
+                        <p className="text-xs text-muted-foreground flex items-start gap-1.5 mt-1">
+                            <i className="ri-information-line mt-0.5" />
+                            Quando o curso estiver bloqueado, o aluno poderá clicar para comprar neste link.
+                        </p>
                     </div>
 
                     {/* Category */}

@@ -12,7 +12,6 @@ export interface ShowcaseItemResponse {
     url: string;
     status: "active" | "inactive";
     priority: number;
-    courses: { id: number; name: string }[];
     created_at: string | null;
 }
 
@@ -21,7 +20,6 @@ export interface ShowcaseCreatePayload {
     description: string;
     url: string;
     priority: number;
-    course_ids: number[];
 }
 
 export interface ShowcaseUpdatePayload {
@@ -29,7 +27,6 @@ export interface ShowcaseUpdatePayload {
     description?: string;
     url?: string;
     priority?: number;
-    course_ids?: number[];
 }
 
 /* ============================================

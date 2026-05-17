@@ -24,6 +24,7 @@ export interface MemberCourse {
     moduleFormat: string;
     coverDesktop: string | null;
     coverMobile: string | null;
+    checkoutUrl?: string | null;
     menuItems: MemberMenuItem[];
     modules: MemberModule[];
     hasAccess?: boolean;
@@ -69,6 +70,7 @@ export interface MemberCourseDetail {
     moduleFormat: string;
     coverDesktop: string | null;
     coverMobile: string | null;
+    checkoutUrl?: string | null;
     menuItems: MemberMenuItem[];
     modules: MemberModuleDetail[];
 }

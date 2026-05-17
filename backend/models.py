@@ -16,10 +16,6 @@ student_lessons = db.Table('student_lessons',
 
 
 
-showcase_courses = db.Table('showcase_courses',
-    db.Column('showcase_id', db.Integer, db.ForeignKey('showcase.id'), primary_key=True),
-    db.Column('course_id', db.Integer, db.ForeignKey('course.id'), primary_key=True)
-)
 
 class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -46,6 +42,8 @@ class Course(db.Model):
     module_format = db.Column(db.String(20), default='standard')  # 'standard' or 'netflix'
     cover_desktop = db.Column(db.String(255))  # filename for desktop cover
     cover_mobile = db.Column(db.String(255))   # filename for mobile cover
+    checkout_url = db.Column(db.String(500), nullable=True) # URL de compra opcional
+
     menu_items = db.Column(db.JSON, default=list)  # [{name, url, icon, order}]
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     modules = db.relationship('Module', backref='course', lazy=True, cascade="all, delete-orphan", order_by='Module.order')
@@ -212,7 +210,6 @@ class Showcase(db.Model):
     priority = db.Column(db.Integer, default=5)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    courses = db.relationship('Course', secondary=showcase_courses, backref=db.backref('showcase_items', lazy='dynamic'))
 
 class ShowcaseAnalytics(db.Model):
     id = db.Column(db.Integer, primary_key=True)

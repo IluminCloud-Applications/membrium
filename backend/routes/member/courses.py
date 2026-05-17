@@ -28,6 +28,7 @@ def _build_courses_structure():
             'moduleFormat': course.module_format,
             'coverDesktop': course.cover_desktop,
             'coverMobile': course.cover_mobile,
+            'checkoutUrl': course.checkout_url,
             'modules': [{
                 'id': m.id,
                 'name': m.name,
@@ -77,6 +78,7 @@ def _build_course_detail_structure(course_id):
         'moduleFormat': course.module_format,
         'coverDesktop': course.cover_desktop,
         'coverMobile': course.cover_mobile,
+        'checkoutUrl': course.checkout_url,
         'modules': modules,
     }
 
@@ -146,7 +148,7 @@ def get_student_courses(student):
                 'isLocked': False, 'unlockDaysRemaining': 0,
             } for m in c['modules']]
             result.append({
-                **{k: c[k] for k in ('id','uuid','name','description','image','category','moduleFormat','coverDesktop','coverMobile')},
+                **{k: c[k] for k in ('id','uuid','name','description','image','category','moduleFormat','coverDesktop','coverMobile','checkoutUrl')},
                 'menuItems': global_menu,
                 'modules': modules,
                 'hasAccess': True,
@@ -162,7 +164,7 @@ def get_student_courses(student):
                 'isLocked': True, 'unlockDaysRemaining': 0,
             } for m in c['modules']]
             result.append({
-                **{k: c[k] for k in ('id','uuid','name','description','image','category','moduleFormat','coverDesktop','coverMobile')},
+                **{k: c[k] for k in ('id','uuid','name','description','image','category','moduleFormat','coverDesktop','coverMobile','checkoutUrl')},
                 'menuItems': [],
                 'modules': modules,
                 'hasAccess': False,
@@ -187,7 +189,7 @@ def get_student_courses(student):
                 'isLocked': is_locked, 'unlockDaysRemaining': unlock_remaining,
             })
         result.append({
-            **{k: c[k] for k in ('id','uuid','name','description','image','category','moduleFormat','coverDesktop','coverMobile')},
+            **{k: c[k] for k in ('id','uuid','name','description','image','category','moduleFormat','coverDesktop','coverMobile','checkoutUrl')},
             'menuItems': global_menu,
             'modules': modules,
             'hasAccess': True,
@@ -229,7 +231,7 @@ def get_course_detail(student, course_id):
         modules.append({**m, 'lessons': lessons})
 
     return jsonify({
-        **{k: structure[k] for k in ('id','uuid','name','description','image','category','moduleFormat','coverDesktop','coverMobile')},
+        **{k: structure[k] for k in ('id','uuid','name','description','image','category','moduleFormat','coverDesktop','coverMobile','checkoutUrl')},
         'menuItems': global_menu,
         'modules': modules,
     })

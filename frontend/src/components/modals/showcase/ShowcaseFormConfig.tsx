@@ -1,26 +1,18 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import type { ShowcaseCourse } from "@/types/showcase";
 
 interface ShowcaseFormConfigProps {
     url: string;
     priority: number;
-    courseIds: number[];
-    availableCourses: ShowcaseCourse[];
     onUrlChange: (value: string) => void;
     onPriorityChange: (value: number) => void;
-    onToggleCourse: (courseId: number) => void;
 }
 
 export function ShowcaseFormConfig({
     url,
     priority,
-    courseIds,
-    availableCourses,
     onUrlChange,
     onPriorityChange,
-    onToggleCourse,
 }: ShowcaseFormConfigProps) {
     return (
         <div className="space-y-5">
@@ -28,34 +20,6 @@ export function ShowcaseFormConfig({
                 <i className="ri-settings-3-line" />
                 Configurações
             </p>
-
-            {/* Courses Selection */}
-            <div className="space-y-2">
-                <Label>
-                    Cursos Relacionados <span className="text-destructive">*</span>
-                </Label>
-
-                <div className="rounded-lg border p-2 space-y-0.5 max-h-[160px] overflow-y-auto">
-                    {availableCourses.map((course) => (
-                        <label
-                            key={course.id}
-                            className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                        >
-                            <Checkbox
-                                checked={courseIds.includes(course.id)}
-                                onCheckedChange={() => onToggleCourse(course.id)}
-                            />
-                            <span className="text-sm">{course.name}</span>
-                        </label>
-                    ))}
-
-                    {availableCourses.length === 0 && (
-                        <p className="text-sm text-muted-foreground text-center py-2">
-                            Nenhum curso disponível.
-                        </p>
-                    )}
-                </div>
-            </div>
 
             {/* URL */}
             <div className="space-y-2">

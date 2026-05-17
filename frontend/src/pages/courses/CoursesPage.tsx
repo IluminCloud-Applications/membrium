@@ -75,6 +75,7 @@ export function CoursesPage() {
         const formData = new FormData();
         formData.append("name", data.name);
         if (data.description) formData.append("description", data.description);
+        formData.append("checkout_url", data.checkoutUrl);
         formData.append("category", data.category);
         if (data.image) formData.append("image", data.image);
         if (data.imageRemoved) formData.append("image_removed", "true");

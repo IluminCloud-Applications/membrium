@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, session
 from functools import wraps
 from datetime import datetime
 from db.database import db
-from models import Admin, Showcase, Course, showcase_courses
+from models import Admin, Showcase, Course
 import os
 
 crud_bp = Blueprint('showcase_crud', __name__)
@@ -29,7 +29,6 @@ def serialize_showcase(item):
         'url': item.url,
         'status': item.status,
         'priority': item.priority,
-        'courses': [{'id': c.id, 'name': c.name} for c in item.courses],
         'created_at': item.created_at.isoformat() if item.created_at else None,
     }
 
@@ -56,13 +55,9 @@ def create_showcase_item():
         description = data.get('description', '')
         url = data.get('url')
         priority = int(data.get('priority', 5))
-        course_ids = data.get('course_ids', [])
 
         if not name or not url:
             return jsonify({'success': False, 'message': 'Nome e URL são obrigatórios'}), 400
-
-        # Validate courses exist
-        courses = Course.query.filter(Course.id.in_(course_ids)).all()
 
         new_item = Showcase(
             name=name,
@@ -71,7 +66,6 @@ def create_showcase_item():
             status='inactive',
             priority=priority,
         )
-        new_item.courses = courses
 
         db.session.add(new_item)
         db.session.commit()
@@ -98,9 +92,6 @@ def update_showcase_item(item_id):
             item.url = data['url']
         if 'priority' in data:
             item.priority = int(data['priority'])
-        if 'course_ids' in data:
-            courses = Course.query.filter(Course.id.in_(data['course_ids'])).all()
-            item.courses = courses
 
         db.session.commit()
         return jsonify({'success': True, 'item': serialize_showcase(item)})

@@ -92,6 +92,8 @@ export function CourseSection({ course, isPrimary = false, onModuleClick, course
                     externalTrackRef={trackRef}
                     onScrollStateChange={handleScrollState}
                     hideModuleInfo={hideModuleInfo}
+                    hasAccess={course.hasAccess}
+                    checkoutUrl={course.checkoutUrl}
                 />
             </div>
         </LazySection>

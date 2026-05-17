@@ -3,7 +3,7 @@ from functools import wraps
 from datetime import datetime
 from sqlalchemy import func
 from db.database import db
-from models import Admin, Showcase, ShowcaseAnalytics, showcase_courses, Course
+from models import Admin, Showcase, ShowcaseAnalytics, Course
 from pytz import timezone
 
 analytics_bp = Blueprint('showcase_analytics', __name__)
@@ -131,7 +131,6 @@ def get_active_showcase():
                 'image': item.image,
                 'url': item.url,
                 'priority': item.priority,
-                'courses': [{'id': c.id, 'name': c.name} for c in item.courses],
             } for item in active_items]
         })
     except Exception as e:

@@ -37,7 +37,6 @@ export function ShowcaseTable({
                 <TableHeader>
                     <TableRow className="hover:bg-transparent">
                         <TableHead className="font-semibold pl-6 px-4">Vitrine</TableHead>
-                        <TableHead className="font-semibold px-4">Cursos</TableHead>
                         <TableHead className="font-semibold px-4 text-center">Prioridade</TableHead>
                         <TableHead className="font-semibold px-4 text-center">Views</TableHead>
                         <TableHead className="font-semibold px-4 text-center">Cliques</TableHead>
@@ -75,9 +74,6 @@ interface ShowcaseRowProps {
 }
 
 function ShowcaseRow({ item, onEdit, onDelete, onToggleStatus }: ShowcaseRowProps) {
-    const maxVisibleCourses = 2;
-    const visibleCourses = item.courses.slice(0, maxVisibleCourses);
-    const extraCount = item.courses.length - maxVisibleCourses;
     const conversionRate = item.views > 0
         ? ((item.clicks / item.views) * 100).toFixed(1)
         : "0.0";
@@ -106,37 +102,6 @@ function ShowcaseRow({ item, onEdit, onDelete, onToggleStatus }: ShowcaseRowProp
                             {item.description}
                         </p>
                     </div>
-                </div>
-            </TableCell>
-
-            {/* Courses */}
-            <TableCell className="px-4">
-                <div className="flex flex-wrap gap-1">
-                    {visibleCourses.length === 0 ? (
-                        <span className="text-xs text-muted-foreground italic">
-                            Nenhum curso
-                        </span>
-                    ) : (
-                        <>
-                            {visibleCourses.map((course) => (
-                                <Badge
-                                    key={course.id}
-                                    variant="secondary"
-                                    className="text-[10px] bg-primary/8 text-primary/80"
-                                >
-                                    {course.name}
-                                </Badge>
-                            ))}
-                            {extraCount > 0 && (
-                                <Badge
-                                    variant="secondary"
-                                    className="text-[10px] bg-muted text-muted-foreground"
-                                >
-                                    +{extraCount}
-                                </Badge>
-                            )}
-                        </>
-                    )}
                 </div>
             </TableCell>
 

@@ -8,15 +8,13 @@ import {
 import type { ShowcaseSortOption } from "@/components/showcase";
 import { ShowcaseModal } from "@/components/modals/showcase/ShowcaseModal";
 import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModal";
-import type { ShowcaseItem, ShowcaseCourse } from "@/types/showcase";
+import type { ShowcaseItem } from "@/types/showcase";
 import { mapShowcaseItem } from "@/types/showcase";
 import { showcaseService } from "@/services/showcase";
-import { coursesService } from "@/services/courses";
 import { toast } from "sonner";
 
 export function ShowcasePage() {
     const [items, setItems] = useState<ShowcaseItem[]>([]);
-    const [availableCourses, setAvailableCourses] = useState<ShowcaseCourse[]>([]);
     const [loading, setLoading] = useState(true);
 
     // Filters
@@ -33,9 +31,8 @@ export function ShowcasePage() {
     const loadData = useCallback(async () => {
         try {
             setLoading(true);
-            const [showcaseData, coursesData, analyticsResponse] = await Promise.all([
+            const [showcaseData, analyticsResponse] = await Promise.all([
                 showcaseService.getAll(),
-                coursesService.listSimple(),
                 showcaseService.getAnalyticsTotal().catch(() => ({ success: false, analytics: [] })),
             ]);
 
@@ -55,12 +52,6 @@ export function ShowcasePage() {
                     const stats = analyticsMap.get(raw.id);
                     return mapShowcaseItem(raw, stats?.views ?? 0, stats?.clicks ?? 0);
                 })
-            );
-            setAvailableCourses(
-                coursesData.map((c: { id: number; name: string }) => ({
-                    id: c.id,
-                    name: c.name,
-                }))
             );
         } catch {
             toast.error("Erro ao carregar dados da vitrine");
@@ -159,7 +150,6 @@ export function ShowcasePage() {
         description: string;
         url: string;
         image: File | null;
-        courseIds: number[];
         priority: number;
     }) {
         try {
@@ -169,7 +159,6 @@ export function ShowcasePage() {
                     description: data.description,
                     url: data.url,
                     priority: data.priority,
-                    course_ids: data.courseIds,
                 });
                 if (data.image && response.item) {
                     await showcaseService.uploadImage(response.item.id, data.image);
@@ -181,7 +170,6 @@ export function ShowcasePage() {
                     description: data.description,
                     url: data.url,
                     priority: data.priority,
-                    course_ids: data.courseIds,
                 });
                 if (data.image && response.item) {
                     await showcaseService.uploadImage(response.item.id, data.image);
@@ -256,7 +244,6 @@ export function ShowcasePage() {
                 open={modalOpen}
                 onOpenChange={setModalOpen}
                 editItem={editingItem}
-                availableCourses={availableCourses}
                 onSubmit={handleSubmit}
             />
 

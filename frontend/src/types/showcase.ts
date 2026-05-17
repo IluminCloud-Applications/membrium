@@ -4,10 +4,7 @@
 
 export type ShowcaseStatus = "active" | "inactive";
 
-export interface ShowcaseCourse {
-    id: number;
-    name: string;
-}
+
 
 export interface ShowcaseItem {
     id: number;
@@ -15,7 +12,6 @@ export interface ShowcaseItem {
     description: string;
     url: string;
     imageUrl: string;
-    courses: ShowcaseCourse[];
     priority: number;
     status: ShowcaseStatus;
     views: number;
@@ -33,7 +29,6 @@ export function mapShowcaseItem(
         url: string;
         status: string;
         priority: number;
-        courses: { id: number; name: string }[];
         created_at: string | null;
     },
     views = 0,
@@ -45,7 +40,6 @@ export function mapShowcaseItem(
         description: raw.description || "",
         url: raw.url,
         imageUrl: raw.image ? `/static/uploads/${raw.image}` : "",
-        courses: raw.courses,
         priority: raw.priority,
         status: raw.status as ShowcaseStatus,
         views,
