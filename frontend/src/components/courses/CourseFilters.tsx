@@ -8,9 +8,9 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { CourseCategory, CourseGroup } from "@/types/course";
+import type { CourseCategory } from "@/types/course";
 
-export type ViewMode = "grid" | "list" | "groups";
+export type ViewMode = "grid" | "list";
 export type SortOption = "newest" | "oldest" | "name" | "students";
 
 interface CourseFiltersProps {
@@ -23,11 +23,7 @@ interface CourseFiltersProps {
     viewMode: ViewMode;
     onViewModeChange: (value: ViewMode) => void;
     onCreateCourse: () => void;
-    onCreateGroup: () => void;
     onImportCourse: () => void;
-    groups: CourseGroup[];
-    activeGroupId: number | null;
-    onGroupChange: (groupId: number | null) => void;
 }
 
 const categories = [
@@ -48,11 +44,7 @@ export function CourseFilters({
     viewMode,
     onViewModeChange,
     onCreateCourse,
-    onCreateGroup,
     onImportCourse,
-    groups,
-    activeGroupId,
-    onGroupChange,
 }: CourseFiltersProps) {
     return (
         <div className="space-y-4">
@@ -84,26 +76,6 @@ export function CourseFilters({
                         </SelectContent>
                     </Select>
 
-                    {/* Group filter */}
-                    {groups.length > 0 && (
-                        <Select
-                            value={activeGroupId?.toString() ?? "all"}
-                            onValueChange={(v) => onGroupChange(v === "all" ? null : Number(v))}
-                        >
-                            <SelectTrigger className="w-[160px] h-9 flex-shrink-0">
-                                <SelectValue placeholder="Grupo" />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-xl">
-                                <SelectItem value="all" className="rounded-lg">Todos os Grupos</SelectItem>
-                                {groups.map((g) => (
-                                    <SelectItem key={g.id} value={g.id.toString()} className="rounded-lg">
-                                        {g.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    )}
-
                     {/* View toggle — desktop only */}
                     <div className="hidden sm:flex border rounded-lg overflow-hidden">
                         <button
@@ -120,19 +92,7 @@ export function CourseFilters({
                         >
                             <i className="ri-list-check text-sm" />
                         </button>
-                        <button
-                            onClick={() => onViewModeChange("groups")}
-                            className={`h-9 w-9 flex items-center justify-center transition-colors ${viewMode === "groups" ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
-                            title="Grupos"
-                        >
-                            <i className="ri-stack-line text-sm" />
-                        </button>
                     </div>
-
-                    <Button onClick={onCreateGroup} variant="outline" className="h-9 text-sm flex-shrink-0">
-                        <i className="ri-stack-line mr-1" />
-                        Agrupar
-                    </Button>
 
                     <Button onClick={onImportCourse} variant="outline" className="h-9 text-sm flex-shrink-0">
                         <i className="ri-upload-2-line mr-1" />

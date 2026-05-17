@@ -17,6 +17,8 @@ interface FileFiltersProps {
     onFileTypeChange: (value: FileType) => void;
     status: FileStatus;
     onStatusChange: (value: FileStatus) => void;
+    prefix: string;
+    onPrefixChange: (value: string) => void;
     unusedCount: number;
     onCleanUnused: () => void;
     pendingCompress: number;
@@ -36,6 +38,8 @@ export function FileFilters({
     onFileTypeChange,
     status,
     onStatusChange,
+    prefix,
+    onPrefixChange,
     unusedCount,
     onCleanUnused,
     pendingCompress,
@@ -56,6 +60,45 @@ export function FileFilters({
                 </div>
 
                 <div className="flex items-center gap-2">
+                    {/* Prefix filter */}
+                    <Select
+                        value={prefix}
+                        onValueChange={onPrefixChange}
+                    >
+                        <SelectTrigger className="w-[160px] h-9">
+                            <SelectValue placeholder="Tipo de Arquivo (Prefixo)" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl">
+                            <SelectItem value="all" className="rounded-lg">
+                                Todos os Prefixos
+                            </SelectItem>
+                            <SelectItem value="lesson_" className="rounded-lg">
+                                Aulas (lesson_)
+                            </SelectItem>
+                            <SelectItem value="cover_" className="rounded-lg">
+                                Capas (cover_)
+                            </SelectItem>
+                            <SelectItem value="doc_" className="rounded-lg">
+                                Anexos (doc_)
+                            </SelectItem>
+                            <SelectItem value="login_" className="rounded-lg">
+                                Login (login_)
+                            </SelectItem>
+                            <SelectItem value="promo_" className="rounded-lg">
+                                Promoção (promo_)
+                            </SelectItem>
+                            <SelectItem value="showcase_" className="rounded-lg">
+                                Vitrine (showcase_)
+                            </SelectItem>
+                            <SelectItem value="module_" className="rounded-lg">
+                                Módulos (module_)
+                            </SelectItem>
+                            <SelectItem value="course_" className="rounded-lg">
+                                Cursos (course_)
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+
                     {/* Status filter */}
                     <Select
                         value={status}

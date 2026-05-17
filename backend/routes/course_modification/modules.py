@@ -5,6 +5,7 @@ from db.database import db
 from db.utils import ensure_upload_directory
 from models import Admin, Course, Module, Lesson, FAQ, LessonTranscript, Document
 import os
+from cache import invalidate_module, invalidate_course
 
 modules_bp = Blueprint('course_mod_modules', __name__)
 
@@ -47,6 +48,7 @@ def create_module(course_id):
     )
     db.session.add(new_module)
     db.session.commit()
+    invalidate_module(course_id, new_module.id)
 
     return jsonify({
         'success': True,
@@ -92,6 +94,7 @@ def update_module(module_id):
                 module.image = None
 
         db.session.commit()
+        invalidate_module(module.course_id, module_id)
         return jsonify({'success': True})
 
     except Exception as e:
@@ -128,8 +131,10 @@ def delete_module(module_id):
             if os.path.exists(image_path):
                 os.remove(image_path)
 
+        course_id = module.course_id
         db.session.delete(module)
         db.session.commit()
+        invalidate_module(course_id, module_id)
         return jsonify({'success': True})
 
     except Exception as e:
@@ -144,9 +149,14 @@ def reorder_modules():
     """Reorder modules by providing an ordered list of IDs."""
     data = request.get_json()
     new_order = data.get('order', [])
+    course_id = None
     for index, module_id in enumerate(new_order, start=1):
         module = Module.query.get(module_id)
         if module:
             module.order = index
+            if course_id is None:
+                course_id = module.course_id
     db.session.commit()
+    if course_id:
+        invalidate_course(course_id)
     return jsonify({'success': True})

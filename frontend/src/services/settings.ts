@@ -33,6 +33,13 @@ interface ApiResponse {
     message: string;
 }
 
+export interface MenuItemPayload {
+    name: string;
+    url: string;
+    icon: string;
+    order: number;
+}
+
 /* ============================================
    SETTINGS SERVICE
    ============================================ */
@@ -53,4 +60,12 @@ export const settingsService = {
     /** Update support info (email + whatsapp) */
     updateSupport: (data: UpdateSupportPayload) =>
         apiClient.post<ApiResponse>("/settings/support", data),
+
+    /** Get global platform menu */
+    getMenu: () =>
+        apiClient.get<{ menu_items: MenuItemPayload[] }>("/settings/menu"),
+
+    /** Update global platform menu */
+    updateMenu: (items: MenuItemPayload[]) =>
+        apiClient.post<{ success: boolean; menu_items: MenuItemPayload[] }>("/settings/menu", { items }),
 };

@@ -26,10 +26,12 @@ interface UseFilesPageReturn {
     search: string;
     fileType: FileType;
     status: FileStatus;
+    prefix: string;
     currentPage: number;
     setSearch: (v: string) => void;
     setFileType: (v: FileType) => void;
     setStatus: (v: FileStatus) => void;
+    setPrefix: (v: string) => void;
     setCurrentPage: (v: number) => void;
     hasActiveFilters: boolean;
 
@@ -61,10 +63,11 @@ export function useFilesPage(): UseFilesPageReturn {
     const [debouncedSearch, setDebouncedSearch] = useState("");
     const [fileType, setFileType] = useState<FileType>("all");
     const [status, setStatus] = useState<FileStatus>("all");
+    const [prefix, setPrefix] = useState("all");
     const [currentPage, setCurrentPage] = useState(1);
 
     const hasActiveFilters =
-        search.trim() !== "" || fileType !== "all" || status !== "all";
+        search.trim() !== "" || fileType !== "all" || status !== "all" || prefix !== "all";
 
     /* ---- Debounce search ---- */
     useEffect(() => {
@@ -80,7 +83,7 @@ export function useFilesPage(): UseFilesPageReturn {
             return;
         }
         setCurrentPage(1);
-    }, [debouncedSearch, fileType, status]);
+    }, [debouncedSearch, fileType, status, prefix]);
 
     /* ---- Fetch files ---- */
     const fetchFiles = useCallback(async () => {
@@ -91,6 +94,7 @@ export function useFilesPage(): UseFilesPageReturn {
                 fileType,
                 status,
                 search: debouncedSearch.trim() || undefined,
+                prefix: prefix !== "all" ? prefix : undefined,
             });
             setFiles(data.files);
             setStats(data.stats);
@@ -100,7 +104,7 @@ export function useFilesPage(): UseFilesPageReturn {
         } finally {
             setIsLoading(false);
         }
-    }, [currentPage, fileType, status, debouncedSearch]);
+    }, [currentPage, fileType, status, debouncedSearch, prefix]);
 
     /* ---- Fetch disk usage ---- */
     const fetchDiskUsage = useCallback(async () => {
@@ -179,10 +183,12 @@ export function useFilesPage(): UseFilesPageReturn {
         search,
         fileType,
         status,
+        prefix,
         currentPage,
         setSearch,
         setFileType,
         setStatus,
+        setPrefix,
         setCurrentPage,
         hasActiveFilters,
         deleteFile,

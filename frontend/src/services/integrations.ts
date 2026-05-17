@@ -124,6 +124,7 @@ export interface EvolutionInstance {
     name: string;
     status: string;
     phone: string;
+    token?: string;
 }
 
 interface FetchInstancesResponse {
@@ -173,8 +174,8 @@ export const integrationsService = {
         apiClient.post<DetectVersionResponse>("/settings/evolution/detect-version", { url, api_key }),
 
     /** Fetch available WhatsApp instances */
-    fetchEvolutionInstances: (url: string, api_key: string) =>
-        apiClient.post<FetchInstancesResponse>("/settings/evolution/instances", { url, api_key }),
+    fetchEvolutionInstances: (url: string, api_key: string, version?: string) =>
+        apiClient.post<FetchInstancesResponse>("/settings/evolution/instances", { url, api_key, version }),
 
     /** Update YouTube settings */
     updateYouTube: (data: Partial<YouTubeSettings>) =>

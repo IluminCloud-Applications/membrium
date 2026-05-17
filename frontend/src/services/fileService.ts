@@ -6,6 +6,7 @@ interface GetFilesParams {
     fileType?: FileType;
     status?: FileStatus;
     search?: string;
+    prefix?: string;
 }
 
 export const fileService = {
@@ -15,6 +16,7 @@ export const fileService = {
         if (params.fileType && params.fileType !== "all") searchParams.set("fileType", params.fileType);
         if (params.status && params.status !== "all") searchParams.set("status", params.status);
         if (params.search) searchParams.set("search", params.search);
+        if (params.prefix && params.prefix !== "all") searchParams.set("prefix", params.prefix);
 
         const query = searchParams.toString();
         return apiClient.get<FilesResponse>(`/files/${query ? `?${query}` : ""}`);

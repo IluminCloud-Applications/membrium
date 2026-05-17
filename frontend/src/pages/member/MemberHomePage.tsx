@@ -1,26 +1,25 @@
 import { useState, useEffect, useRef } from "react";
 import { memberService } from "@/services/member";
-import { MemberHeader, CourseSection, GroupSelectorModal, GroupedCourseView, ShowcaseSection } from "@/components/member";
+import { MemberHeader, CourseSection, ShowcaseSection } from "@/components/member";
 import { PromotionQueue } from "@/components/member/promotion";
+import { EventQueue } from "@/components/member/events/EventQueue";
 import { ChatWidget } from "@/components/member/chatbot";
 import { getContinueWatching } from "@/utils/continueWatching";
 import { usePreview } from "@/contexts/PreviewContext";
 import { PreviewBanner } from "@/components/member/PreviewBanner";
 import { useAutoScrollPastBanner } from "@/hooks/useAutoScrollPastBanner";
 import { customizationService, type MemberAreaConfig } from "@/services/customization";
-import type { MemberCourse, MemberCourseGroup, MemberMenuItem, MemberShowcaseItem, MemberActivePromotion } from "@/types/member";
+import type { MemberCourse, MemberShowcaseItem, MemberActivePromotion, MemberActiveEvent } from "@/types/member";
 
 export function MemberHomePage() {
     const { isPreview } = usePreview();
     const [courses, setCourses] = useState<MemberCourse[]>([]);
-    const [groups, setGroups] = useState<MemberCourseGroup[]>([]);
-    const [ungrouped, setUngrouped] = useState<MemberCourse[]>([]);
-    const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
     const [studentName, setStudentName] = useState("");
     const [platformName, setPlatformName] = useState("Área de Membros");
     const [showcases, setShowcases] = useState<MemberShowcaseItem[]>([]);
     const [promotions, setPromotions] = useState<MemberActivePromotion[]>([]);
+    const [events, setEvents] = useState<MemberActiveEvent[]>([]);
     const [config, setConfig] = useState<MemberAreaConfig | null>(null);
 
     useEffect(() => {
@@ -35,35 +34,20 @@ export function MemberHomePage() {
 
     async function loadData() {
         try {
-            const [groupedData, profile, showcaseData, promoData] = await Promise.all([
-                memberService.getCoursesGrouped(isPreview),
+            const [coursesData, profile, showcaseData, promoData, eventData] = await Promise.all([
+                memberService.getCourses(isPreview),
                 memberService.getProfile(isPreview),
                 memberService.getShowcases(isPreview).catch(() => []),
                 memberService.getActivePromotions(isPreview).catch(() => ({ promotions: [] })),
+                memberService.getActiveEvents(isPreview).catch(() => ({ events: [] })),
             ]);
 
-            setGroups(groupedData.groups);
-            setUngrouped(groupedData.ungrouped);
+            setCourses(coursesData);
             setStudentName(profile.name);
             setPlatformName(profile.platformName);
             setShowcases(showcaseData);
             setPromotions(promoData.promotions);
-
-            const allCourses = [
-                ...groupedData.groups.flatMap((g) => g.courses),
-                ...groupedData.ungrouped,
-            ];
-            const seen = new Set<number>();
-            const deduped = allCourses.filter((c) => {
-                if (seen.has(c.id)) return false;
-                seen.add(c.id);
-                return true;
-            });
-            setCourses(deduped);
-
-            if (groupedData.groups.length === 1 && groupedData.ungrouped.length === 0) {
-                setSelectedGroupId(groupedData.groups[0].id);
-            }
+            setEvents(eventData.events);
         } catch (err) {
             console.error("Erro ao carregar dados:", err);
         } finally {
@@ -71,18 +55,8 @@ export function MemberHomePage() {
         }
     }
 
-    const allMenuItems = courses.reduce<MemberMenuItem[]>((acc, course) => {
-        if (course.menuItems) {
-            course.menuItems.forEach((item) => {
-                if (!acc.find((a) => a.name === item.name)) acc.push(item);
-            });
-        }
-        return acc;
-    }, []);
-
-    const selectedGroup = groups.find((g) => g.id === selectedGroupId);
-    const hasGroups = groups.length > 0;
-    const showGroupSelector = hasGroups && !selectedGroupId && groups.length > 1;
+    // Global menu: same for all courses — take from first accessible course
+    const allMenuItems = courses.find((c) => c.hasAccess !== false)?.menuItems ?? [];
 
     // Auto-scroll on mobile when banner covers the full screen
     const courseHeaderRef = useRef<HTMLDivElement>(null);
@@ -105,14 +79,15 @@ export function MemberHomePage() {
         window.location.href = url;
     }
 
-
     const hideModuleInfo = config?.hide_module_info || false;
 
     if (loading) {
         return <MemberLoadingSkeleton />;
     }
 
-    if (!courses.length) {
+    const accessibleCourses = courses.filter((c) => c.hasAccess !== false);
+
+    if (!accessibleCourses.length) {
         return (
             <div className="member-page dark">
                 {isPreview && <PreviewBanner />}
@@ -131,65 +106,7 @@ export function MemberHomePage() {
         );
     }
 
-    if (showGroupSelector) {
-        return (
-            <div className="member-page dark">
-                {isPreview && <PreviewBanner />}
-                <MemberHeader
-                    platformName={platformName}
-                    studentName={studentName}
-                    menuItems={allMenuItems}
-                />
-                <GroupSelectorModal
-                    groups={groups}
-                    onSelect={setSelectedGroupId}
-                    platformName={platformName}
-                />
-                {promotions.length > 0 && <PromotionQueue promotions={promotions} />}
-                <ChatWidget />
-            </div>
-        );
-    }
-
-    if (selectedGroup) {
-        return (
-            <div className="member-page dark">
-                {isPreview && <PreviewBanner />}
-                <MemberHeader
-                    platformName={platformName}
-                    studentName={studentName}
-                    menuItems={allMenuItems}
-                />
-                <main className="member-main">
-                    <GroupedCourseView
-                        group={selectedGroup}
-                        onModuleClick={handleModuleClick}
-                        onBackToSelector={groups.length > 1 ? () => setSelectedGroupId(null) : undefined}
-                        showBack={groups.length > 1}
-                        hideModuleInfo={hideModuleInfo}
-                    />
-
-                    {ungrouped.map((course) => (
-                        <CourseSection
-                            key={course.id}
-                            course={course}
-                            onModuleClick={handleModuleClick}
-                            hideModuleInfo={hideModuleInfo}
-                        />
-                    ))}
-
-                    <ShowcaseSection showcases={showcases} />
-                </main>
-                <footer className="member-footer">
-                    <p>{platformName} · Todos os direitos reservados</p>
-                </footer>
-                {promotions.length > 0 && <PromotionQueue promotions={promotions} />}
-                <ChatWidget />
-            </div>
-        );
-    }
-
-    const primaryCourse = courses.find((c) => c.category === "principal");
+    const primaryCourse = courses.find((c) => c.category === "principal" && c.hasAccess !== false);
     const secondaryCourses = courses.filter((c) => c.category !== "principal");
 
     return (
@@ -228,6 +145,7 @@ export function MemberHomePage() {
                 <p>{platformName} · Todos os direitos reservados</p>
             </footer>
             {promotions.length > 0 && <PromotionQueue promotions={promotions} />}
+            {events.length > 0 && <EventQueue events={events} />}
             <ChatWidget />
         </div>
     );

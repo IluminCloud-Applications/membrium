@@ -51,6 +51,11 @@ export const sidebarNavGroups: NavGroup[] = [
                 icon: "ri-megaphone-line",
             },
             {
+                title: "Eventos",
+                url: "/admin/eventos",
+                icon: "ri-calendar-event-line",
+            },
+            {
                 title: "FAQ",
                 url: "/admin/faq",
                 icon: "ri-question-answer-line",

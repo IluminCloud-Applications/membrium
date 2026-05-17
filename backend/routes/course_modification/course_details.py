@@ -3,8 +3,10 @@ from functools import wraps
 from datetime import datetime
 from db.database import db
 from db.utils import ensure_upload_directory
+from db.integration_helpers import get_integration, set_integration
 from models import Admin, Course, Module, Lesson, Document
 import os
+from cache import invalidate_course, cache_delete_pattern
 
 course_details_bp = Blueprint('course_details', __name__)
 
@@ -68,6 +70,10 @@ def get_course_full(course_id):
     """Get full course data for the modification page."""
     course = Course.query.get_or_404(course_id)
 
+    # Return global menu instead of per-course menu
+    _, menu_config = get_integration('menu')
+    global_menu = menu_config.get('items', [])
+
     return jsonify({
         'id': course.id,
         'name': course.name,
@@ -78,7 +84,7 @@ def get_course_full(course_id):
             'desktop': _image_url(course.cover_desktop),
             'mobile': _image_url(course.cover_mobile),
         },
-        'menu_items': course.menu_items or [],
+        'menu_items': global_menu,
     })
 
 
@@ -113,6 +119,7 @@ def update_cover(course_id):
             setattr(course, attr, None)
 
     db.session.commit()
+    invalidate_course(course_id)
     return jsonify({
         'success': True,
         'cover': {
@@ -125,16 +132,17 @@ def update_cover(course_id):
 @course_details_bp.route('/<int:course_id>/menu', methods=['PUT', 'POST'])
 @admin_required
 def update_menu(course_id):
-    """Replace all menu items for a course."""
-    course = Course.query.get_or_404(course_id)
+    """Replace all global menu items (shared across all courses)."""
     data = request.get_json()
     if data is None:
         return jsonify({'success': False, 'message': 'Body inválido'}), 400
 
-    course.menu_items = data.get('items', [])
-    db.session.commit()
+    items = data.get('items', [])
+    set_integration('menu', True, {'items': items})
+    # Menu is embedded in every course response — wipe all course detail caches
+    cache_delete_pattern('course:*:detail')
 
     return jsonify({
         'success': True,
-        'menu_items': course.menu_items,
+        'menu_items': items,
     })

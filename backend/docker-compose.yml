@@ -10,11 +10,13 @@ services:
       - DATABASE_URL=postgresql://postgres:Extreme123@postgres:5432/membriumwl
       - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
       - GUNICORN_WORKERS=1
+      - REDIS_URL=redis://redis:6379/0
     volumes:
       - .:/app
       - uploads_data:/app/static/uploads
     depends_on:
       - postgres
+      - redis
     restart: unless-stopped
 
   postgres:
@@ -29,6 +31,13 @@ services:
     volumes:
       - membrium_data:/var/lib/postgresql/data
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
 volumes:
   membrium_data:
   uploads_data:
+  redis_data:

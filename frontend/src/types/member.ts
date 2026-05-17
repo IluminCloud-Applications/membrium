@@ -29,18 +29,6 @@ export interface MemberCourse {
     hasAccess?: boolean;
 }
 
-export interface MemberCourseGroup {
-    id: number;
-    name: string;
-    principalCourseId: number | null;
-    courses: MemberCourse[];
-}
-
-export interface MemberGroupedResponse {
-    groups: MemberCourseGroup[];
-    ungrouped: MemberCourse[];
-}
-
 export interface MemberMenuItem {
     name: string;
     url: string;
@@ -190,4 +178,19 @@ export interface MemberActivePromotion {
     ctaUrl: string;
     ctaDelay: number;
     hideVideoControls: boolean;
+}
+
+/* ============================================
+   EVENT (EVENTO) — Member modal
+   ============================================ */
+
+export interface MemberActiveEvent {
+    id: number;
+    title: string;
+    description: string;
+    mediaType: "default" | "image" | "html";
+    mediaUrl: string;
+    htmlContent: string;
+    callLink: string;
+    eventDate: string;
 }

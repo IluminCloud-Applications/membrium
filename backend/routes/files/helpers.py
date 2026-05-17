@@ -2,7 +2,7 @@
 Shared helpers for file manager routes.
 """
 import os
-from models import Course, Module, Document, Showcase, Promotion, Customization
+from models import Course, Module, Document, Showcase, Promotion, Customization, Lesson
 
 
 def get_referenced_filenames():
@@ -36,6 +36,15 @@ def get_referenced_filenames():
         if mobile.get('background_image'):
             login_images.add(mobile['background_image'])
 
+    # Lesson thumbnails
+    lessons = Lesson.query.filter(Lesson.thumbnail_url.isnot(None)).all()
+    lesson_thumbnails = set()
+    for l in lessons:
+        url = l.thumbnail_url
+        if url and url.startswith('/static/uploads/'):
+            filename = url.replace('/static/uploads/', '')
+            lesson_thumbnails.add(filename)
+
     return {
         'course_images': course_images,
         'course_covers_desktop': course_covers_desktop,
@@ -45,6 +54,7 @@ def get_referenced_filenames():
         'showcase_images': showcase_images,
         'promo_images': promo_images,
         'login_images': login_images,
+        'lesson_thumbnails': lesson_thumbnails,
     }
 
 
@@ -87,6 +97,10 @@ def check_file_usage(filename, refs):
     if filename in refs['login_images']:
         is_used = True
         used_in.append('Fundo da página de login')
+
+    if filename in refs.get('lesson_thumbnails', set()):
+        is_used = True
+        used_in.append('Thumbnail de aula')
 
     return is_used, used_in
 

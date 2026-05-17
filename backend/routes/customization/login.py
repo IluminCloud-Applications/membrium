@@ -12,6 +12,7 @@ from db.database import db
 from sqlalchemy.orm.attributes import flag_modified
 from models import Admin, Customization
 from db.utils import ensure_upload_directory
+from cache import cache_get, cache_set, invalidate_login_page
 
 login_customization_bp = Blueprint('login_customization', __name__)
 
@@ -91,10 +92,13 @@ def merge_with_defaults(stored):
 
 @login_customization_bp.route('/api/customization/login', methods=['GET'])
 def get_login_customization():
+    cached = cache_get('customization:login_page')
+    if cached is not None:
+        return jsonify(cached)
     custom = Customization.query.first()
-    if not custom:
-        return jsonify(DEFAULT_LOGIN_PAGE)
-    return jsonify(merge_with_defaults(custom.login_page))
+    data = DEFAULT_LOGIN_PAGE if not custom else merge_with_defaults(custom.login_page)
+    cache_set('customization:login_page', data)
+    return jsonify(data)
 
 
 # ─── ADMIN: Update login customization ──────────────────────
@@ -123,6 +127,7 @@ def update_login_customization():
     custom.login_page = current
     flag_modified(custom, 'login_page')
     db.session.commit()
+    invalidate_login_page()
 
     return jsonify({
         'success': True,

@@ -5,10 +5,10 @@ import type {
     MemberProfile,
     MemberProgress,
     MemberModuleLessonsResponse,
-    MemberGroupedResponse,
     SearchResult,
     MemberShowcaseItem,
     MemberActivePromotion,
+    MemberActiveEvent,
 } from "@/types/member";
 import type { ApiResponse } from "@/types/api";
 
@@ -20,13 +20,9 @@ function withPreview(endpoint: string, preview?: boolean): string {
 }
 
 export const memberService = {
-    /** Get all courses the student is enrolled in */
+    /** Get all published courses (accessible ones unlocked, others locked) */
     getCourses: (preview?: boolean) =>
         apiClient.get<MemberCourse[]>(withPreview("/member/courses", preview)),
-
-    /** Get courses organized by groups for the member area */
-    getCoursesGrouped: (preview?: boolean) =>
-        apiClient.get<MemberGroupedResponse>(withPreview("/member/courses/grouped", preview)),
 
     /** Get single course detail with lessons */
     getCourseDetail: (courseId: number, preview?: boolean) =>
@@ -95,4 +91,18 @@ export const memberService = {
     /** Track promotion CTA click */
     trackPromotionClick: (promoId: number, preview?: boolean) =>
         apiClient.post<ApiResponse>(withPreview(`/member/promotions/${promoId}/click`, preview), {}),
+
+    /* ======= EVENT (Evento) ======= */
+
+    /** Get all currently active events */
+    getActiveEvents: (preview?: boolean) =>
+        apiClient.get<{ events: MemberActiveEvent[] }>(withPreview("/member/events/active", preview)),
+
+    /** Track event view */
+    trackEventView: (eventId: number, preview?: boolean) =>
+        apiClient.post<ApiResponse>(withPreview(`/member/events/${eventId}/view`, preview), {}),
+
+    /** Track event link click */
+    trackEventClick: (eventId: number, preview?: boolean) =>
+        apiClient.post<ApiResponse>(withPreview(`/member/events/${eventId}/click`, preview), {}),
 };

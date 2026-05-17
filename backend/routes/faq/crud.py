@@ -3,6 +3,7 @@ from functools import wraps
 from db.database import db
 from models import Admin, FAQ, Lesson, Module, Course
 from sqlalchemy import func
+from cache import invalidate_lesson
 
 crud_bp = Blueprint('faq_crud', __name__)
 
@@ -130,6 +131,9 @@ def create_faq():
             db.session.add(faq)
 
         db.session.commit()
+        lesson = Lesson.query.get(lesson_id)
+        if lesson:
+            invalidate_lesson(lesson.module.course_id, lesson.module_id)
         return jsonify({'success': True, 'message': 'FAQs criados com sucesso'})
     except Exception as e:
         db.session.rollback()
@@ -161,6 +165,9 @@ def update_lesson_faqs(lesson_id):
             db.session.add(faq)
 
         db.session.commit()
+        lesson = Lesson.query.get(lesson_id)
+        if lesson:
+            invalidate_lesson(lesson.module.course_id, lesson.module_id)
         return jsonify({'success': True, 'message': 'FAQs atualizados com sucesso'})
     except Exception as e:
         db.session.rollback()
@@ -172,8 +179,11 @@ def update_lesson_faqs(lesson_id):
 def delete_lesson_faqs(lesson_id):
     """Delete all FAQs for a lesson."""
     try:
+        lesson = Lesson.query.get(lesson_id)
         FAQ.query.filter_by(lesson_id=lesson_id).delete()
         db.session.commit()
+        if lesson:
+            invalidate_lesson(lesson.module.course_id, lesson.module_id)
         return jsonify({'success': True, 'message': 'FAQs excluídos com sucesso'})
     except Exception as e:
         db.session.rollback()

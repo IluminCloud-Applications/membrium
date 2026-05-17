@@ -14,11 +14,7 @@ student_lessons = db.Table('student_lessons',
     db.Column('lesson_id', db.Integer, db.ForeignKey('lesson.id'), primary_key=True)
 )
 
-course_group_courses = db.Table('course_group_courses',
-    db.Column('group_id', db.Integer, db.ForeignKey('course_group.id'), primary_key=True),
-    db.Column('course_id', db.Integer, db.ForeignKey('course.id'), primary_key=True),
-    db.Column('order', db.Integer, default=0)
-)
+
 
 showcase_courses = db.Table('showcase_courses',
     db.Column('showcase_id', db.Integer, db.ForeignKey('showcase.id'), primary_key=True),
@@ -111,16 +107,7 @@ class EmailBlacklist(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-class CourseGroup(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), nullable=False)
-    principal_course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # Relationships
-    principal_course = db.relationship('Course', foreign_keys=[principal_course_id])
-    courses = db.relationship('Course', secondary=course_group_courses, backref=db.backref('groups', lazy='dynamic'))
+
 
 class IntegrationConfig(db.Model):
     """Configurações flexíveis por integração — uma linha por provider.
@@ -180,6 +167,40 @@ class PromotionAnalytics(db.Model):
     clicks = db.Column(db.Integer, default=0)
     __table_args__ = (db.UniqueConstraint('promotion_id', 'date', name='uix_promotion_date'),)
     promotion = db.relationship('Promotion', backref='analytics', lazy=True)
+
+class Event(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    media_type = db.Column(db.String(10), nullable=False)  # 'image' or 'html'
+    media_url = db.Column(db.Text, nullable=True)  # Image filename if image
+    html_content = db.Column(db.Text, nullable=True) # HTML content if html
+    call_link = db.Column(db.String(500), nullable=True) # Zoom/Meet link
+    event_date = db.Column(db.DateTime, nullable=False)
+    send_email = db.Column(db.Boolean, default=False)
+    send_whatsapp = db.Column(db.Boolean, default=False)
+    is_active = db.Column(db.Boolean, default=True)
+    sent_reminder = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    @property
+    def status(self):
+        now = datetime.utcnow()
+        if not self.is_active:
+            return 'inactive'
+        elif now > self.event_date:
+            return 'expired'
+        else:
+            return 'upcoming'
+
+class EventAnalytics(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id'), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    views = db.Column(db.Integer, default=0)
+    clicks = db.Column(db.Integer, default=0)
+    __table_args__ = (db.UniqueConstraint('event_id', 'date', name='uix_event_date'),)
+    event = db.relationship('Event', backref='analytics', lazy=True)
 
 class Showcase(db.Model):
     id = db.Column(db.Integer, primary_key=True)

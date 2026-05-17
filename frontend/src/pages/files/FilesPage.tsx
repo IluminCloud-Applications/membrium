@@ -28,10 +28,12 @@ export function FilesPage() {
         search,
         fileType,
         status,
+        prefix,
         currentPage,
         setSearch,
         setFileType,
         setStatus,
+        setPrefix,
         setCurrentPage,
         hasActiveFilters,
         deleteFile,
@@ -96,6 +98,8 @@ export function FilesPage() {
                 onFileTypeChange={setFileType}
                 status={status}
                 onStatusChange={setStatus}
+                prefix={prefix}
+                onPrefixChange={setPrefix}
                 unusedCount={stats.unusedFiles}
                 onCleanUnused={() => setCleanModalOpen(true)}
                 pendingCompress={pendingCompress}

@@ -11,6 +11,7 @@ import { SetupPage } from "@/pages/setup";
 import { MaintenancePage } from "@/pages/maintenance";
 import { QuickAccessPage } from "@/pages/quick-access";
 import { ChangePasswordPage } from "@/pages/change-password";
+import { EventInvitePage } from "@/pages/event/EventInvitePage";
 import { AdminRoutes } from "./routes/AdminRoutes";
 import { MemberRoutes } from "./routes/MemberRoutes";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -124,6 +125,12 @@ export default function App() {
             <Route
               path="/change-password"
               element={<ChangePasswordPage />}
+            />
+
+            {/* Public event invite page */}
+            <Route
+              path="/e/:eventId"
+              element={<EventInvitePage />}
             />
 
             {/* Admin routes — protected, admin only */}

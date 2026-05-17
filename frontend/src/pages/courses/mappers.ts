@@ -1,5 +1,5 @@
-import type { Course, CourseCategory, CourseGroup } from "@/types/course";
-import type { CourseResponse, CourseGroupResponse } from "@/services/courses";
+import type { Course, CourseCategory } from "@/types/course";
+import type { CourseResponse } from "@/services/courses";
 
 /* ---- API → Frontend type mappers ---- */
 
@@ -15,14 +15,5 @@ export function mapCourse(raw: CourseResponse): Course {
         lessonsCount: raw.lessons_count,
         createdAt: raw.created_at || "",
         isPublished: raw.is_published,
-    };
-}
-
-export function mapGroup(raw: CourseGroupResponse): CourseGroup {
-    return {
-        id: raw.id,
-        name: raw.name,
-        principalCourseId: raw.principal_course_id,
-        courseIds: raw.course_ids,
     };
 }

@@ -26,6 +26,8 @@ interface CourseModalProps {
     /** If provided, modal enters edit mode with pre-filled data */
     editCourse?: Course | null;
     isLoading?: boolean;
+    /** Whether a principal course already exists (used to hide the option) */
+    hasPrincipal?: boolean;
 }
 
 export interface CourseFormData {
@@ -50,6 +52,7 @@ export function CourseModal({
     onSubmit,
     editCourse,
     isLoading,
+    hasPrincipal,
 }: CourseModalProps) {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
@@ -60,6 +63,11 @@ export function CourseModal({
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const isEditing = !!editCourse;
+    // The editing course is itself the principal — don't block it
+    const editingIsPrincipal = editCourse?.category === "principal";
+    // Hide "principal" option if one exists AND we're not editing that same principal
+    const principalBlocked = !!(hasPrincipal && !editingIsPrincipal);
+
 
     // Pre-fill form when editing
     useEffect(() => {
@@ -72,6 +80,16 @@ export function CourseModal({
             setImageRemoved(false);
         }
     }, [editCourse]);
+
+    // Reset category if principal is blocked on open (new course)
+    useEffect(() => {
+        if (open && !editCourse && principalBlocked) {
+            setCategory("bonus");
+        }
+        if (open && !editCourse && !principalBlocked) {
+            setCategory("principal");
+        }
+    }, [open, editCourse, principalBlocked]);
 
     function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
@@ -97,7 +115,7 @@ export function CourseModal({
     function resetForm() {
         setName("");
         setDescription("");
-        setCategory("principal");
+        setCategory(principalBlocked ? "bonus" : "principal");
         setImageFile(null);
         setPreview(null);
         setImageRemoved(false);
@@ -206,23 +224,50 @@ export function CourseModal({
                                 <SelectValue placeholder="Selecione a categoria" />
                             </SelectTrigger>
                             <SelectContent className="rounded-xl">
-                                {categoryOptions.map((opt) => (
-                                    <SelectItem
-                                        key={opt.value}
-                                        value={opt.value}
-                                        className="rounded-lg"
-                                    >
-                                        {opt.label}
-                                    </SelectItem>
-                                ))}
+                                {categoryOptions
+                                    .filter((opt) => !(opt.value === "principal" && principalBlocked))
+                                    .map((opt) => (
+                                        <SelectItem
+                                            key={opt.value}
+                                            value={opt.value}
+                                            className="rounded-lg"
+                                        >
+                                            {opt.label}
+                                        </SelectItem>
+                                    ))}
                             </SelectContent>
                         </Select>
-                        <p className="text-xs text-muted-foreground">
-                            {category === "principal" && "Curso principal da sua plataforma."}
-                            {category === "order_bump" && "Oferta adicional no checkout."}
-                            {category === "upsell" && "Oferta de upgrade após a compra."}
-                            {category === "bonus" && "Material bônus para compradores."}
-                        </p>
+
+                        {/* Category hint messages */}
+                        {category === "principal" && (
+                            <p className="text-xs text-muted-foreground">Curso principal da sua plataforma.</p>
+                        )}
+                        {category === "order_bump" && (
+                            <p className="text-xs text-muted-foreground">Oferta adicional no checkout.</p>
+                        )}
+                        {category === "upsell" && (
+                            <p className="text-xs text-muted-foreground">Oferta de upgrade após a compra.</p>
+                        )}
+                        {category === "bonus" && (
+                            <div className="flex items-start gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2.5">
+                                <i className="ri-gift-line text-primary mt-0.5 flex-shrink-0 text-sm" />
+                                <p className="text-xs text-foreground leading-relaxed">
+                                    <span className="font-semibold text-primary">Bônus automático:</span>{" "}
+                                    ao comprar o curso principal, o aluno recebe acesso a este bônus automaticamente — sem precisar configurar webhook.
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Warning if principal already exists */}
+                        {principalBlocked && (
+                            <div className="flex items-start gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2.5">
+                                <i className="ri-error-warning-line text-primary mt-0.5 flex-shrink-0 text-sm" />
+                                <p className="text-xs text-foreground leading-relaxed">
+                                    <span className="font-semibold text-primary">1 curso principal por plataforma.</span>{" "}
+                                    A opção foi ocultada pois você já possui um curso principal cadastrado.
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Submit */}

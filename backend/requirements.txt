@@ -1,11 +1,12 @@
 Flask
 Flask-SQLAlchemy
+redis
 Flask-Cors
 SQLAlchemy
 Werkzeug
-PyMySQL
+# PyMySQL
 python-dotenv
-Flask-Migrate
+# Flask-Migrate
 requests
 pytz
 psycopg2-binary
@@ -35,4 +36,6 @@ opencv-python-headless
 
 # CSS minification
 rcssmin
-
+
+# Calendar Events (.ics protocol)
+icalendar

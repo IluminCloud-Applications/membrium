@@ -9,6 +9,7 @@ from models import (
     showcase_courses, student_courses
 )
 import os
+from cache import invalidate_course
 
 crud_courses_bp = Blueprint('courses_crud', __name__)
 
@@ -36,6 +37,15 @@ def create_course():
     if not name:
         return jsonify({'success': False, 'message': 'Nome é obrigatório'}), 400
 
+    # Enforce single principal course
+    if category == 'principal':
+        existing_principal = Course.query.filter_by(category='principal').first()
+        if existing_principal:
+            return jsonify({
+                'success': False,
+                'message': f'Já existe um curso principal: "{existing_principal.name}". Apenas 1 curso principal é permitido.'
+            }), 400
+
     filename = None
     if image:
         ensure_upload_directory()
@@ -50,6 +60,7 @@ def create_course():
     )
     db.session.add(new_course)
     db.session.commit()
+    invalidate_course(new_course.id)
 
     return jsonify({
         'success': True,
@@ -70,7 +81,17 @@ def update_course(course_id):
         course.name = request.form.get('name', course.name)
         if 'description' in request.form:
             course.description = request.form.get('description', '').strip() or None
-        course.category = request.form.get('category', course.category)
+
+        new_category = request.form.get('category', course.category)
+        # Enforce single principal course (allow keeping own category)
+        if new_category == 'principal' and course.category != 'principal':
+            existing_principal = Course.query.filter_by(category='principal').first()
+            if existing_principal:
+                return jsonify({
+                    'success': False,
+                    'message': f'Já existe um curso principal: "{existing_principal.name}". Apenas 1 curso principal é permitido.'
+                }), 400
+        course.category = new_category
 
         # Handle is_published
         is_published = request.form.get('is_published')
@@ -101,6 +122,7 @@ def update_course(course_id):
                 course.image = None
 
         db.session.commit()
+        invalidate_course(course_id)
         return jsonify({'success': True})
 
     except Exception as e:
@@ -190,6 +212,7 @@ def delete_course(course_id):
         # 5. Delete the course
         db.session.delete(course)
         db.session.commit()
+        invalidate_course(course_id)
 
         return jsonify({'success': True, 'message': 'Curso excluído com sucesso'})
 

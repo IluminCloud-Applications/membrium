@@ -18,6 +18,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from models import Admin, Course, Module, Showcase, Promotion, Customization
 from routes.files.helpers import UPLOADS_DIR
 from services.image_compress import compress_image, is_compressed, is_image
+from cache import invalidate_all_content
 
 compress_bp = Blueprint("files_compress", __name__)
 
@@ -161,6 +162,8 @@ def compress_next():
 
     # Update every DB table that might reference this file
     _update_db_references(filename, new_filename)
+    # Filenames changed in DB — wipe all content caches
+    invalidate_all_content()
 
     return jsonify({
         "compressed": True,

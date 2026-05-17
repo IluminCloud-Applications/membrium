@@ -198,7 +198,18 @@ def detect_evolution_version():
 
     import requests as http_requests
     try:
-        # Try v2 endpoint first
+        # Try Evolution GO first
+        resp_go = http_requests.get(
+            f"{url}/instance/all",
+            headers={'apikey': api_key},
+            timeout=10
+        )
+        if resp_go.status_code == 200:
+            body_go = resp_go.json()
+            if isinstance(body_go, dict) and 'data' in body_go:
+                return jsonify({'success': True, 'version': 'go'})
+
+        # Try v2 endpoint
         resp = http_requests.get(
             f"{url}/instance/fetchInstances",
             headers={'apikey': api_key},
@@ -243,8 +254,38 @@ def fetch_evolution_instances():
     if not url or not api_key:
         return jsonify({'success': False, 'message': 'URL e API Key são obrigatórios'}), 400
 
+    version = data.get('version', '')
+
     import requests as http_requests
     try:
+        # Evolution GO uses a different endpoint and response shape
+        if version == 'go':
+            resp = http_requests.get(
+                f"{url}/instance/all",
+                headers={'apikey': api_key},
+                timeout=10
+            )
+            if resp.status_code != 200:
+                return jsonify({'success': False, 'message': f'Erro da API: {resp.status_code}'}), 400
+
+            body = resp.json()
+            instances = []
+            for item in body.get('data', []):
+                if not isinstance(item, dict):
+                    continue
+                name = item.get('name', '')
+                connected = item.get('connected', False)
+                jid = item.get('jid', '')
+                phone = jid.split('@')[0] if jid and '@' in jid else jid
+                if name:
+                    instances.append({
+                        'name': name,
+                        'status': 'open' if connected else 'close',
+                        'phone': phone,
+                        'token': item.get('token', ''),
+                    })
+            return jsonify({'success': True, 'instances': instances})
+
         resp = http_requests.get(
             f"{url}/instance/fetchInstances",
             headers={'apikey': api_key},

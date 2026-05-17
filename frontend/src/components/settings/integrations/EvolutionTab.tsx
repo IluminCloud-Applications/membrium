@@ -76,11 +76,21 @@ export function EvolutionTab() {
         }
     }
 
+    function selectInstance(name: string, instanceList?: EvolutionInstance[]) {
+        const list = instanceList ?? instances;
+        const inst = list.find((i) => i.name === name);
+        const patch: Partial<EvolutionSettings> = { instance: name };
+        if (data.version === "go" && inst?.token) {
+            patch.api_key = inst.token;
+        }
+        update(patch);
+    }
+
     async function handleFetchInstances() {
         setFetchingInstances(true);
         setFeedback(null);
         try {
-            const res = await integrationsService.fetchEvolutionInstances(data.url, data.api_key);
+            const res = await integrationsService.fetchEvolutionInstances(data.url, data.api_key, data.version);
             if (res.success && res.instances) {
                 setInstances(res.instances);
                 if (res.instances.length === 0) {
@@ -89,7 +99,7 @@ export function EvolutionTab() {
                     setFeedback(`${res.instances.length} instância(s) encontrada(s)`);
                     // Auto-select if only one
                     if (res.instances.length === 1) {
-                        update({ instance: res.instances[0].name });
+                        selectInstance(res.instances[0].name, res.instances);
                     }
                 }
             } else {
@@ -140,7 +150,7 @@ export function EvolutionTab() {
         <IntegrationToggle
             id="evolutionToggle"
             icon="ri-whatsapp-line"
-            title="Evolution API"
+            title="Evolution API/Go"
             description="Envie mensagens de WhatsApp para seus alunos"
             enabled={data.enabled}
             onToggle={(v) => handleToggle(v)}
@@ -195,6 +205,9 @@ export function EvolutionTab() {
                                 <SelectItem value="2.x.x" className="rounded-lg">
                                     2.x.x ou superior
                                 </SelectItem>
+                                <SelectItem value="go" className="rounded-lg">
+                                    Evolution GO
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                         <Button
@@ -211,7 +224,7 @@ export function EvolutionTab() {
                 <div className="space-y-2">
                     <Label>Instância do WhatsApp</Label>
                     <div className="flex gap-2">
-                        <Select value={data.instance} onValueChange={(v) => update({ instance: v })}>
+                        <Select value={data.instance} onValueChange={(v) => selectInstance(v)}>
                             <SelectTrigger className="flex-1">
                                 <SelectValue placeholder="Selecione a instância" />
                             </SelectTrigger>

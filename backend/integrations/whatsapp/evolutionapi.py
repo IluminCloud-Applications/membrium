@@ -66,6 +66,12 @@ class EvolutionClient:
         version = self.settings.get('evolution_version', '2.x.x')
         if version == '1.8.x':
             return self._send_v1(phone, message)
+        if version == 'go':
+            # Evolution GO: digits only, no + prefix, no Brazilian 9-stripping
+            go_phone = ''.join(filter(str.isdigit, phone_number))
+            if not go_phone.startswith('55'):
+                go_phone = '55' + go_phone
+            return self._send_go(go_phone, message)
         return self._send_v2(phone, message)
 
     # ─── Formatação de telefone ──────────────────────────────────
@@ -135,6 +141,32 @@ class EvolutionClient:
             return False, "Timeout ao enviar WhatsApp"
         except Exception as e:
             logger.error(f"Erro Evolution v1: {str(e)}")
+            return False, f"Erro: {str(e)}"
+
+    def _send_go(self, phone: str, message: str) -> tuple[bool, str]:
+        """Envio via Evolution GO."""
+        try:
+            url = f"{self.settings['evolution_url']}/send/text"
+            headers = {
+                'Content-Type': 'application/json',
+                'apikey': self.settings['evolution_api_key'],
+            }
+            payload = {
+                "number": phone,
+                "text": message,
+                "delay": 1200,
+            }
+
+            print(f"[Evolution GO] Enviando WhatsApp para {phone} | URL: {url}")
+            response = requests.post(url, headers=headers, json=payload, timeout=10)
+            return self._parse_response(response, "Evolution GO")
+
+        except requests.exceptions.ConnectionError:
+            return False, "Erro de conexão com Evolution GO"
+        except requests.exceptions.Timeout:
+            return False, "Timeout ao enviar WhatsApp"
+        except Exception as e:
+            logger.error(f"Erro Evolution GO: {str(e)}")
             return False, f"Erro: {str(e)}"
 
     def _send_v2(self, phone: str, message: str) -> tuple[bool, str]:

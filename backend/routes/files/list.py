@@ -34,6 +34,7 @@ def get_files():
     file_type = request.args.get('fileType', 'all')
     status = request.args.get('status', 'all')
     search = request.args.get('search', '')
+    prefix = request.args.get('prefix', 'all')
 
     try:
         physical_files = os.listdir(UPLOADS_DIR)
@@ -60,6 +61,10 @@ def get_files():
         if file_type == 'image' and not is_image:
             continue
         if file_type == 'document' and not is_document:
+            continue
+
+        # Prefix filter
+        if prefix != 'all' and not filename.startswith(prefix):
             continue
 
         # Search filter

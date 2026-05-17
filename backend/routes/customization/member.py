@@ -8,6 +8,7 @@ from functools import wraps
 from db.database import db
 from sqlalchemy.orm.attributes import flag_modified
 from models import Admin, Customization
+from cache import cache_get, cache_set, invalidate_member_area
 
 member_customization_bp = Blueprint('member_customization', __name__)
 
@@ -52,11 +53,15 @@ def merge_with_defaults(stored):
 
 @member_customization_bp.route('/api/customization/member', methods=['GET'])
 def get_member_customization():
-    custom = Customization.query.first()
-    if not custom:
-        return jsonify(DEFAULT_MEMBER_AREA)
+    cached = cache_get('customization:member_area')
+    if cached is not None:
+        return jsonify(cached)
 
-    return jsonify(merge_with_defaults(custom.member_area))
+    custom = Customization.query.first()
+    data = DEFAULT_MEMBER_AREA if not custom else merge_with_defaults(custom.member_area)
+    
+    cache_set('customization:member_area', data)
+    return jsonify(data)
 
 
 # ─── ADMIN: Update member customization ──────────────────────
@@ -76,6 +81,7 @@ def update_member_customization():
     custom.member_area = member_area
     flag_modified(custom, 'member_area')
     db.session.commit()
+    invalidate_member_area()
 
     return jsonify({
         'success': True,

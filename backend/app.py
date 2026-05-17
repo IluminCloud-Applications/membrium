@@ -3,6 +3,7 @@ from flask import Flask
 from flask_cors import CORS
 from db.database import init_db, create_all_tables
 from db.utils import ensure_upload_directory
+from services.event_scheduler import start_scheduler
 
 # Import blueprints
 from routes.auth import auth_bp
@@ -14,6 +15,7 @@ from routes.courses import courses_bp
 from routes.course_modification import course_modification_bp
 from routes.showcase import showcase_bp
 from routes.promote import promote_bp
+from routes.events import events_bp
 from routes.faq import faq_bp
 from routes.chatbot import chatbot_bp
 from routes.transcripts import transcripts_bp
@@ -47,6 +49,7 @@ def create_app():
     app.register_blueprint(course_modification_bp)
     app.register_blueprint(showcase_bp)
     app.register_blueprint(promote_bp)
+    app.register_blueprint(events_bp)
     app.register_blueprint(faq_bp)
     app.register_blueprint(chatbot_bp)
     app.register_blueprint(transcripts_bp)
@@ -60,6 +63,7 @@ def create_app():
     with app.app_context():
         ensure_upload_directory()
         create_all_tables(app)
+        start_scheduler(app)
 
     return app
 

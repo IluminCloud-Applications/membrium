@@ -6,6 +6,7 @@ import { CoursesPage } from "@/pages/courses";
 import { StudentsPage } from "@/pages/students";
 import { ShowcasePage } from "@/pages/showcase";
 import { PromotePage } from "@/pages/promote";
+import { EventPage } from "@/pages/events/EventPage";
 import { FilesPage } from "@/pages/files";
 import { TranscriptsPage } from "@/pages/transcripts";
 import { FAQPage } from "@/pages/faq";
@@ -59,6 +60,7 @@ export function AdminRoutes({ platformName }: AdminRoutesProps) {
                 <Route path="alunos" element={<StudentsPage />} />
                 <Route path="vitrine" element={<ShowcasePage />} />
                 <Route path="promocoes" element={<PromotePage />} />
+                <Route path="eventos" element={<EventPage />} />
                 <Route path="faq" element={<FAQPage />} />
                 <Route path="transcricoes" element={<TranscriptsPage />} />
                 <Route path="arquivos" element={<FilesPage />} />

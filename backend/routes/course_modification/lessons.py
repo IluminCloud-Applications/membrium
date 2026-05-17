@@ -9,6 +9,7 @@ from .transcript_sync import auto_fetch_transcript
 from services.lesson_thumbnail import youtube_thumbnail_url, extract_r2_thumbnail
 import os
 import logging
+from cache import invalidate_lesson
 
 logger = logging.getLogger("routes.course_modification.lessons")
 
@@ -82,6 +83,7 @@ def create_lesson(module_id):
         logger.info(f"Auto-importando transcrição para lesson={new_lesson.id} (type={new_lesson.video_type})")
         transcript_result = auto_fetch_transcript(new_lesson.id)
 
+    invalidate_lesson(module.course_id, module_id)
     return jsonify({
         'success': True,
         'lesson': _serialize_lesson(new_lesson),
@@ -131,6 +133,7 @@ def update_lesson(lesson_id):
             lesson.thumbnail_url = r2_thumb
             db.session.commit()
 
+    invalidate_lesson(lesson.module.course_id, lesson.module_id)
     return jsonify({
         'success': True,
         'lesson': _serialize_lesson(lesson),
@@ -155,8 +158,11 @@ def delete_lesson(lesson_id):
             _delete_file(doc.filename)
             db.session.delete(doc)
 
+        course_id = lesson.module.course_id
+        module_id = lesson.module_id
         db.session.delete(lesson)
         db.session.commit()
+        invalidate_lesson(course_id, module_id)
         return jsonify({'success': True})
 
     except Exception as e:
@@ -171,11 +177,18 @@ def reorder_lessons():
     """Reorder lessons by providing an ordered list of IDs."""
     data = request.get_json()
     new_order = data.get('order', [])
+    course_id = None
+    module_id = None
     for index, lesson_id in enumerate(new_order, start=1):
         lesson = Lesson.query.get(lesson_id)
         if lesson:
             lesson.order = index
+            if module_id is None:
+                module_id = lesson.module_id
+                course_id = lesson.module.course_id
     db.session.commit()
+    if course_id and module_id:
+        invalidate_lesson(course_id, module_id)
     return jsonify({'success': True})
 
 
@@ -188,9 +201,14 @@ def delete_lesson_file(lesson_id, file_id):
         return jsonify({'success': False, 'message': 'Arquivo não pertence a esta aula'}), 400
 
     try:
+        lesson = Lesson.query.get(lesson_id)
+        course_id = lesson.module.course_id if lesson else None
+        module_id = lesson.module_id if lesson else None
         _delete_file(document.filename)
         db.session.delete(document)
         db.session.commit()
+        if course_id and module_id:
+            invalidate_lesson(course_id, module_id)
         return jsonify({'success': True})
     except Exception as e:
         db.session.rollback()

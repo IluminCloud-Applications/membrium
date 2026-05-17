@@ -24,8 +24,8 @@ export function MenuTab({ menuItems, onAddItem, onEditItem, onDeleteItem }: Menu
                 </div>
                 <h3 className="font-semibold text-foreground mb-1">Nenhum item de menu</h3>
                 <p className="text-sm mb-4 text-center max-w-sm">
-                    Adicione links úteis como Suporte, WhatsApp, Comunidade e mais
-                    para facilitar o acesso dos seus alunos.
+                    Adicione links úteis como Suporte, WhatsApp, Comunidade e mais.
+                    Este menu é <strong className="text-foreground">global</strong> e aparecerá em todos os cursos.
                 </p>
                 <Button onClick={onAddItem} className="btn-brand gap-2 rounded-lg">
                     <i className="ri-add-line" />
@@ -41,13 +41,13 @@ export function MenuTab({ menuItems, onAddItem, onEditItem, onDeleteItem }: Menu
             <div className="rounded-xl border bg-card p-4 shadow-sm">
                 <div className="flex items-start gap-3">
                     <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-                        <i className="ri-links-line text-purple-600 text-lg" />
+                        <i className="ri-global-line text-purple-600 text-lg" />
                     </div>
                     <div className="flex-1">
-                        <h4 className="text-sm font-semibold">Links do Menu</h4>
+                        <h4 className="text-sm font-semibold">Menu Global da Plataforma</h4>
                         <p className="text-sm text-muted-foreground mt-0.5">
-                            Esses links ficam visíveis no menu lateral do curso para os alunos.
-                            Ideal para suporte, comunidade, WhatsApp e mais.
+                            Esses links aparecem em <strong>todos os cursos</strong> da área de membros.
+                            Alterar aqui reflete imediatamente em toda a plataforma.
                         </p>
                     </div>
                     <Button onClick={onAddItem} className="btn-brand gap-2 rounded-lg" size="sm">

@@ -142,3 +142,33 @@ def get_support_email():
     if email:
         return jsonify({'success': True, 'support_email': email})
     return jsonify({'success': False, 'support_email': None})
+
+
+# ─── Global platform menu ─────────────────────────────────────────
+
+@general_bp.route('/api/settings/menu', methods=['GET'])
+@admin_required
+def get_global_menu():
+    """Get the global menu items for the member area."""
+    _, config = get_integration('menu')
+    return jsonify({'menu_items': config.get('items', [])})
+
+
+@general_bp.route('/api/settings/menu', methods=['PUT', 'POST'])
+@admin_required
+def update_global_menu():
+    """Replace global menu items for the member area."""
+    data = request.get_json()
+    if data is None:
+        return jsonify({'success': False, 'message': 'Body inválido'}), 400
+
+    items = data.get('items', [])
+    set_integration('menu', True, {'items': items})
+    return jsonify({'success': True, 'menu_items': items})
+
+
+@general_bp.route('/api/member/menu', methods=['GET'])
+def get_global_menu_public():
+    """Public endpoint: returns global menu items for the member area."""
+    _, config = get_integration('menu')
+    return jsonify({'menu_items': config.get('items', [])})

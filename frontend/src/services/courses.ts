@@ -22,20 +22,6 @@ export interface CourseSimple {
     name: string;
 }
 
-export interface CourseGroupResponse {
-    id: number;
-    name: string;
-    principal_course_id: number | null;
-    course_ids: number[];
-    created_at: string | null;
-}
-
-export interface GroupFormPayload {
-    name: string;
-    principal_course_id: number | null;
-    course_ids: number[];
-}
-
 export interface MutationResult {
     success: boolean;
     message?: string;
@@ -87,37 +73,4 @@ export const coursesService = {
         apiClient.request<MutationResult>(`/courses/${id}`, {
             method: "DELETE",
         }),
-
-    /* ---------- Groups ---------- */
-
-    /** List all course groups */
-    listGroups: () =>
-        apiClient.get<CourseGroupResponse[]>("/courses/groups"),
-
-    /** Create a course group */
-    createGroup: (data: GroupFormPayload) =>
-        apiClient.post<{ success: boolean; group: CourseGroupResponse }>(
-            "/courses/groups",
-            data
-        ),
-
-    /** Update a course group */
-    updateGroup: (id: number, data: GroupFormPayload) =>
-        apiClient.put<{ success: boolean; group: CourseGroupResponse }>(
-            `/courses/groups/${id}`,
-            data
-        ),
-
-    /** Delete a course group */
-    deleteGroup: (id: number) =>
-        apiClient.request<MutationResult>(`/courses/groups/${id}`, {
-            method: "DELETE",
-        }),
-
-    /** Reorder courses within a group */
-    reorderGroup: (id: number, courseIds: number[]) =>
-        apiClient.post<{ success: boolean; group: CourseGroupResponse }>(
-            `/courses/groups/${id}/reorder`,
-            { course_ids: courseIds }
-        ),
 };

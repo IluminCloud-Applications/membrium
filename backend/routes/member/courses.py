@@ -1,57 +1,72 @@
-from flask import Blueprint, jsonify, session
-from models import Student
+from flask import Blueprint, jsonify
+from models import Student, Course, Module
 from .auth_helpers import member_or_preview
+from db.integration_helpers import get_integration
+from db.database import db
+from cache import cache_get, cache_set
 
 member_courses_bp = Blueprint('member_courses', __name__)
 
 
-def _build_course_data(course, student):
-    """Build course data dict with modules and progress for a student.
-    If student is None (admin preview), shows all modules unlocked with no progress.
-    """
-    from models import student_lessons
-    from db.database import db
-    from datetime import datetime
+# ── Cache builders ────────────────────────────────────────────────
 
-    now = datetime.utcnow()
-    modules = []
-
-    for module in course.modules:
-        total = len(module.lessons)
-
-        # Admin preview: no student context, skip progress/lock
-        if student is None:
-            completed = 0
-            is_locked = False
-            unlock_days_remaining = 0
-        else:
-            completed = db.session.query(student_lessons).filter_by(
-                student_id=student.id
-            ).filter(
-                student_lessons.c.lesson_id.in_([l.id for l in module.lessons])
-            ).count() if module.lessons else 0
-
-            # Calculate lock status
-            is_locked = False
-            unlock_days_remaining = 0
-            if module.unlock_after_days and module.unlock_after_days > 0:
-                days_since_enrollment = (now - student.created_at).days
-                if days_since_enrollment < module.unlock_after_days:
-                    is_locked = True
-                    unlock_days_remaining = module.unlock_after_days - days_since_enrollment
-
-        modules.append({
-            'id': module.id,
-            'name': module.name,
-            'image': module.image,
-            'order': module.order,
-            'totalLessons': total,
-            'completedLessons': completed,
-            'unlockAfterDays': module.unlock_after_days,
-            'isLocked': is_locked,
-            'unlockDaysRemaining': unlock_days_remaining,
+def _build_courses_structure():
+    """Build static course list for caching — no per-student fields."""
+    courses = Course.query.filter_by(is_published=True).order_by(Course.id).all()
+    result = []
+    for course in courses:
+        modules = course.modules
+        if not modules:
+            continue
+        result.append({
+            'id': course.id,
+            'uuid': course.uuid,
+            'name': course.name,
+            'description': course.description,
+            'image': course.image,
+            'category': course.category,
+            'moduleFormat': course.module_format,
+            'coverDesktop': course.cover_desktop,
+            'coverMobile': course.cover_mobile,
+            'modules': [{
+                'id': m.id,
+                'name': m.name,
+                'image': m.image,
+                'order': m.order,
+                'unlockAfterDays': m.unlock_after_days or 0,
+                'lessonIds': [l.id for l in m.lessons],
+            } for m in modules],
         })
+    return result
 
+
+def _build_course_detail_structure(course_id):
+    """Build static single-course structure for caching — no completion flags."""
+    course = Course.query.get(course_id)
+    if not course:
+        return None
+    modules = []
+    for m in course.modules:
+        lessons = [{
+            'id': l.id,
+            'title': l.title,
+            'description': l.description,
+            'videoUrl': l.video_url,
+            'videoType': l.video_type,
+            'thumbnailUrl': l.thumbnail_url,
+            'order': l.order,
+            'hasButton': l.has_button,
+            'buttonText': l.button_text,
+            'buttonLink': l.button_link,
+            'buttonDelay': l.button_delay,
+        } for l in m.lessons]
+        modules.append({
+            'id': m.id,
+            'name': m.name,
+            'image': m.image,
+            'order': m.order,
+            'lessons': lessons,
+        })
     return {
         'id': course.id,
         'uuid': course.uuid,
@@ -62,257 +77,159 @@ def _build_course_data(course, student):
         'moduleFormat': course.module_format,
         'coverDesktop': course.cover_desktop,
         'coverMobile': course.cover_mobile,
-        'menuItems': course.menu_items or [],
         'modules': modules,
     }
 
 
+# ── Helpers ───────────────────────────────────────────────────────
+
+def _get_completed_ids(student, lesson_ids):
+    """Return set of completed lesson IDs for a student from a given list."""
+    if not student or not lesson_ids:
+        return set()
+    from models import student_lessons as sl_table
+    rows = db.session.execute(
+        db.select(sl_table.c.lesson_id).where(
+            sl_table.c.student_id == student.id,
+            sl_table.c.lesson_id.in_(lesson_ids),
+        )
+    )
+    return {row[0] for row in rows}
+
+
+# ── Routes ────────────────────────────────────────────────────────
+
 @member_courses_bp.route('/courses', methods=['GET'])
 @member_or_preview
 def get_student_courses(student):
-    """Returns all courses the student has access to, with modules and progress.
-    In admin preview mode (student=None), returns ALL published courses."""
-    from models import Course
+    from sqlalchemy import text
 
-    if student is None:
-        # Admin preview: return ALL published courses
-        all_courses = Course.query.filter_by(is_published=True).all()
-        return jsonify([_build_course_data(c, None) for c in all_courses if len(c.modules) > 0])
+    # 1. Load static structure from cache
+    courses_structure = cache_get('courses:published')
+    if courses_structure is None:
+        courses_structure = _build_courses_structure()
+        cache_set('courses:published', courses_structure)
 
-    courses_data = []
-    for course in student.courses:
-        if not course.is_published or len(course.modules) == 0:
-            continue
-        courses_data.append(_build_course_data(course, student))
+    # 2. Auto-provision bonus courses for real students
+    if student is not None:
+        bonus_ids = [c['id'] for c in courses_structure if c['category'] == 'bonus']
+        if bonus_ids:
+            for cid in bonus_ids:
+                db.session.execute(
+                    text("INSERT INTO student_courses (student_id, course_id) "
+                         "VALUES (:sid, :cid) ON CONFLICT DO NOTHING"),
+                    {"sid": student.id, "cid": cid},
+                )
+            db.session.commit()
+            db.session.refresh(student)
 
-    return jsonify(courses_data)
+    # 3. One query for all completed lesson IDs
+    all_lesson_ids = [lid for c in courses_structure for m in c['modules'] for lid in m['lessonIds']]
+    completed_ids = _get_completed_ids(student, all_lesson_ids)
+    student_course_ids = {c.id for c in student.courses} if student is not None else None
 
+    # 4. Global menu (live — lightweight integration table read)
+    _, menu_config = get_integration('menu')
+    global_menu = menu_config.get('items', [])
 
-@member_courses_bp.route('/courses/grouped', methods=['GET'])
-@member_or_preview
-def get_student_courses_grouped(student):
-    """Returns courses organized by groups for the member area.
-    In admin preview mode (student=None), returns ALL published courses.
-    """
-    from models import CourseGroup, Course, course_group_courses
-    from db.database import db
+    from datetime import datetime
+    now = datetime.utcnow()
 
-    all_published_query = Course.query.filter_by(is_published=True).order_by(Course.id).all()
-    all_published = [c for c in all_published_query if len(c.modules) > 0]
-
-    # Admin preview: all published courses are "accessible"
-    if student is None:
-        student_course_ids = set(c.id for c in all_published)
-    else:
-        student_course_ids = set(
-            c.id for c in student.courses if c.is_published and len(c.modules) > 0
-        )
-
-    all_groups = CourseGroup.query.order_by(CourseGroup.id).all()
-    groups_data = []
-    grouped_course_ids = set()
-
-    if not all_groups:
-        group_courses = []
-        principal_course_id = None
-        
-        for course in all_published:
-            has_access = course.id in student_course_ids
-            
-            if has_access:
-                course_data = _build_course_data(course, student)
-            else:
-                locked_modules = []
-                for module in course.modules:
-                    locked_modules.append({
-                        'id': module.id,
-                        'name': module.name,
-                        'image': module.image,
-                        'order': module.order,
-                        'totalLessons': len(module.lessons),
-                        'completedLessons': 0,
-                        'unlockAfterDays': 0,
-                        'isLocked': True,
-                        'unlockDaysRemaining': 0,
-                    })
-                course_data = {
-                    'id': course.id,
-                    'uuid': course.uuid,
-                    'name': course.name,
-                    'description': course.description,
-                    'image': course.image,
-                    'category': course.category,
-                    'moduleFormat': course.module_format,
-                    'coverDesktop': course.cover_desktop,
-                    'coverMobile': course.cover_mobile,
-                    'menuItems': [],
-                    'modules': locked_modules,
-                }
-            course_data['hasAccess'] = has_access
-            group_courses.append(course_data)
-            
-            if principal_course_id is None and (course.cover_desktop or course.cover_mobile):
-                principal_course_id = course.id
-
-        if not principal_course_id and group_courses:
-            principal_course_id = group_courses[0]['id']
-            
-        if group_courses:
-            groups_data.append({
-                'id': 999999,
-                'name': 'Todos os Cursos',
-                'principalCourseId': principal_course_id,
-                'courses': group_courses,
+    result = []
+    for c in courses_structure:
+        if student is None:
+            # Admin preview: all unlocked, no progress
+            modules = [{
+                'id': m['id'], 'name': m['name'], 'image': m['image'],
+                'order': m['order'], 'totalLessons': len(m['lessonIds']),
+                'completedLessons': 0, 'unlockAfterDays': m['unlockAfterDays'],
+                'isLocked': False, 'unlockDaysRemaining': 0,
+            } for m in c['modules']]
+            result.append({
+                **{k: c[k] for k in ('id','uuid','name','description','image','category','moduleFormat','coverDesktop','coverMobile')},
+                'menuItems': global_menu,
+                'modules': modules,
+                'hasAccess': True,
             })
-            
-        return jsonify({
-            'groups': groups_data,
-            'ungrouped': []
-        })
-
-    for group in all_groups:
-        rows = db.session.query(
-            course_group_courses.c.course_id,
-            course_group_courses.c.order
-        ).filter(
-            course_group_courses.c.group_id == group.id
-        ).order_by(
-            course_group_courses.c.order
-        ).all()
-
-        group_course_ids = [r.course_id for r in rows]
-
-        has_any_access = any(cid in student_course_ids for cid in group_course_ids)
-        if not has_any_access:
             continue
 
-        group_courses = []
-        for cid in group_course_ids:
-            course = Course.query.get(cid)
-            if not course or not course.is_published or len(course.modules) == 0:
-                continue
+        has_access = c['id'] in student_course_ids
+        if not has_access:
+            modules = [{
+                'id': m['id'], 'name': m['name'], 'image': m['image'],
+                'order': m['order'], 'totalLessons': len(m['lessonIds']),
+                'completedLessons': 0, 'unlockAfterDays': 0,
+                'isLocked': True, 'unlockDaysRemaining': 0,
+            } for m in c['modules']]
+            result.append({
+                **{k: c[k] for k in ('id','uuid','name','description','image','category','moduleFormat','coverDesktop','coverMobile')},
+                'menuItems': [],
+                'modules': modules,
+                'hasAccess': False,
+            })
+            continue
 
-            has_access = cid in student_course_ids
-            if has_access:
-                course_data = _build_course_data(course, student)
-            else:
-                locked_modules = []
-                for module in course.modules:
-                    locked_modules.append({
-                        'id': module.id,
-                        'name': module.name,
-                        'image': module.image,
-                        'order': module.order,
-                        'totalLessons': len(module.lessons),
-                        'completedLessons': 0,
-                        'unlockAfterDays': 0,
-                        'isLocked': True,
-                        'unlockDaysRemaining': 0,
-                    })
-                course_data = {
-                    'id': course.id,
-                    'uuid': course.uuid,
-                    'name': course.name,
-                    'description': course.description,
-                    'image': course.image,
-                    'category': course.category,
-                    'moduleFormat': course.module_format,
-                    'coverDesktop': course.cover_desktop,
-                    'coverMobile': course.cover_mobile,
-                    'menuItems': [],
-                    'modules': locked_modules,
-                }
-            course_data['hasAccess'] = has_access
-            group_courses.append(course_data)
-
-        grouped_course_ids.update(group_course_ids)
-
-        groups_data.append({
-            'id': group.id,
-            'name': group.name,
-            'principalCourseId': group.principal_course_id,
-            'courses': group_courses,
+        modules = []
+        for m in c['modules']:
+            total = len(m['lessonIds'])
+            done = sum(1 for lid in m['lessonIds'] if lid in completed_ids)
+            is_locked = False
+            unlock_remaining = 0
+            if m['unlockAfterDays'] > 0:
+                days = (now - student.created_at).days
+                if days < m['unlockAfterDays']:
+                    is_locked = True
+                    unlock_remaining = m['unlockAfterDays'] - days
+            modules.append({
+                'id': m['id'], 'name': m['name'], 'image': m['image'],
+                'order': m['order'], 'totalLessons': total,
+                'completedLessons': done, 'unlockAfterDays': m['unlockAfterDays'],
+                'isLocked': is_locked, 'unlockDaysRemaining': unlock_remaining,
+            })
+        result.append({
+            **{k: c[k] for k in ('id','uuid','name','description','image','category','moduleFormat','coverDesktop','coverMobile')},
+            'menuItems': global_menu,
+            'modules': modules,
+            'hasAccess': True,
         })
 
-    # Ungrouped
-    if student is None:
-        ungrouped = [
-            _build_course_data(c, None) for c in all_published
-            if c.id not in grouped_course_ids
-        ]
-    else:
-        ungrouped = []
-        for course in student.courses:
-            if not course.is_published or len(course.modules) == 0:
-                continue
-            if course.id not in grouped_course_ids:
-                ungrouped.append(_build_course_data(course, student))
-
-    return jsonify({
-        'groups': groups_data,
-        'ungrouped': ungrouped,
-    })
+    return jsonify(result)
 
 
 @member_courses_bp.route('/courses/<int:course_id>', methods=['GET'])
 @member_or_preview
 def get_course_detail(student, course_id):
-    """Returns a single course details with modules and lessons.
-    In admin preview mode (student=None), skips access check."""
-    from models import Course, student_lessons
-    from db.database import db
+    course_check = Course.query.get_or_404(course_id)
 
-    course = Course.query.get_or_404(course_id)
-
-    # Check student has access (skip for admin preview)
-    if student is not None and course not in student.courses:
+    if student is not None and course_check not in student.courses:
         return jsonify({'error': 'Sem acesso a este curso'}), 403
 
+    # Load static structure from cache
+    cache_key = f'course:{course_id}:detail'
+    structure = cache_get(cache_key)
+    if structure is None:
+        structure = _build_course_detail_structure(course_id)
+        if structure:
+            cache_set(cache_key, structure)
+
+    if not structure:
+        return jsonify({'error': 'Curso não encontrado'}), 404
+
+    # Completed lesson IDs for this course (live)
+    all_lesson_ids = [l['id'] for m in structure['modules'] for l in m['lessons']]
+    completed_ids = _get_completed_ids(student, all_lesson_ids)
+
+    # Global menu (live)
+    _, menu_config = get_integration('menu')
+    global_menu = menu_config.get('items', [])
+
     modules = []
-    for module in course.modules:
-        lessons = []
-        for lesson in module.lessons:
-            if student is not None:
-                is_completed = db.session.query(student_lessons).filter_by(
-                    student_id=student.id,
-                    lesson_id=lesson.id,
-                ).first() is not None
-            else:
-                is_completed = False
-
-            lessons.append({
-                'id': lesson.id,
-                'title': lesson.title,
-                'description': lesson.description,
-                'videoUrl': lesson.video_url,
-                'videoType': lesson.video_type,
-                'thumbnailUrl': lesson.thumbnail_url,
-                'order': lesson.order,
-                'hasButton': lesson.has_button,
-                'buttonText': lesson.button_text,
-                'buttonLink': lesson.button_link,
-                'buttonDelay': lesson.button_delay,
-                'completed': is_completed,
-            })
-
-        modules.append({
-            'id': module.id,
-            'name': module.name,
-            'image': module.image,
-            'order': module.order,
-            'lessons': lessons,
-        })
+    for m in structure['modules']:
+        lessons = [{**l, 'completed': l['id'] in completed_ids} for l in m['lessons']]
+        modules.append({**m, 'lessons': lessons})
 
     return jsonify({
-        'id': course.id,
-        'uuid': course.uuid,
-        'name': course.name,
-        'description': course.description,
-        'image': course.image,
-        'category': course.category,
-        'moduleFormat': course.module_format,
-        'coverDesktop': course.cover_desktop,
-        'coverMobile': course.cover_mobile,
-        'menuItems': course.menu_items or [],
+        **{k: structure[k] for k in ('id','uuid','name','description','image','category','moduleFormat','coverDesktop','coverMobile')},
+        'menuItems': global_menu,
         'modules': modules,
     })

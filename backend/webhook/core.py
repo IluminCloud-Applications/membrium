@@ -3,7 +3,7 @@ Lógica central de processamento de estudantes via webhook.
 Responsável por adicionar/remover alunos do curso e disparar notificações.
 """
 from flask import request, jsonify
-from models import db, Course, Student, CourseGroup, course_group_courses
+from models import db, Course, Student
 from werkzeug.security import generate_password_hash
 from sqlalchemy.exc import IntegrityError
 from integrations import dispatch_notifications
@@ -92,36 +92,24 @@ def process_student(nome, email, course_id, add=True, password=None, phone=None,
     return _remove_student_from_course(student, course)
 
 
-def _get_bonus_courses(course):
-    """
-    Verifica se o curso pertence a algum agrupamento e retorna
-    os cursos bônus desse agrupamento.
-    """
-    groups = CourseGroup.query.filter(
-        CourseGroup.courses.any(Course.id == course.id)
+def _get_all_bonus_courses(exclude_course_id):
+    """Retorna todos os cursos bônus publicados, exceto o curso principal da compra."""
+    return Course.query.filter(
+        Course.category == 'bonus',
+        Course.is_published == True,
+        Course.id != exclude_course_id,
     ).all()
-
-    if not groups:
-        return []
-
-    bonus_courses = []
-    for group in groups:
-        for c in group.courses:
-            if c.id != course.id and c.category == 'bonus':
-                bonus_courses.append(c)
-
-    return bonus_courses
 
 
 def _add_student_to_course(student, course, password, phone=None):
-    """Adiciona aluno ao curso principal e aos cursos bônus do agrupamento."""
+    """Adiciona aluno ao curso principal e a todos os cursos bônus existentes."""
     already_enrolled = course in student.courses
 
     if not already_enrolled:
         student.courses.append(course)
 
-    # ── Adicionar aos cursos bônus do agrupamento ──────────────────
-    bonus_courses = _get_bonus_courses(course)
+    # ── Adicionar automaticamente a todos os cursos bônus ──────────
+    bonus_courses = _get_all_bonus_courses(course.id)
     added_bonus = []
     for bonus in bonus_courses:
         if bonus not in student.courses:
@@ -152,32 +140,18 @@ def _add_student_to_course(student, course, password, phone=None):
 
 
 def _remove_student_from_course(student, course):
-    """Remove aluno do curso principal e dos cursos bônus do agrupamento."""
+    """Remove aluno do curso especificado."""
     if course in student.courses:
         student.courses.remove(course)
 
-    bonus_courses = _get_bonus_courses(course)
-    removed_bonus = []
-    for bonus in bonus_courses:
-        if bonus in student.courses:
-            student.courses.remove(bonus)
-            removed_bonus.append(bonus.name)
-
     try:
         db.session.commit()
-        if removed_bonus:
-            logger.info(f"Estudante removido do curso + bônus: {', '.join(removed_bonus)}")
-        else:
-            logger.info("Estudante removido do curso com sucesso")
+        logger.info("Estudante removido do curso com sucesso")
     except IntegrityError:
         db.session.rollback()
         return jsonify({'error': 'Erro ao salvar os dados'}), 500
 
-    bonus_msg = f" + {len(removed_bonus)} bônus" if removed_bonus else ""
-    return jsonify({
-        'message': f'Estudante removido do curso com sucesso{bonus_msg}',
-        'removed_bonus': removed_bonus,
-    }), 200
+    return jsonify({'message': 'Estudante removido do curso com sucesso'}), 200
 
 
 def _trigger_notifications(student, course, password, phone=None):

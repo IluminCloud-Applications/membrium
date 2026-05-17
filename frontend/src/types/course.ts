@@ -17,15 +17,6 @@ export interface Course {
     isPublished: boolean;
 }
 
-export interface CourseGroup {
-    id: number;
-    name: string;
-    /** ID of the main/principal course in this group */
-    principalCourseId: number | null;
-    /** IDs of all courses in this group (including principal) */
-    courseIds: number[];
-}
-
 export const categoryLabels: Record<CourseCategory, string> = {
     principal: "Principal",
     order_bump: "Order Bump",

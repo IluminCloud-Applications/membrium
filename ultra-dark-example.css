@@ -1,0 +1,238 @@
+/* ========================================================
+   MEMBRIUM - ULTRA DARK THEME
+   Tema "Ultra Dark" com foco no conteúdo, inspirado em 
+   plataformas premium de streaming.
+   
+   Instruções: 
+   Copie este código e cole na aba de "Personalização" > "CSS"
+   na plataforma do Membrium.
+   ======================================================== */
+
+/* 1. LAYOUT PRINCIPAL E BACKGROUND */
+/* Sobrescreve o fundo principal para um preto/cinza bem escuro */
+.lesson-fullscreen {
+  background-color: #09090b !important; /* Fundo quase preto */
+  color: #ededed !important;            /* Texto principal claro */
+}
+
+/* Container de conteúdo */
+.lesson-root-layout {
+  background-color: #09090b !important;
+}
+
+/* 2. MENU LATERAL ESQUERDO (Mini Sidebar) */
+.lesson-mini-sidebar {
+  background-color: #09090b !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.04) !important;
+}
+
+.lesson-mini-btn {
+  color: #71717a !important; /* Cinza suave para ícones inativos */
+  transition: all 0.2s ease !important;
+}
+
+.lesson-mini-btn:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  color: #ededed !important; /* Fica branco ao passar o mouse */
+}
+
+/* 3. BARRA SUPERIOR (Breadcrumbs) */
+.lesson-breadcrumb-bar {
+  background-color: transparent !important;
+  border-bottom: none !important;
+  padding: 1.5rem 0 1rem 0 !important;
+}
+
+.lesson-breadcrumb-course, 
+.lesson-breadcrumb-module,
+.lesson-breadcrumb-lesson {
+  color: #71717a !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+}
+
+.lesson-breadcrumb-trail i {
+  color: #3f3f46 !important;
+}
+
+.lesson-breadcrumb-course:hover,
+.lesson-breadcrumb-module:hover,
+.lesson-breadcrumb-lesson:hover {
+  color: #ededed !important;
+}
+
+/* 4. PLAYER DE VÍDEO */
+.lesson-main-col {
+  padding-right: 2rem !important; /* Respiro entre vídeo e sidebar */
+}
+
+.lesson-video-container {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  background-color: #000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.04) !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* 5. SIDEBAR DIREITA (Módulos e Aulas) */
+.lesson-sidebar {
+  background-color: transparent !important;
+  border-left: none !important;
+  padding-top: 1.5rem !important;
+}
+
+/* Cabeçalho do Módulo (Acordeon) */
+.lesson-sidebar-module-header {
+  background-color: transparent !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+  padding: 1rem 0 !important;
+  border-radius: 0 !important;
+}
+
+.lesson-sidebar-module-header:hover {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+}
+
+.lesson-sidebar-module-name {
+  color: #ededed !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  letter-spacing: -0.01em !important;
+}
+
+.lesson-sidebar-module-count {
+  color: #71717a !important;
+  font-size: 0.75rem !important;
+}
+
+.lesson-sidebar-module-chevron {
+  color: #71717a !important;
+}
+
+/* Ítem de Aula na Sidebar (Cards) */
+.lesson-sidebar-item {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.03) !important;
+  border-radius: 12px !important;
+  margin-bottom: 0.5rem !important;
+  padding: 0.75rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.lesson-sidebar-item:hover {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.lesson-sidebar-item-active {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Thumbnail da Aula */
+.lesson-sidebar-thumb {
+  border-radius: 8px !important;
+  border: none !important;
+}
+
+.lesson-sidebar-item-title {
+  color: #a1a1aa !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+}
+
+.lesson-sidebar-item-active .lesson-sidebar-item-title {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+/* Progresso na Sidebar */
+.lesson-sidebar-progress-text {
+  color: #a1a1aa !important;
+}
+
+.lesson-sidebar-progress-bar {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.lesson-sidebar-progress-fill {
+  background-color: #ededed !important; /* Progresso branco premium */
+}
+
+/* 6. CONTEÚDO ABAIXO DO VÍDEO */
+.lesson-title-section {
+  padding-top: 2rem !important;
+}
+
+.lesson-title {
+  font-size: 2rem !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  letter-spacing: -0.02em !important;
+  margin-bottom: 0.5rem !important;
+}
+
+/* Botões de Navegação (Concluir e Setas) */
+.lesson-nav-bar {
+  border-top: none !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+  padding: 1.5rem 0 !important;
+  margin-top: 1.5rem !important;
+}
+
+.lesson-nav-btn {
+  background-color: transparent !important;
+  color: #a1a1aa !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+  padding: 0.5rem 1rem !important;
+  font-weight: 500 !important;
+}
+
+.lesson-nav-btn:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  color: #ededed !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.lesson-complete-btn {
+  background-color: transparent !important;
+  color: #ededed !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+}
+
+.lesson-complete-btn:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.lesson-complete-btn-done {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: #a1a1aa !important;
+  border: 1px solid transparent !important;
+}
+
+/* Abas de conteúdo (Visão Geral, Arquivos, etc) */
+.lesson-section-label {
+  color: #ededed !important;
+  font-weight: 600 !important;
+  border-bottom: 2px solid #ededed !important;
+  padding-bottom: 0.5rem !important;
+  display: inline-block !important;
+}
+
+.lesson-section-divider {
+  border-top: 1px solid rgba(255, 255, 255, 0.04) !important;
+  margin-top: -1px !important;
+}
+
+.lesson-description-body {
+  color: #a1a1aa !important;
+  font-size: 0.95rem !important;
+  line-height: 1.7 !important;
+  background-color: rgba(255, 255, 255, 0.02) !important;
+  padding: 1.5rem !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.03) !important;
+}
