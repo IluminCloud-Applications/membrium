@@ -25,6 +25,7 @@ interface VideoPlayerProps {
     videoType: string;
     lessonId?: number;
     hasNextLesson?: boolean;
+    nextLesson?: { title: string; thumbnailUrl: string | null };
     initialTime?: number;
     onNextLesson?: () => void;
     onTimeUpdate?: (currentTime: number, duration: number) => void;
@@ -36,16 +37,15 @@ export function VideoPlayer({
     videoType,
     lessonId,
     hasNextLesson,
+    nextLesson,
     initialTime,
     onNextLesson,
     onTimeUpdate,
 }: VideoPlayerProps) {
-    // If it's vturb, use the dedicated VTurb player (no vidstack)
     if (videoType === "vturb") {
         return <VTurbEmbedLoader videoId={src} />;
     }
 
-    // Key forces a clean remount when source changes - prevents stale provider errors
     const playerKey = `${videoType}-${src}-${lessonId ?? 0}`;
 
     return (
@@ -55,6 +55,7 @@ export function VideoPlayer({
             src={src}
             videoType={videoType}
             hasNextLesson={hasNextLesson}
+            nextLesson={nextLesson}
             initialTime={initialTime}
             onNextLesson={onNextLesson}
             onTimeUpdate={onTimeUpdate}
@@ -69,6 +70,7 @@ interface VidstackPlayerProps {
     src: string;
     videoType: string;
     hasNextLesson?: boolean;
+    nextLesson?: { title: string; thumbnailUrl: string | null };
     initialTime?: number;
     onNextLesson?: () => void;
     onTimeUpdate?: (currentTime: number, duration: number) => void;
@@ -79,6 +81,7 @@ function VidstackPlayer({
     src,
     videoType,
     hasNextLesson,
+    nextLesson,
     initialTime,
     onNextLesson,
     onTimeUpdate,
@@ -121,6 +124,7 @@ function VidstackPlayer({
                     <NextLessonBanner
                         hasNextLesson={hasNextLesson}
                         onNextLesson={onNextLesson}
+                        nextLesson={nextLesson}
                     />
                 )}
             </MediaPlayer>

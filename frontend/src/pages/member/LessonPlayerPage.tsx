@@ -38,6 +38,7 @@ export function LessonPlayerPage() {
         courseModules,
         hasNextLesson,
         hasPreviousLesson,
+        nextLesson,
         selectLesson,
         goToPrevious,
         goToNext,
@@ -124,6 +125,7 @@ export function LessonPlayerPage() {
                                     videoType={currentLesson.videoType}
                                     lessonId={currentLesson.id}
                                     hasNextLesson={hasNextLesson}
+                                    nextLesson={nextLesson ?? undefined}
                                     initialTime={initialVideoTime}
                                     onNextLesson={goToNext}
                                     onTimeUpdate={handleVideoTime}

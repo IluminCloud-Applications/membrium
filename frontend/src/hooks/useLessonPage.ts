@@ -8,11 +8,15 @@ import type {
     MemberModuleLessonsResponse,
     MemberMenuItem,
     MemberModuleDetail,
+    MemberLesson,
 } from "@/types/member";
+
+type NextLessonInfo = Pick<MemberLesson, "title" | "thumbnailUrl">;
 
 interface UseLessonPageReturn {
     hasNextLesson: boolean;
     hasPreviousLesson: boolean;
+    nextLesson: NextLessonInfo | null;
     loading: boolean;
     error: string | null;
     courseName: string;
@@ -235,13 +239,34 @@ export function useLessonPage(): UseLessonPageReturn {
     const hasNextLesson = useMemo(() => {
         if (!data || !currentLesson) return false;
         const idx = data.lessons.findIndex((l) => l.id === currentLesson.id);
-        // Still has lessons in this module
         if (idx < data.lessons.length - 1) return true;
-        // Check if there's a next module with lessons
         const sortedModules = [...courseModules].sort((a, b) => a.order - b.order);
         const currentModuleIdx = sortedModules.findIndex((m) => m.id === moduleId);
         if (currentModuleIdx < 0) return false;
         return sortedModules.slice(currentModuleIdx + 1).some((m) => m.lessons.length > 0);
+    }, [data, currentLesson, courseModules, moduleId]);
+
+    // Compute the next lesson info (title + thumbnail) for the banner
+    const nextLesson = useMemo((): NextLessonInfo | null => {
+        if (!data || !currentLesson) return null;
+        const idx = data.lessons.findIndex((l) => l.id === currentLesson.id);
+        // Next within same module
+        if (idx < data.lessons.length - 1) {
+            const n = data.lessons[idx + 1];
+            return { title: n.title, thumbnailUrl: n.thumbnailUrl };
+        }
+        // First lesson of the next module
+        const sortedModules = [...courseModules].sort((a, b) => a.order - b.order);
+        const currentModuleIdx = sortedModules.findIndex((m) => m.id === moduleId);
+        if (currentModuleIdx < 0) return null;
+        for (let i = currentModuleIdx + 1; i < sortedModules.length; i++) {
+            const nextMod = sortedModules[i];
+            if (nextMod.lessons.length > 0) {
+                const first = [...nextMod.lessons].sort((a, b) => a.order - b.order)[0];
+                return { title: first.title, thumbnailUrl: first.thumbnailUrl };
+            }
+        }
+        return null;
     }, [data, currentLesson, courseModules, moduleId]);
 
     // Compute hasPreviousLesson (within current module only for now)
@@ -271,6 +296,7 @@ export function useLessonPage(): UseLessonPageReturn {
         courseModules,
         hasNextLesson,
         hasPreviousLesson,
+        nextLesson,
         selectLesson,
         goToPrevious,
         goToNext,

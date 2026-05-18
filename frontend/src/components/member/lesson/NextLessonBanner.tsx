@@ -1,36 +1,39 @@
 import { useEffect, useRef, useState } from "react";
 import { useMediaState } from "@vidstack/react";
 
-const THRESHOLD = 20;
-const RADIUS = 14;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+const THRESHOLD = 15;
+
+interface NextLessonInfo {
+    title: string;
+    thumbnailUrl: string | null;
+}
 
 interface NextLessonBannerProps {
     hasNextLesson: boolean;
     onNextLesson: () => void;
+    nextLesson?: NextLessonInfo;
 }
 
-export function NextLessonBanner({ hasNextLesson, onNextLesson }: NextLessonBannerProps) {
+export function NextLessonBanner({ hasNextLesson, onNextLesson, nextLesson }: NextLessonBannerProps) {
     const currentTime = useMediaState("currentTime");
     const duration = useMediaState("duration");
     const ended = useMediaState("ended");
 
     const [visible, setVisible] = useState(false);
-    const [dismissed, setDismissed] = useState(false);
     const [remaining, setRemaining] = useState(THRESHOLD);
 
     const jumpedRef = useRef(false);
 
     // Auto-jump when video ends (100%)
     useEffect(() => {
-        if (!hasNextLesson || !ended || jumpedRef.current || dismissed) return;
+        if (!hasNextLesson || !ended || jumpedRef.current) return;
         jumpedRef.current = true;
         onNextLesson();
-    }, [ended, hasNextLesson, dismissed, onNextLesson]);
+    }, [ended, hasNextLesson, onNextLesson]);
 
     // Show banner and track countdown
     useEffect(() => {
-        if (!hasNextLesson || !duration || duration <= 0 || dismissed) return;
+        if (!hasNextLesson || !duration || duration <= 0) return;
         const rem = duration - currentTime;
         const shouldShow = rem <= THRESHOLD && rem > 0;
         setVisible(shouldShow);
@@ -38,71 +41,41 @@ export function NextLessonBanner({ hasNextLesson, onNextLesson }: NextLessonBann
             const ceiled = Math.ceil(rem);
             setRemaining(ceiled);
 
-            // Auto-jump when countdown hits 0
             if (ceiled <= 0 && !jumpedRef.current) {
                 jumpedRef.current = true;
                 onNextLesson();
             }
         }
-    }, [currentTime, duration, hasNextLesson, dismissed, onNextLesson]);
+    }, [currentTime, duration, hasNextLesson, onNextLesson]);
 
     if (!visible) return null;
 
-    const progress = Math.max(0, Math.min(1, remaining / THRESHOLD));
-    const dashOffset = CIRCUMFERENCE * (1 - progress);
-
     return (
         <div className="next-lesson-banner" onClick={onNextLesson}>
-            <div className="next-lesson-banner-inner">
-                <i className="ri-skip-forward-fill next-lesson-banner-icon" />
-                <span className="next-lesson-banner-text">Próxima Aula</span>
-            </div>
+            {/* Thumbnail (optional) */}
+            {nextLesson?.thumbnailUrl && (
+                <div className="next-lesson-banner-thumb">
+                    <img
+                        src={nextLesson.thumbnailUrl}
+                        alt={nextLesson.title}
+                        className="next-lesson-banner-thumb-img"
+                    />
+                    <div className="next-lesson-banner-thumb-overlay">
+                        <i className="ri-play-fill" />
+                    </div>
+                </div>
+            )}
 
-            {/* Circular countdown — click dismisses */}
-            <button
-                className="next-lesson-banner-dismiss"
-                onClick={(e) => {
-                    e.stopPropagation();
-                    setDismissed(true);
-                    setVisible(false);
-                }}
-                title="Fechar"
-            >
-                <svg
-                    className="next-lesson-countdown-svg"
-                    width="36"
-                    height="36"
-                    viewBox="0 0 36 36"
-                >
-                    {/* Track */}
-                    <circle
-                        className="next-lesson-countdown-track"
-                        cx="18" cy="18" r={RADIUS}
-                        fill="none"
-                        strokeWidth="2.5"
-                    />
-                    {/* Progress arc */}
-                    <circle
-                        className="next-lesson-countdown-fill"
-                        cx="18" cy="18" r={RADIUS}
-                        fill="none"
-                        strokeWidth="2.5"
-                        strokeDasharray={CIRCUMFERENCE}
-                        strokeDashoffset={dashOffset}
-                        strokeLinecap="round"
-                        transform="rotate(-90 18 18)"
-                    />
-                    {/* Number */}
-                    <text
-                        x="18" y="18"
-                        className="next-lesson-countdown-label"
-                        dominantBaseline="central"
-                        textAnchor="middle"
-                    >
-                        {remaining}
-                    </text>
-                </svg>
-            </button>
+            {/* Info: label + title */}
+            <div className="next-lesson-banner-info">
+                <span className="next-lesson-banner-label">
+                    <i className="ri-skip-forward-fill" />
+                    Próxima aula em {remaining}s
+                </span>
+                {nextLesson?.title && (
+                    <span className="next-lesson-banner-title">{nextLesson.title}</span>
+                )}
+            </div>
         </div>
     );
 }

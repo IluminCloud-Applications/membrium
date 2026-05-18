@@ -2835,87 +2835,129 @@
   right: 1.25rem;
   z-index: 40;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 0;
-  background: oklch(0.1 0 0 / 85%);
+  background: oklch(0.1 0 0 / 90%);
   border: 1px solid oklch(1 0 0 / 15%);
-  border-radius: 0.75rem;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 8px 32px oklch(0 0 0 / 50%), 0 0 0 1px oklch(1 0 0 / 5%);
+  border-radius: 0.875rem;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px oklch(0 0 0 / 55%), 0 0 0 1px oklch(1 0 0 / 5%);
   cursor: pointer;
   overflow: hidden;
+  width: clamp(200px, 28vw, 280px);
   animation: nextLessonSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .next-lesson-banner:hover {
   transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 12px 40px oklch(0 0 0 / 60%), 0 0 0 1px oklch(0.6 0.18 25 / 30%);
+  box-shadow: 0 12px 40px oklch(0 0 0 / 65%), 0 0 0 1px oklch(0.6 0.18 25 / 30%);
   border-color: oklch(0.6 0.18 25 / 50%);
 }
 
-.next-lesson-banner-inner {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.65rem 0.9rem 0.65rem 1rem;
-}
-
-.next-lesson-banner-icon {
-  font-size: 1.1rem;
-  color: oklch(0.7 0.18 25);
+/* Thumbnail */
+.next-lesson-banner-thumb {
+  position: relative;
+  width: 96px;
+  min-width: 96px;
   flex-shrink: 0;
+  overflow: hidden;
+  background: oklch(0.06 0 0);
 }
 
-.next-lesson-banner-text {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: oklch(0.95 0 0);
-  white-space: nowrap;
-  letter-spacing: -0.01em;
+.next-lesson-banner-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
-.next-lesson-banner-dismiss {
+.next-lesson-banner-thumb-overlay {
+  position: absolute;
+  inset: 0;
+  background: oklch(0 0 0 / 35%);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 100%;
-  min-height: 44px;
-  border: none;
-  background: oklch(1 0 0 / 4%);
-  border-left: 1px solid oklch(1 0 0 / 8%);
-  cursor: pointer;
-  padding: 0.35rem 0.5rem;
-  transition: background 0.15s;
-  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.2s;
 }
 
-.next-lesson-banner-dismiss:hover {
-  background: oklch(1 0 0 / 10%);
+.next-lesson-banner:hover .next-lesson-banner-thumb-overlay {
+  opacity: 1;
 }
 
-/* SVG ring countdown */
-.next-lesson-countdown-svg {
-  display: block;
-  overflow: visible;
+.next-lesson-banner-thumb-overlay i {
+  font-size: 1.4rem;
+  color: white;
+  filter: drop-shadow(0 1px 4px oklch(0 0 0 / 60%));
 }
 
-.next-lesson-countdown-track {
-  stroke: oklch(1 0 0 / 12%);
+/* Info area */
+.next-lesson-banner-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.7rem 0.85rem;
+  min-width: 0;
+  flex: 1;
 }
 
-.next-lesson-countdown-fill {
-  stroke: oklch(0.7 0.18 25);
-  transition: stroke-dashoffset 0.9s linear;
+.next-lesson-banner-label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: oklch(0.65 0.18 25);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
 }
 
-.next-lesson-countdown-label {
-  fill: oklch(0.8 0 0);
-  font-size: 10px;
-  font-weight: 700;
-  font-family: inherit;
+.next-lesson-banner-label i {
+  font-size: 0.85rem;
+}
+
+.next-lesson-banner-title {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: oklch(0.95 0 0);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+/* Responsive: telas pequenas / mobile */
+@media (max-width: 600px) {
+  .next-lesson-banner {
+    right: 0.75rem;
+    bottom: 70px;
+    width: clamp(160px, 65vw, 220px);
+    border-radius: 0.65rem;
+  }
+
+  .next-lesson-banner-thumb {
+    width: 68px;
+    min-width: 68px;
+  }
+
+  .next-lesson-banner-info {
+    padding: 0.5rem 0.6rem;
+    gap: 0.18rem;
+  }
+
+  .next-lesson-banner-label {
+    font-size: 0.62rem;
+  }
+
+  .next-lesson-banner-title {
+    font-size: 0.75rem;
+  }
 }
 
 @keyframes nextLessonSlideIn {
@@ -2928,8 +2970,6 @@
     transform: translateX(0) translateY(0);
   }
 }
-
-
 
 /* Controls container */
 .lesson-controls {
