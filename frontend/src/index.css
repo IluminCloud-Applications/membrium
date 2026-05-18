@@ -2225,6 +2225,9 @@
   font-size: 0.85rem;
   color: oklch(0.5 0 0);
   margin-top: 0.1rem;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 
 /* Two-column wrapper */
@@ -2244,7 +2247,8 @@
   border: 1px solid oklch(1 0 0 / 6%);
   border-radius: 1rem;
   padding: 1.5rem;
-  min-width: 360px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .member-profile-card-title {
@@ -2482,9 +2486,9 @@
   font-size: 0.9rem;
   font-weight: 500;
   color: oklch(0.85 0 0);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 
 .member-support-channel-arrow {
@@ -2501,11 +2505,51 @@
 
 @media (max-width: 768px) {
   .member-profile-support-wrapper {
-    padding: 0 1rem 3rem;
+    padding: 0 1rem 1rem;
   }
 
   .member-support-card {
     max-width: 100%;
+  }
+}
+
+/* ---- Mobile logout button ---- */
+.member-profile-logout-wrapper {
+  display: none; /* hidden on desktop */
+}
+
+@media (max-width: 768px) {
+  .member-profile-logout-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 0 1rem 6rem; /* extra bottom for floating nav */
+  }
+
+  .member-profile-logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.85rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: inherit;
+    color: oklch(0.65 0.18 25);
+    background: oklch(0.35 0.1 25 / 8%);
+    border: 1px solid oklch(0.5 0.15 25 / 20%);
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .member-profile-logout-btn:hover,
+  .member-profile-logout-btn:active {
+    background: oklch(0.35 0.1 25 / 16%);
+    border-color: oklch(0.5 0.15 25 / 35%);
+  }
+
+  .member-profile-logout-btn i {
+    font-size: 1.1rem;
   }
 }
 

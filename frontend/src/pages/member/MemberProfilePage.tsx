@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { memberService } from "@/services/member";
 import { customizationService } from "@/services/customization";
+import { authService } from "@/services/authService";
 import { MemberHeader } from "@/components/member";
 import { ChatWidget } from "@/components/member/chatbot";
 import { ProfileForm } from "./ProfileForm";
@@ -11,6 +12,11 @@ import type { MemberMenuItem } from "@/types/member";
 export function MemberProfilePage() {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
+
+    async function handleLogout() {
+        try { await authService.logout(); } catch { /* ignore */ }
+        window.location.href = "/login";
+    }
     const [phone, setPhone] = useState("");
     const [platformName, setPlatformName] = useState("Área de Membros");
     const [supportEmail, setSupportEmail] = useState("");
@@ -105,6 +111,14 @@ export function MemberProfilePage() {
                     supportEmail={supportEmail}
                     supportWhatsapp={supportWhatsapp}
                 />
+            </div>
+
+            {/* Mobile-only logout button */}
+            <div className="member-profile-logout-wrapper">
+                <button className="member-profile-logout-btn" onClick={handleLogout}>
+                    <i className="ri-logout-box-r-line" />
+                    Sair da conta
+                </button>
             </div>
 
             <ChatWidget />

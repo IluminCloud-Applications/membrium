@@ -70,10 +70,12 @@ services:
     image: ghcr.io/ilumincloud-applications/membrium:${APP_VERSION}
     depends_on:
       - postgres
+      - redis
     environment:
       - DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@postgres:5432/membriumwl
       - DB_PASSWORD=${DB_PASSWORD}
       - SECRET_KEY=${SECRET_KEY}
+      - REDIS_URL=redis://redis:6379/0
     volumes:
       - uploads_data:/app/backend/static/uploads
     networks:
@@ -101,9 +103,18 @@ services:
       - internal
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - internal
+
 volumes:
   membrium_data:
   uploads_data:
+  redis_data:
 
 networks:
   traefik:
@@ -124,10 +135,12 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@postgres:5432/membriumwl
       - SECRET_KEY=${SECRET_KEY}
+      - REDIS_URL=redis://redis:6379/0
     volumes:
       - uploads_data:/app/backend/static/uploads
     depends_on:
       - postgres
+      - redis
     networks:
       - internal
     restart: unless-stopped
@@ -144,9 +157,18 @@ services:
     networks:
       - internal
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - internal
+
 volumes:
   membrium_data:
   uploads_data:
+  redis_data:
 
 networks:
   internal:
@@ -156,6 +178,7 @@ networks:
 ```env
 DB_PASSWORD=sua_senha_segura_aqui
 SECRET_KEY=sua_chave_secreta_aqui
+REDIS_URL=redis://redis:6379/0
 ```
 
 > ⚠️ **Atenção:** A autenticação do PostgreSQL falha se `DB_PASSWORD` estiver vazio ou incorreto no `.env`. Certifique-se de definir o valor antes de subir os containers pela primeira vez.
@@ -170,6 +193,7 @@ SECRET_KEY=sua_chave_secreta_aqui
 - **Frontend:** React, Vite, ShadCN UI, Tailwind CSS, Remix Icons
 - **Backend:** Python, Flask, Gunicorn
 - **Banco de Dados:** PostgreSQL
+- **Cache:** Redis 7
 - **Infraestrutura:** Docker, Docker Compose
 
 ---
