@@ -20,6 +20,7 @@ interface LoginPageProps {
 export function LoginPage({ platformName }: LoginPageProps) {
     const [forgotOpen, setForgotOpen] = useState(false);
     const [config, setConfig] = useState<LoginPageConfig>(DEFAULT_LOGIN_CONFIG);
+    const [isLoadingConfig, setIsLoadingConfig] = useState(true);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
     useEffect(() => {
@@ -33,7 +34,15 @@ export function LoginPage({ platformName }: LoginPageProps) {
         try {
             const data = await customizationService.getLoginConfig();
             setConfig({ ...DEFAULT_LOGIN_CONFIG, ...data });
-        } catch { /* keep defaults */ }
+        } catch { 
+            /* keep defaults */ 
+        } finally {
+            setIsLoadingConfig(false);
+        }
+    }
+
+    if (isLoadingConfig) {
+        return null;
     }
 
     // Pick the device-specific config
