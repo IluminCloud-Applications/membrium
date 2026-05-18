@@ -106,7 +106,11 @@ export function HtmlLoginRenderer({ html, css, js }: HtmlLoginRendererProps) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>${css}</style>
+  <style>
+    /* Reset básico para evitar margens indesejadas */
+    body, html { margin: 0; padding: 0; min-height: 100vh; box-sizing: border-box; }
+    ${css}
+  </style>
 </head>
 <body>
   ${html}
@@ -131,6 +135,18 @@ export function HtmlLoginRenderer({ html, css, js }: HtmlLoginRendererProps) {
             ref={iframeRef}
             srcDoc={srcdoc}
             className="html-login-iframe"
+            style={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                width: "100vw",
+                height: "100vh",
+                border: "none",
+                margin: 0,
+                padding: 0,
+                zIndex: 9999,
+                backgroundColor: "transparent",
+            }}
             title="Login personalizado"
             sandbox="allow-scripts allow-same-origin allow-forms"
         />
