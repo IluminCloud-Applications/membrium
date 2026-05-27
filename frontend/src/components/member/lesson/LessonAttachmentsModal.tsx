@@ -13,7 +13,14 @@ export function LessonAttachmentsModal({ documents, initialDoc, onClose }: Lesso
     if (!documents?.length) return null;
 
     const currentIndex = documents.findIndex(d => d.id === selectedDoc?.id);
+    const isImage = (filename?: string) => {
+        if (!filename) return false;
+        const ext = filename.toLowerCase().split(".").pop() || "";
+        return ["png", "jpg", "jpeg", "gif", "webp", "svg"].includes(ext);
+    };
+
     const isPdf = selectedDoc?.filename?.toLowerCase().endsWith(".pdf");
+    const isImg = isImage(selectedDoc?.filename);
 
     return (
         <div className="pdf-viewer-backdrop" onClick={onClose}>
@@ -49,6 +56,14 @@ export function LessonAttachmentsModal({ documents, initialDoc, onClose }: Lesso
                                 className="pdf-viewer-iframe"
                                 title={selectedDoc.filename}
                             />
+                        ) : isImg ? (
+                            <div className="pdf-viewer-image-container">
+                                <img 
+                                    src={`/static/uploads/${selectedDoc.filename}`}
+                                    className="pdf-viewer-image"
+                                    alt={selectedDoc.filename}
+                                />
+                            </div>
                         ) : (
                             <div className="pdf-viewer-fallback">
                                 <i className="ri-file-download-line" />

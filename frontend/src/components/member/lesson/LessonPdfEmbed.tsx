@@ -5,49 +5,86 @@ interface LessonPdfEmbedProps {
     documents: MemberLessonDocument[];
 }
 
+const isImage = (filename?: string) => {
+    if (!filename) return false;
+    const ext = filename.toLowerCase().split(".").pop() || "";
+    return ["png", "jpg", "jpeg", "gif", "webp", "svg"].includes(ext);
+};
+
+const isPdf = (filename?: string) => {
+    return filename?.toLowerCase().endsWith(".pdf") || false;
+};
+
 /** Shown in place of the video player when a lesson has no video but has PDFs/documents. */
 export function LessonPdfEmbed({ documents }: LessonPdfEmbedProps) {
-    const pdfDocs = documents.filter((d) =>
-        d.filename?.toLowerCase().endsWith(".pdf")
-    );
+    const viewableDocs = documents.filter((d) => {
+        const name = d.filename?.toLowerCase() || "";
+        return isPdf(name) || isImage(name);
+    });
+
     const [activeIndex, setActiveIndex] = useState(0);
-    const activeDoc = pdfDocs[activeIndex] ?? documents[0];
+    const activeDoc = viewableDocs[activeIndex] ?? documents[0];
 
     if (!activeDoc) return null;
 
-    const isPdf = activeDoc.filename?.toLowerCase().endsWith(".pdf");
+    // Special case: if there is exactly 1 document and it's an image,
+    // render it directly and cleanly on the page.
+    if (viewableDocs.length === 1 && isImage(viewableDocs[0].filename)) {
+        const fileUrl = `/static/uploads/${viewableDocs[0].filename}`;
+        return (
+            <div className="lesson-single-image-wrapper">
+                <img
+                    src={fileUrl}
+                    alt={viewableDocs[0].filename}
+                    className="lesson-single-image"
+                />
+            </div>
+        );
+    }
+
+    const activeIsPdf = isPdf(activeDoc.filename);
+    const activeIsImg = isImage(activeDoc.filename);
     const fileUrl = `/static/uploads/${activeDoc.filename}`;
-    // #page=1&toolbar=0&navpanes=0 — hints to the PDF renderer to show only page 1, no UI chrome
-    const previewUrl = isPdf ? `${fileUrl}#page=1&toolbar=0&navpanes=0&scrollbar=0&view=FitH` : fileUrl;
 
     return (
         <div className="lesson-pdf-embed">
-            {/* Tab bar — shown when multiple PDF docs */}
-            {pdfDocs.length > 1 && (
+            {/* Tab bar — shown when multiple viewable docs */}
+            {viewableDocs.length > 1 && (
                 <div className="lesson-pdf-tabs">
-                    {pdfDocs.map((doc, i) => (
-                        <button
-                            key={doc.id}
-                            className={`lesson-pdf-tab ${i === activeIndex ? "lesson-pdf-tab-active" : ""}`}
-                            onClick={() => setActiveIndex(i)}
-                            title={doc.filename}
-                        >
-                            <i className="ri-file-pdf-2-line" />
-                            <span className="lesson-pdf-tab-name">{doc.filename}</span>
-                        </button>
-                    ))}
+                    {viewableDocs.map((doc, i) => {
+                        const isDocImg = isImage(doc.filename);
+                        return (
+                            <button
+                                key={doc.id}
+                                className={`lesson-pdf-tab ${i === activeIndex ? "lesson-pdf-tab-active" : ""}`}
+                                onClick={() => setActiveIndex(i)}
+                                title={doc.filename}
+                            >
+                                <i className={isDocImg ? "ri-image-line" : "ri-file-pdf-2-line"} />
+                                <span className="lesson-pdf-tab-name">{doc.filename}</span>
+                            </button>
+                        );
+                    })}
                 </div>
             )}
 
-            {/* Desktop: fully interactive iframe embed */}
+            {/* Desktop: fully interactive iframe embed or image */}
             <div className="lesson-pdf-desktop-view">
-                {isPdf ? (
+                {activeIsPdf ? (
                     <div className="lesson-pdf-ratio-box">
                         <iframe
                             key={activeDoc.id}
                             src={fileUrl}
                             className="lesson-pdf-iframe"
                             title={activeDoc.filename}
+                        />
+                    </div>
+                ) : activeIsImg ? (
+                    <div className="lesson-image-container">
+                        <img
+                            src={fileUrl}
+                            className="lesson-image-content"
+                            alt={activeDoc.filename}
                         />
                     </div>
                 ) : (
@@ -63,45 +100,54 @@ export function LessonPdfEmbed({ documents }: LessonPdfEmbedProps) {
                 )}
             </div>
 
-            {/* Mobile: first-page preview + full-area tap to open */}
+            {/* Mobile: image rendering, premium card for PDF, or download fallback */}
             <div className="lesson-pdf-mobile-view">
-                <a
-                    href={fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="lesson-pdf-preview-link"
-                    aria-label={`Abrir ${activeDoc.filename}`}
-                >
-                    {/* Non-interactive iframe — renders first page visually */}
-                    <iframe
-                        key={`preview-${activeDoc.id}`}
-                        src={previewUrl}
-                        className="lesson-pdf-preview-iframe"
-                        title={`Preview — ${activeDoc.filename}`}
-                        tabIndex={-1}
-                        aria-hidden="true"
-                    />
-
-                    {/* Gradient overlay + open button */}
-                    <div className="lesson-pdf-preview-overlay">
-                        <div className="lesson-pdf-preview-badge">
-                            <i className="ri-file-pdf-2-line" />
-                            <span>{activeDoc.filename}</span>
-                        </div>
-                        <div className="lesson-pdf-preview-cta">
-                            <span className="lesson-pdf-preview-btn">
-                                <i className="ri-expand-diagonal-line" />
-                                Abrir em tela cheia
-                            </span>
-                            <p className="lesson-pdf-preview-hint">Toque em qualquer lugar para abrir</p>
+                {activeIsImg ? (
+                    <div className="lesson-image-mobile-container">
+                        <img
+                            src={fileUrl}
+                            className="lesson-image-mobile-content"
+                            alt={activeDoc.filename}
+                        />
+                    </div>
+                ) : activeIsPdf ? (
+                    <div className="lesson-pdf-mobile-card">
+                        <div className="lesson-pdf-mobile-card-glow" />
+                        <div className="lesson-pdf-mobile-card-content">
+                            <div className="lesson-pdf-mobile-card-icon-wrapper">
+                                <i className="ri-file-pdf-2-fill text-rose-500" />
+                            </div>
+                            <h3 className="lesson-pdf-mobile-card-title">Apresentação da Aula</h3>
+                            <p className="lesson-pdf-mobile-card-text">
+                                Esta aula é uma apresentação em PDF. Clique abaixo para abrir o conteúdo.
+                            </p>
+                            <a
+                                href={fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="lesson-pdf-mobile-card-btn"
+                            >
+                                <i className="ri-book-open-line" />
+                                Abrir Apresentação
+                            </a>
                         </div>
                     </div>
-                </a>
+                ) : (
+                    <div className="lesson-pdf-fallback">
+                        <i className="ri-file-download-line" />
+                        <h3>{activeDoc.filename}</h3>
+                        <p>Este arquivo não pode ser visualizado diretamente.</p>
+                        <a href={fileUrl} download={activeDoc.filename} className="lesson-pdf-download-btn">
+                            <i className="ri-download-cloud-2-line" />
+                            Baixar Arquivo
+                        </a>
+                    </div>
+                )}
 
-                {/* Dots navigator — multiple PDFs */}
-                {pdfDocs.length > 1 && (
+                {/* Dots navigator — multiple viewable docs */}
+                {viewableDocs.length > 1 && (
                     <div className="lesson-pdf-mobile-nav">
-                        {pdfDocs.map((doc, i) => (
+                        {viewableDocs.map((doc, i) => (
                             <button
                                 key={doc.id}
                                 className={`lesson-pdf-mobile-dot ${i === activeIndex ? "lesson-pdf-mobile-dot-active" : ""}`}
@@ -115,13 +161,13 @@ export function LessonPdfEmbed({ documents }: LessonPdfEmbedProps) {
 
             {/* Footer — always visible, download button */}
             <div className="lesson-pdf-footer">
-                <i className="ri-file-pdf-2-line text-rose-400" />
+                <i className={activeIsImg ? "ri-image-line text-rose-400" : "ri-file-pdf-2-line text-rose-400"} />
                 <span className="lesson-pdf-footer-name">{activeDoc.filename}</span>
                 <a
                     href={fileUrl}
                     download={activeDoc.filename}
                     className="lesson-pdf-footer-btn"
-                    title="Baixar PDF"
+                    title={activeIsImg ? "Baixar Imagem" : "Baixar PDF"}
                 >
                     <i className="ri-download-2-line" />
                     Baixar
