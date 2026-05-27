@@ -7,6 +7,7 @@ import { MenuItemModal } from "@/components/modals/course_modification/MenuItemM
 import { BulkUploadModal } from "@/components/modals/course_modification/BulkUploadModal";
 import { VTurbBulkModal } from "@/components/modals/course_modification/VTurbBulkModal";
 import { AutoDescriptionModal } from "@/components/modals/course_modification/AutoDescriptionModal";
+import { PublishLessonsModal } from "@/components/modals/course_modification/PublishLessonsModal";
 import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModal";
 import type {
     CourseModule, CourseMenuItem, Lesson,
@@ -50,6 +51,7 @@ export function CourseModificationPage() {
     const [vturbBulkModuleId, setVturbBulkModuleId] = useState<number | null>(null);
     const [lessonSubmitting, setLessonSubmitting] = useState(false);
     const [autoDescriptionOpen, setAutoDescriptionOpen] = useState(false);
+    const [publishLessonsOpen, setPublishLessonsOpen] = useState(false);
 
     // Check connection statuses
     useEffect(() => {
@@ -73,6 +75,12 @@ export function CourseModificationPage() {
 
     const totalLessons = useMemo(
         () => course?.modules.reduce((sum, m) => sum + m.lessons.length, 0) ?? 0,
+        [course?.modules]
+    );
+
+    /** Aulas em rascunho em todos os módulos do curso */
+    const draftLessons = useMemo<Lesson[]>(
+        () => course?.modules.flatMap((m) => m.lessons.filter((l) => l.status === 'draft')) ?? [],
         [course?.modules]
     );
 
@@ -301,7 +309,16 @@ export function CourseModificationPage() {
 
     return (
         <div className="space-y-6 animate-fade-in">
-            <CourseHeader courseName={course.name} courseId={courseId} modulesCount={course.modules.length} lessonsCount={totalLessons} isPublished={course.isPublished} onPublished={refetch} />
+            <CourseHeader
+                courseName={course.name}
+                courseId={courseId}
+                modulesCount={course.modules.length}
+                lessonsCount={totalLessons}
+                isPublished={course.isPublished}
+                draftLessonsCount={draftLessons.length}
+                onPublished={refetch}
+                onPublishLessons={() => setPublishLessonsOpen(true)}
+            />
             <CourseTabs
                 modules={course.modules} cover={course.cover} menuItems={course.menuItems}
                 onAddModule={handleAddModule} onEditModule={handleEditModule} onDeleteModule={handleDeleteModule}
@@ -354,6 +371,18 @@ export function CourseModificationPage() {
                 courseId={courseId!}
                 onComplete={refetch}
             />
+
+            {/* Publish Lessons Modal */}
+            {courseId && (
+                <PublishLessonsModal
+                    open={publishLessonsOpen}
+                    onOpenChange={setPublishLessonsOpen}
+                    courseId={courseId}
+                    draftLessons={draftLessons}
+                    modules={course.modules}
+                    onSuccess={refetch}
+                />
+            )}
         </div>
     );
 }

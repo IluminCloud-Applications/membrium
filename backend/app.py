@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 from flask_cors import CORS
-from db.database import init_db, create_all_tables
+from db.database import init_db, create_all_tables, run_migrations
 from db.utils import ensure_upload_directory
 from services.event_scheduler import start_scheduler
 
@@ -63,6 +63,7 @@ def create_app():
     with app.app_context():
         ensure_upload_directory()
         create_all_tables(app)
+        run_migrations(app)
         start_scheduler(app)
 
     return app

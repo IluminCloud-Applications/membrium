@@ -18,6 +18,7 @@ export interface LessonResponse {
     video_platform: string;
     video_url: string;
     order: number;
+    status: string;
     has_cta: boolean;
     cta_text: string;
     cta_url: string;
@@ -147,6 +148,12 @@ export const courseModificationService = {
 
     deleteLessonFile: (lessonId: number, fileId: number) =>
         apiClient.delete<{ success: boolean }>(`${BASE}/lessons/${lessonId}/files/${fileId}`),
+
+    /** Publish all draft lessons in a course */
+    publishDraftLessons: (courseId: number) =>
+        apiClient.post<{ success: boolean; published: { id: number; title: string; module_id: number }[]; message: string }>(
+            `${BASE}/${courseId}/lessons/publish`, {}
+        ),
 
     /* ---------- Export / Import ---------- */
 

@@ -35,7 +35,7 @@ def _build_courses_structure():
                 'image': m.image,
                 'order': m.order,
                 'unlockAfterDays': m.unlock_after_days or 0,
-                'lessonIds': [l.id for l in m.lessons],
+                'lessonIds': [l.id for l in m.lessons if (l.status or 'published') == 'published'],
             } for m in modules],
         })
     return result
@@ -60,7 +60,7 @@ def _build_course_detail_structure(course_id):
             'buttonText': l.button_text,
             'buttonLink': l.button_link,
             'buttonDelay': l.button_delay,
-        } for l in m.lessons]
+        } for l in m.lessons if (l.status or 'published') == 'published']
         modules.append({
             'id': m.id,
             'name': m.name,

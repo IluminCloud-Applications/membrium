@@ -12,10 +12,12 @@ interface CourseHeaderProps {
     modulesCount: number;
     lessonsCount: number;
     isPublished: boolean;
+    draftLessonsCount: number;
     onPublished: () => void;
+    onPublishLessons: () => void;
 }
 
-export function CourseHeader({ courseName, courseId, modulesCount, lessonsCount, isPublished, onPublished }: CourseHeaderProps) {
+export function CourseHeader({ courseName, courseId, modulesCount, lessonsCount, isPublished, draftLessonsCount, onPublished, onPublishLessons }: CourseHeaderProps) {
     const navigate = useNavigate();
     const [exporting, setExporting] = useState(false);
     const [publishing, setPublishing] = useState(false);
@@ -87,10 +89,27 @@ export function CourseHeader({ courseName, courseId, modulesCount, lessonsCount,
                                 Rascunho
                             </Badge>
                         )}
+                        {draftLessonsCount > 0 && (
+                            <Badge className="text-xs bg-orange-500/20 text-orange-600 border border-orange-500/40">
+                                <i className="ri-draft-line mr-1" />
+                                {draftLessonsCount} {draftLessonsCount === 1 ? "aula em rascunho" : "aulas em rascunho"}
+                            </Badge>
+                        )}
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2">
+                    {/* Publish draft lessons button — only visible when there are drafts */}
+                    {draftLessonsCount > 0 && (
+                        <Button
+                            size="sm"
+                            onClick={onPublishLessons}
+                            className="btn-brand gap-2"
+                        >
+                            <i className="ri-send-plane-line" />
+                            Publicar Aulas ({draftLessonsCount})
+                        </Button>
+                    )}
                     {!isPublished && (
                         <Button
                             size="sm"

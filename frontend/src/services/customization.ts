@@ -28,6 +28,7 @@ export interface LoginPageConfig {
     custom_html: string | null;
     custom_css_html: string | null;
     custom_js_html: string | null;
+    quick_access_enabled: boolean;
     desktop: DeviceConfig;
     mobile: DeviceConfig;
 }
@@ -54,6 +55,7 @@ export const DEFAULT_LOGIN_CONFIG: LoginPageConfig = {
     custom_html: null,
     custom_css_html: null,
     custom_js_html: null,
+    quick_access_enabled: false,
     desktop: { ...DEFAULT_DEVICE_CONFIG },
     mobile: { ...DEFAULT_DEVICE_CONFIG },
 };

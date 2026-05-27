@@ -19,14 +19,6 @@ export function IntegrationsPage() {
                 description="Configure suas integrações com serviços externos."
             />
 
-            {/* Alert */}
-            <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 p-4">
-                <i className="ri-alert-line text-amber-500 text-lg mt-0.5" />
-                <p className="text-sm text-amber-700 dark:text-amber-300">
-                    A MembriumWL não dispara mensagens automaticamente. É necessário integrar ao menos
-                    uma opção (Email ou WhatsApp) para notificar seus alunos.
-                </p>
-            </div>
 
             <Tabs defaultValue="messaging" className="w-full">
                 <TabsList className="h-9">

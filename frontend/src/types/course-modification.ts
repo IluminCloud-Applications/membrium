@@ -30,6 +30,7 @@ export interface Lesson {
     hasCta: boolean;
     cta: LessonCTA;
     order: number;
+    status: 'draft' | 'published';
 }
 
 export interface CourseModule {

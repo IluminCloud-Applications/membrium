@@ -2,6 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import {
     DEFAULT_DEVICE_CONFIG,
     type LoginPageConfig,
@@ -75,6 +76,22 @@ export function LoginCustomizationForm({
                         <p className="text-xs text-muted-foreground">
                             Texto abaixo do nome da plataforma
                         </p>
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-lg border border-border p-4 bg-muted/10">
+                        <div className="space-y-0.5">
+                            <Label htmlFor="quickAccessEnabled" className="text-sm font-medium">
+                                Acesso Rápido sem Senha
+                            </Label>
+                            <p className="text-xs text-muted-foreground">
+                                Permite fazer login enviando link por e-mail ou WhatsApp
+                            </p>
+                        </div>
+                        <Switch
+                            id="quickAccessEnabled"
+                            checked={config.quick_access_enabled || false}
+                            onCheckedChange={(checked) => updateGlobal("quick_access_enabled", checked)}
+                        />
                     </div>
 
                     {/* ── Device-specific fields ────────────────── */}

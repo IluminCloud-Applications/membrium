@@ -5,6 +5,7 @@ from .lessons import lessons_bp
 from .export_import import export_import_bp
 from .auto_fill import auto_fill_bp
 from .banner_prompt import banner_prompt_bp
+from .publish import publish_bp
 
 course_modification_bp = Blueprint('course_modification', __name__, url_prefix='/api/course-modification')
 
@@ -15,4 +16,6 @@ course_modification_bp.register_blueprint(lessons_bp)
 course_modification_bp.register_blueprint(export_import_bp)
 course_modification_bp.register_blueprint(auto_fill_bp)
 course_modification_bp.register_blueprint(banner_prompt_bp)
+course_modification_bp.register_blueprint(publish_bp)
+
 

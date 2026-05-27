@@ -18,6 +18,9 @@ def _build_module_content(course_id, module_id):
     course = module.course
     lessons = []
     for lesson in module.lessons:
+        # Only expose published lessons to students
+        if (lesson.status or 'published') != 'published':
+            continue
         documents = [{
             'id': doc.id,
             'filename': doc.filename,

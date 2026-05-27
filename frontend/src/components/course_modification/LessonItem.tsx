@@ -17,8 +17,14 @@ interface LessonItemProps {
 }
 
 export function LessonItem({ lesson, index, onEdit, onDelete }: LessonItemProps) {
+    const isDraft = lesson.status === 'draft';
+
     return (
-        <div className="group flex items-center gap-3 rounded-lg border bg-card p-3 hover:shadow-sm transition-all">
+        <div className={`group flex items-center gap-3 rounded-lg border p-3 hover:shadow-sm transition-all ${
+            isDraft
+                ? 'bg-destructive/5 border-destructive/30'
+                : 'bg-card'
+        }`}>
             {/* Drag handle */}
             <div className="flex-shrink-0 cursor-move text-muted-foreground hover:text-foreground transition-colors">
                 <i className="ri-draggable text-lg" />
@@ -56,6 +62,12 @@ export function LessonItem({ lesson, index, onEdit, onDelete }: LessonItemProps)
 
             {/* Tags */}
             <div className="hidden sm:flex items-center gap-2">
+                {isDraft && (
+                    <Badge className="text-[10px] font-medium bg-destructive/10 text-destructive border border-destructive/30">
+                        <i className="ri-draft-line mr-1 text-[10px]" />
+                        Rascunho
+                    </Badge>
+                )}
                 {lesson.hasCta && (
                     <Badge variant="secondary" className="text-[10px] font-medium bg-primary/8 text-primary">
                         <i className="ri-cursor-line mr-1 text-[10px]" />

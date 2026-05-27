@@ -38,11 +38,12 @@ DEFAULT_LOGIN_PAGE = {
     'custom_html': None,
     'custom_css_html': None,
     'custom_js_html': None,
+    'quick_access_enabled': False,
     'desktop': {**DEFAULT_DEVICE_CONFIG},
     'mobile': {**DEFAULT_DEVICE_CONFIG},
 }
 
-GLOBAL_ALLOWED = {'layout', 'logo', 'subtitle', 'custom_css', 'custom_html', 'custom_css_html', 'custom_js_html'}
+GLOBAL_ALLOWED = {'layout', 'logo', 'subtitle', 'custom_css', 'custom_html', 'custom_css_html', 'custom_js_html', 'quick_access_enabled'}
 DEVICE_ALLOWED = set(DEFAULT_DEVICE_CONFIG.keys())
 
 

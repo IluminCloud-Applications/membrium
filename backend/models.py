@@ -70,6 +70,7 @@ class Lesson(db.Model):
     button_link = db.Column(db.String(500))
     button_delay = db.Column(db.Integer)
     module_id = db.Column(db.Integer, db.ForeignKey('module.id'), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='draft')  # 'draft' | 'published'
     documents = db.relationship('Document', backref='lesson', lazy=True)
     
     def format_video_url(self):

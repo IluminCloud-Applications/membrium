@@ -39,6 +39,7 @@ def _serialize_lesson(lesson):
         'video_platform': lesson.video_type or 'youtube',
         'video_url': lesson.video_url or '',
         'order': lesson.order,
+        'status': lesson.status or 'published',
         'has_cta': lesson.has_button or False,
         'cta_text': lesson.button_text or '',
         'cta_url': lesson.button_link or '',

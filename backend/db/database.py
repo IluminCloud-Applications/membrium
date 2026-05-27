@@ -60,3 +60,73 @@ def create_all_tables(app):
                 f"create_all_tables warning (likely race condition): {e}"
             )
 
+
+def run_migrations(app):
+    """Auto-run all .sql migration files from db/migrations/ in alphabetical order.
+
+    Each file has comment lines stripped first, then is split on semicolons and
+    executed statement by statement. Statements that fail (e.g. column already
+    exists) are caught and logged as warnings so they never crash the app on
+    subsequent boots.
+    """
+    migrations_dir = os.path.join(os.path.dirname(__file__), 'migrations')
+    if not os.path.isdir(migrations_dir):
+        logger.warning(f"Migrations directory not found: {migrations_dir}")
+        return
+
+    sql_files = sorted(
+        f for f in os.listdir(migrations_dir) if f.endswith('.sql')
+    )
+
+    if not sql_files:
+        logger.info("[migration] No migration files found.")
+        return
+
+    logger.info(f"[migration] Running {len(sql_files)} migration file(s): {sql_files}")
+
+    try:
+        conn = db.engine.raw_connection()
+        try:
+            cursor = conn.cursor()
+            for filename in sql_files:
+                filepath = os.path.join(migrations_dir, filename)
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    sql_content = f.read()
+
+                # Strip comment-only lines first, THEN split on semicolons.
+                # Filtering after split would incorrectly discard blocks that start
+                # with comments but contain real SQL before the semicolon.
+                clean_lines = [
+                    line for line in sql_content.splitlines()
+                    if not line.strip().startswith('--')
+                ]
+                clean_sql = '\n'.join(clean_lines)
+
+                statements = [
+                    stmt.strip()
+                    for stmt in clean_sql.split(';')
+                    if stmt.strip()
+                ]
+
+                applied = 0
+                for stmt in statements:
+                    try:
+                        cursor.execute(stmt)
+                        conn.commit()
+                        applied += 1
+                    except Exception as e:
+                        conn.rollback()
+                        logger.warning(
+                            f"[migration] {filename}: skipped statement "
+                            f"({type(e).__name__}: {e})"
+                        )
+
+                logger.info(
+                    f"[migration] {filename}: {applied}/{len(statements)} statement(s) applied."
+                )
+            cursor.close()
+        finally:
+            conn.close()
+    except Exception as e:
+        logger.error(f"[migration] Fatal error in run_migrations: {e}", exc_info=True)
+

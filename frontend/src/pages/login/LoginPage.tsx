@@ -85,7 +85,10 @@ export function LoginPage({ platformName }: LoginPageProps) {
                         <h1 className="platform-name text-3xl lg:text-4xl">Bem-vindo</h1>
                         <p className="login-subtitle text-sm mt-1">{subtitle}</p>
                     </div>
-                    <LoginForm onForgotPassword={() => setForgotOpen(true)} />
+                    <LoginForm
+                        onForgotPassword={() => setForgotOpen(true)}
+                        quickAccessEnabled={config.quick_access_enabled || false}
+                    />
                     <ForgotPasswordModal open={forgotOpen} onOpenChange={setForgotOpen} />
                 </AuthLayoutModern>
             </>
@@ -113,7 +116,10 @@ export function LoginPage({ platformName }: LoginPageProps) {
                 </div>
                 <Card className="login-card border-0 shadow-xl shadow-black/5 dark:shadow-black/20">
                     <CardContent className="p-8">
-                        <LoginForm onForgotPassword={() => setForgotOpen(true)} />
+                        <LoginForm
+                            onForgotPassword={() => setForgotOpen(true)}
+                            quickAccessEnabled={config.quick_access_enabled || false}
+                        />
                     </CardContent>
                 </Card>
                 <ForgotPasswordModal open={forgotOpen} onOpenChange={setForgotOpen} />

@@ -11,6 +11,7 @@ interface PasswordInputProps {
     required?: boolean;
     autoComplete?: string;
     labelRight?: ReactNode;
+    autoFocus?: boolean;
 }
 
 export function PasswordInput({
@@ -22,6 +23,7 @@ export function PasswordInput({
     required = true,
     autoComplete = "current-password",
     labelRight,
+    autoFocus,
 }: PasswordInputProps) {
     const [showPassword, setShowPassword] = useState(false);
 
@@ -44,6 +46,7 @@ export function PasswordInput({
                     required={required}
                     autoComplete={autoComplete}
                     className="pl-10 pr-10"
+                    autoFocus={autoFocus}
                 />
                 <button
                     type="button"

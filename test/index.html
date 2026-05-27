@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Login - Programa Micro Jobs Lucrativos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://membros.metodomicrojobs.com">
+    <link rel="preload" as="image" href="https://membros.metodomicrojobs.com/static/uploads/login_f6a73867.png" fetchpriority="high">
+    <link rel="preload" as="image" href="https://membros.metodomicrojobs.com/static/uploads/login_ecc26712_compress.webp">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="login-container">
+        <!-- Lado esquerdo - Banner / Imagem -->
+        <aside class="login-visual">
+            <div class="visual-image"></div>
+            <div class="visual-overlay"></div>
+            <footer class="visual-footer">
+                <p class="footer-credit">Feito com <span class="heart">♡</span> Ivana Oliveira — <a href="mailto:Suporte@metodomicrojobs.com">Suporte@metodomicrojobs.com</a></p>
+                <p class="footer-copy">Copyright © 2026 — Mentoria do Micro Jobs <span class="footer-icons">📱✨</span></p>
+                <p class="footer-rights">Todos os direitos reservados.</p>
+            </footer>
+        </aside>
+
+        <!-- Lado direito - Formulários -->
+        <main class="login-form-wrapper">
+            <div class="login-form-container">
+                <!-- Logo -->
+                <div class="brand">
+                    <img src="https://membros.metodomicrojobs.com/static/uploads/login_f6a73867.png" alt="PMJ — Programa Micro Jobs Lucrativos" class="brand-logo-img">
+                </div>
+
+                <!-- ============================================
+                     VIEW: LOGIN
+                     ============================================ -->
+                <section class="form-view is-active" data-view="login">
+                    <div class="welcome">
+                        <h1 class="welcome-title">Bem-vinda de volta</h1>
+                        <p class="welcome-subtitle">Acesse sua área de membros para continuar sua jornada</p>
+                    </div>
+
+                    <form id="login-form" class="login-form" action="/api/auth/login" method="POST" novalidate>
+                        <div class="form-group">
+                            <label for="email">E-mail</label>
+                            <div class="input-wrapper">
+                                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke-width="2"/>
+                                    <polyline points="22,6 12,13 2,6" stroke-width="2"/>
+                                </svg>
+                                <input type="email" id="email" name="email" placeholder="seu@email.com" autocomplete="email" required>
+                            </div>
+                            <span class="form-error" id="emailError"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password">Senha</label>
+                            <div class="input-wrapper">
+                                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-width="2"/>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke-width="2"/>
+                                </svg>
+                                <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required>
+                                <button type="button" class="toggle-password" id="togglePassword" aria-label="Mostrar senha">
+                                    <svg class="eye-icon eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke-width="2"/>
+                                        <circle cx="12" cy="12" r="3" stroke-width="2"/>
+                                    </svg>
+                                    <svg class="eye-icon eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="display:none;">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" stroke-width="2"/>
+                                        <line x1="1" y1="1" x2="23" y2="23" stroke-width="2"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <span class="form-error" id="passwordError"></span>
+                        </div>
+
+                        <div class="form-options">
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" id="remember" name="remember">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Lembrar de mim</span>
+                            </label>
+                            <a href="#" class="forgot-link" id="forgotLink" data-target-view="forgot">Esqueceu sua senha?</a>
+                        </div>
+
+                        <button type="submit" class="submit-btn" id="submitBtn">
+                            <span class="btn-text">Entrar</span>
+                            <span class="btn-loader" aria-hidden="true">
+                                <span class="loader-dot"></span>
+                                <span class="loader-dot"></span>
+                                <span class="loader-dot"></span>
+                            </span>
+                        </button>
+
+                        <div class="form-message" id="formMessage"></div>
+                    </form>
+                </section>
+
+                <!-- ============================================
+                     VIEW: ESQUECI MINHA SENHA
+                     ============================================ -->
+                <section class="form-view" data-view="forgot" hidden>
+                    <div class="welcome">
+                        <h1 class="welcome-title">Recuperar acesso</h1>
+                        <p class="welcome-subtitle">Informe seu e-mail e enviaremos um link para redefinir sua senha</p>
+                    </div>
+
+                    <form id="forgot-form" class="login-form" action="/api/auth/forgot-password" method="POST" novalidate>
+                        <div class="form-group">
+                            <label for="forgotEmail">E-mail</label>
+                            <div class="input-wrapper">
+                                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke-width="2"/>
+                                    <polyline points="22,6 12,13 2,6" stroke-width="2"/>
+                                </svg>
+                                <input type="email" id="forgotEmail" name="email" placeholder="seu@email.com" autocomplete="email" required>
+                            </div>
+                            <span class="form-error" id="forgotEmailError"></span>
+                        </div>
+
+                        <button type="submit" class="submit-btn" id="forgotSubmitBtn">
+                            <span class="btn-text">Enviar link de recuperação</span>
+                            <span class="btn-loader" aria-hidden="true">
+                                <span class="loader-dot"></span>
+                                <span class="loader-dot"></span>
+                                <span class="loader-dot"></span>
+                            </span>
+                        </button>
+
+                        <div class="form-message" id="forgotMessage"></div>
+
+                        <a href="#" class="back-link" id="backToLogin" data-target-view="login">
+                            <svg class="back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <line x1="19" y1="12" x2="5" y2="12" stroke-width="2"/>
+                                <polyline points="12 19 5 12 12 5" stroke-width="2"/>
+                            </svg>
+                            Voltar para o login
+                        </a>
+                    </form>
+                </section>
+
+                <div class="support-info">
+                    <p>Precisa de ajuda? <a href="mailto:suporte@metodomicrojobs.com">Fale com o suporte</a></p>
+                </div>
+
+                <!-- Créditos visíveis apenas no mobile -->
+                <div class="mobile-credits">
+                    <p>Feito com <span class="heart">♡</span> Ivana Oliveira</p>
+                    <p>© 2026 — Mentoria do Micro Jobs</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

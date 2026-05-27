@@ -62,6 +62,7 @@ def create_lesson(module_id):
         button_text=button_text,
         button_link=button_link,
         button_delay=button_delay,
+        status='draft',
     )
     db.session.add(new_lesson)
 
@@ -273,6 +274,7 @@ def _serialize_lesson(lesson):
         'video_url': lesson.video_url or '',
         'thumbnail_url': lesson.thumbnail_url or '',
         'order': lesson.order,
+        'status': lesson.status or 'published',
         'has_cta': lesson.has_button or False,
         'cta_text': lesson.button_text or '',
         'cta_url': lesson.button_link or '',

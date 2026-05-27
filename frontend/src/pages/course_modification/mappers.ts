@@ -36,6 +36,7 @@ export function mapLesson(raw: LessonResponse): Lesson {
             delaySeconds: raw.cta_delay,
         },
         order: raw.order,
+        status: (raw.status as 'draft' | 'published') || 'published',
     };
 }
 

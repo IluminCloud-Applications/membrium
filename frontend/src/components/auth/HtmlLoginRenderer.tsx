@@ -94,6 +94,87 @@ const BRIDGE_SCRIPT = `
         .catch(function () { showMsg(form, 'Erro de conexão. Tente novamente.', true); setBusy(btn, false); });
     }
   });
+
+  // ─── Quick Access ─────────────────────────────────────────
+  // Check if any messaging integration is active.
+  // Sets window.MEMBRIUM_STATUS so custom JS can read it.
+  // If yes, enable [data-membrium="quick-access"] elements
+  // OR auto-inject a button below the login form if none exists.
+  fetch(BASE + '/api/auth/quick-access/status', { credentials: 'include' })
+    .then(function (r) { return r.json(); })
+    .then(function (status) {
+      // Expose to user-authored JS in the same page
+      window.MEMBRIUM_STATUS = { available: !!status.available, channels: status.channels || {} };
+
+      if (!status.available) return;
+
+      // Wire up any element marked data-membrium="quick-access"
+      document.querySelectorAll('[data-membrium="quick-access"]').forEach(function (el) {
+        el.style.display = '';
+        el.addEventListener('click', function () { triggerQuickAccess(el); });
+      });
+
+      // Auto-inject button if no quick-access element exists in the page
+      var loginForm = document.getElementById('login-form')
+                   || document.querySelector('[data-membrium="login"]');
+      if (loginForm && !document.querySelector('[data-membrium="quick-access"]')) {
+        var wrapper = document.createElement('div');
+        wrapper.style.cssText = 'margin-top:12px;text-align:center;';
+        var qaBtn = document.createElement('button');
+        qaBtn.type = 'button';
+        qaBtn.setAttribute('data-membrium', 'quick-access');
+        qaBtn.textContent = '⚡ Receber Acesso Rápido (sem senha)';
+        qaBtn.style.cssText = [
+          'background:none',
+          'border:none',
+          'color:#6366f1',
+          'font-size:.82rem',
+          'cursor:pointer',
+          'text-decoration:underline',
+          'padding:4px 0',
+        ].join(';');
+        qaBtn.addEventListener('click', function () { triggerQuickAccess(loginForm); });
+        wrapper.appendChild(qaBtn);
+        loginForm.appendChild(wrapper);
+      }
+    })
+    .catch(function () { /* integration check failed — silent */ });
+
+  function triggerQuickAccess(context) {
+    var emailInput = document.querySelector('[name=email]');
+    var email = emailInput ? emailInput.value.trim() : '';
+    if (!email) {
+      var msg = document.createElement('p');
+      msg.style.cssText = 'font-size:.82rem;color:#E62020;text-align:center;margin-top:6px;';
+      msg.textContent = 'Informe seu e-mail antes de solicitar o acesso rápido.';
+      if (context && context.appendChild) context.appendChild(msg);
+      setTimeout(function () { if (msg.parentNode) msg.parentNode.removeChild(msg); }, 4000);
+      return;
+    }
+
+    var originalText = context.textContent;
+    if (context.tagName === 'BUTTON' || context.tagName === 'A') setBusy(context, true);
+
+    fetch(BASE + '/api/auth/quick-access/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email: email }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        showMsg(
+          context.closest('form') || document.body,
+          data.message || (data.success ? 'Link enviado! Verifique seu e-mail ou WhatsApp.' : 'Erro ao enviar link.'),
+          !data.success
+        );
+        if (context.tagName === 'BUTTON' || context.tagName === 'A') setBusy(context, false);
+      })
+      .catch(function () {
+        showMsg(context.closest('form') || document.body, 'Erro de conexão. Tente novamente.', true);
+        if (context.tagName === 'BUTTON' || context.tagName === 'A') setBusy(context, false);
+      });
+  }
 })();
 `;
 

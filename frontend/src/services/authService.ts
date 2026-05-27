@@ -46,4 +46,16 @@ export const authService = {
     /** Quick access — authenticate student by UUID token */
     quickAccess: (uuid: string) =>
         apiClient.post<LoginResponse>(`/auth/quick-access/${uuid}`, {}),
+
+    /** Check if student email exists and integrations are active */
+    checkQuickAccess: (email: string) =>
+        apiClient.post<{ exists: boolean; has_integrations: boolean; success: boolean; message?: string }>("/auth/quick-access/check", { email }),
+
+    /** Probe whether any messaging integration is active (no email needed) */
+    quickAccessStatus: () =>
+        apiClient.get<{ available: boolean; channels: { email: boolean; whatsapp: boolean } }>("/auth/quick-access/status"),
+
+    /** Request quick access link to be sent */
+    sendQuickAccess: (email: string) =>
+        apiClient.post<ApiResponse>("/auth/quick-access/send", { email }),
 };
