@@ -3,7 +3,8 @@
    Used across course editing components
    ============================================ */
 
-export type VideoPlatform = "youtube" | "custom" | "vturb" | "cloudflare";
+export type VideoPlatform = "youtube" | "custom" | "vturb" | "cloudflare" | "none";
+
 
 export interface LessonCTA {
     text: string;

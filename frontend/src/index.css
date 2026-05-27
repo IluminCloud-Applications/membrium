@@ -5157,6 +5157,333 @@
 }
 
 /* ============================================
+   INLINE PDF EMBED — Lesson player (no video)
+   ============================================ */
+
+.lesson-pdf-embed {
+  display: flex;
+  flex-direction: column;
+  border-radius: 1rem;
+  overflow: hidden;
+  background: oklch(0.1 0 0);
+  border: 1px solid oklch(1 0 0 / 8%);
+  box-shadow: 0 8px 32px oklch(0 0 0 / 40%);
+  margin-bottom: 0.5rem;
+}
+
+/* ---- Tab bar ---- */
+.lesson-pdf-tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem 0;
+  background: oklch(0.12 0 0);
+  overflow-x: auto;
+  border-bottom: 1px solid oklch(1 0 0 / 8%);
+}
+
+.lesson-pdf-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.5rem 0.5rem 0 0;
+  border: 1px solid oklch(1 0 0 / 8%);
+  border-bottom: none;
+  background: oklch(0.15 0 0);
+  color: oklch(0.6 0 0);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.lesson-pdf-tab:hover {
+  background: oklch(0.18 0 0);
+  color: oklch(0.85 0 0);
+}
+
+.lesson-pdf-tab-active {
+  background: oklch(0.1 0 0);
+  color: oklch(0.95 0 0);
+  border-color: oklch(1 0 0 / 12%);
+}
+
+.lesson-pdf-tab-name {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- Desktop view: fully interactive iframe ---- */
+.lesson-pdf-desktop-view {
+  display: block;
+}
+
+.lesson-pdf-ratio-box {
+  position: relative;
+  width: 100%;
+  height: 70vh;
+}
+
+.lesson-pdf-iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  background: #f5f5f5;
+}
+
+.lesson-pdf-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  gap: 0.75rem;
+  color: oklch(0.6 0 0);
+  text-align: center;
+  padding: 2rem;
+}
+
+.lesson-pdf-fallback > i {
+  font-size: 3rem;
+  color: oklch(0.4 0 0);
+}
+
+.lesson-pdf-fallback h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: oklch(0.9 0 0);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  margin: 0;
+}
+
+.lesson-pdf-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  background: #E62020;
+  color: white;
+  border-radius: 99px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+  margin-top: 0.5rem;
+}
+
+.lesson-pdf-download-btn:hover {
+  background: #c81a1a;
+  transform: translateY(-1px);
+}
+
+/* ---- Mobile view: first-page preview + tap-to-open overlay ---- */
+.lesson-pdf-mobile-view {
+  display: none;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: oklch(0.08 0 0);
+}
+
+/* The outer <a> wraps iframe + overlay, full tap target */
+.lesson-pdf-preview-link {
+  display: block;
+  position: relative;
+  /* A4 portrait ratio: height = width × √2 ≈ 141.4% */
+  padding-top: 141.4%;
+  overflow: hidden;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  text-decoration: none;
+}
+
+/* Non-interactive iframe — renders first page visually only */
+.lesson-pdf-preview-iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #f5f5f5;
+  pointer-events: none; /* ← crucial: no touch events go into iframe */
+  user-select: none;
+}
+
+/* Overlay: covers the full iframe, handles the tap */
+.lesson-pdf-preview-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1rem;
+  /* subtle gradient top+bottom, transparent in the middle so PDF is visible */
+  background:
+    linear-gradient(to bottom, oklch(0 0 0 / 55%) 0%, transparent 30%),
+    linear-gradient(to top,    oklch(0 0 0 / 75%) 0%, transparent 45%);
+  transition: background 0.2s;
+}
+
+.lesson-pdf-preview-link:active .lesson-pdf-preview-overlay {
+  background:
+    linear-gradient(to bottom, oklch(0 0 0 / 65%) 0%, transparent 35%),
+    linear-gradient(to top,    oklch(0 0 0 / 85%) 0%, transparent 50%);
+}
+
+/* Filename badge — top left */
+.lesson-pdf-preview-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: oklch(0 0 0 / 50%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid oklch(1 0 0 / 12%);
+  border-radius: 99px;
+  padding: 0.3rem 0.75rem 0.3rem 0.5rem;
+  width: fit-content;
+  max-width: 85%;
+}
+
+.lesson-pdf-preview-badge > i {
+  color: #ff6b6b;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.lesson-pdf-preview-badge > span {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: oklch(0.9 0 0);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Bottom area: button + hint */
+.lesson-pdf-preview-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.lesson-pdf-preview-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.4rem;
+  background: #E62020;
+  color: white;
+  border-radius: 99px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 16px oklch(0.4 0.2 25 / 50%);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.lesson-pdf-preview-link:active .lesson-pdf-preview-btn {
+  transform: scale(0.95);
+  box-shadow: 0 2px 8px oklch(0.4 0.2 25 / 40%);
+}
+
+.lesson-pdf-preview-hint {
+  font-size: 0.7rem;
+  color: oklch(0.7 0 0);
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+/* Dots navigator — multiple PDFs */
+.lesson-pdf-mobile-nav {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.lesson-pdf-mobile-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+  background: oklch(0.3 0 0);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.lesson-pdf-mobile-dot-active {
+  width: 24px;
+  background: #E62020;
+}
+
+/* ---- Footer bar (always visible) ---- */
+.lesson-pdf-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: oklch(0.13 0 0);
+  border-top: 1px solid oklch(1 0 0 / 8%);
+}
+
+.lesson-pdf-footer-name {
+  flex: 1;
+  font-size: 0.8rem;
+  color: oklch(0.65 0 0);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lesson-pdf-footer-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.9rem;
+  background: oklch(0.18 0 0);
+  border: 1px solid oklch(1 0 0 / 10%);
+  color: oklch(0.85 0 0);
+  border-radius: 99px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.lesson-pdf-footer-btn:hover {
+  background: oklch(0.22 0.05 25);
+  color: #E62020;
+  border-color: #E62020;
+}
+
+/* ---- Breakpoint: switch desktop ↔ mobile views ---- */
+@media (max-width: 768px) {
+  .lesson-pdf-embed {
+    border-radius: 0.75rem;
+  }
+  .lesson-pdf-desktop-view {
+    display: none;
+  }
+  .lesson-pdf-mobile-view {
+    display: flex;
+  }
+  .lesson-pdf-tab-name {
+    max-width: 90px;
+  }
+}
+
+
+
+/* ============================================
    ATTACHMENTS / PDF VIEWER MODAL
    ============================================ */
 
@@ -5372,7 +5699,19 @@
   .pdf-viewer-nav-btn span {
     display: none; /* Hide text on mobile to save space */
   }
+  .pdf-viewer-header {
+    height: auto;
+    min-height: 60px;
+    padding: 0.75rem 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
   .pdf-viewer-title {
-    max-width: 60%;
+    font-size: 0.875rem;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    max-width: calc(100% - 80px);
+    word-break: break-word;
   }
 }

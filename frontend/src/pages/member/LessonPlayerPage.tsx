@@ -15,6 +15,7 @@ import {
     LessonModulesDrawer,
     LessonMobileNav,
     LessonAttachmentsModal,
+    LessonPdfEmbed,
 } from "@/components/member/lesson";
 import { MemberHeader } from "@/components/member";
 import type { MemberShowcaseItem, MemberLessonDocument } from "@/types/member";
@@ -117,28 +118,35 @@ export function LessonPlayerPage() {
                     <main className="lesson-page-layout">
                         {/* Main content area */}
                         <div className="lesson-main-col">
-                            {/* Video Player */}
-                            {currentLesson.videoUrl && (
-                                <VideoPlayer
-                                    title={currentLesson.title}
-                                    src={currentLesson.videoUrl}
-                                    videoType={currentLesson.videoType}
-                                    lessonId={currentLesson.id}
-                                    hasNextLesson={hasNextLesson}
-                                    nextLesson={nextLesson ?? undefined}
-                                    initialTime={initialVideoTime}
-                                    onNextLesson={goToNext}
-                                    onTimeUpdate={handleVideoTime}
-                                />
-                            )}
+                            {/* Video Player — only when a video URL exists */}
+                            {currentLesson.videoUrl ? (
+                                <>
+                                    <VideoPlayer
+                                        title={currentLesson.title}
+                                        src={currentLesson.videoUrl}
+                                        videoType={currentLesson.videoType}
+                                        lessonId={currentLesson.id}
+                                        hasNextLesson={hasNextLesson}
+                                        nextLesson={nextLesson ?? undefined}
+                                        initialTime={initialVideoTime}
+                                        onNextLesson={goToNext}
+                                        onTimeUpdate={handleVideoTime}
+                                    />
 
-                            {/* CTA Button */}
-                            {currentLesson.hasButton && currentLesson.buttonText && currentLesson.buttonLink && (
-                                <LessonCTA
-                                    visible={ctaVisible || !currentLesson.buttonDelay}
-                                    text={currentLesson.buttonText}
-                                    link={currentLesson.buttonLink}
-                                />
+                                    {/* CTA Button (video-only) */}
+                                    {currentLesson.hasButton && currentLesson.buttonText && currentLesson.buttonLink && (
+                                        <LessonCTA
+                                            visible={ctaVisible || !currentLesson.buttonDelay}
+                                            text={currentLesson.buttonText}
+                                            link={currentLesson.buttonLink}
+                                        />
+                                    )}
+                                </>
+                            ) : (
+                                /* PDF-only lesson — embed the first document inline */
+                                currentLesson.documents && currentLesson.documents.length > 0 && (
+                                    <LessonPdfEmbed documents={currentLesson.documents} />
+                                )
                             )}
 
                             {/* Nav bar (prev/next + complete) */}

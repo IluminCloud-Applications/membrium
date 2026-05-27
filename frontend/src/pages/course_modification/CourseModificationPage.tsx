@@ -123,11 +123,14 @@ export function CourseModificationPage() {
     }
 
     async function handleLessonSubmit(data: LessonFormData) {
+        // Guard against double submission
+        if (lessonSubmitting) return;
+        setLessonSubmitting(true);
+
         // ── If Cloudflare and a new file is selected, upload to R2 first ──
         let cloudflareVideoUrl = data.cloudflareUrl;
         if (data.videoPlatform === "cloudflare" && data.cloudflareFile) {
             const uploadToast = toast.loading("Enviando vídeo ao Cloudflare R2...");
-            setLessonSubmitting(true);
             try {
                 const result = await cloudflareUploadService.upload(data.cloudflareFile, {
                     onProgress: (fraction) => {
@@ -159,6 +162,8 @@ export function CourseModificationPage() {
             formData.append("video_url", data.vturbVideoId);
         } else if (data.videoPlatform === "cloudflare") {
             formData.append("video_url", cloudflareVideoUrl);
+        } else if (data.videoPlatform === "none") {
+            formData.append("video_url", "");
         } else {
             formData.append("video_url", data.videoUrl);
         }

@@ -113,6 +113,12 @@ export function LessonFormLeft({ form, onChange }: LessonFormLeftProps) {
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                        <SelectItem value="none">
+                            <span className="flex items-center gap-2">
+                                <i className="ri-file-pdf-2-line text-rose-500" />
+                                Sem Vídeo (apenas PDF/Material)
+                            </span>
+                        </SelectItem>
                         <SelectItem value="youtube">
                             <span className="flex items-center gap-2">
                                 <i className="ri-youtube-line text-red-500" />
@@ -143,6 +149,12 @@ export function LessonFormLeft({ form, onChange }: LessonFormLeftProps) {
                         </SelectItem>
                     </SelectContent>
                 </Select>
+                {form.videoPlatform === "none" && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        <i className="ri-information-line" />
+                        O PDF/material anexado será exibido diretamente na página da aula.
+                    </p>
+                )}
             </div>
 
             {/* Video URL / VTurb picker / Custom code */}

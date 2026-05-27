@@ -217,25 +217,27 @@ export function CourseModal({
                         />
                     </div>
 
-                    {/* Checkout URL */}
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                            <Label htmlFor="checkout-url" className="text-sm font-medium">
-                                Link de Compra (Checkout) <span className="text-muted-foreground font-normal">(Opcional)</span>
-                            </Label>
+                    {/* Checkout URL — apenas para order bump e upsell */}
+                    {(category === "order_bump" || category === "upsell") && (
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                                <Label htmlFor="checkout-url" className="text-sm font-medium">
+                                    Link de Compra (Checkout) <span className="text-muted-foreground font-normal">(Opcional)</span>
+                                </Label>
+                            </div>
+                            <Input
+                                id="checkout-url"
+                                value={checkoutUrl}
+                                onChange={(e) => setCheckoutUrl(e.target.value)}
+                                placeholder="Ex: https://pay.kiwify.com.br/1234"
+                                type="url"
+                            />
+                            <p className="text-xs text-muted-foreground flex items-start gap-1.5 mt-1">
+                                <i className="ri-information-line mt-0.5" />
+                                Quando o curso estiver bloqueado, o aluno poderá clicar para comprar neste link.
+                            </p>
                         </div>
-                        <Input
-                            id="checkout-url"
-                            value={checkoutUrl}
-                            onChange={(e) => setCheckoutUrl(e.target.value)}
-                            placeholder="Ex: https://pay.kiwify.com.br/1234"
-                            type="url"
-                        />
-                        <p className="text-xs text-muted-foreground flex items-start gap-1.5 mt-1">
-                            <i className="ri-information-line mt-0.5" />
-                            Quando o curso estiver bloqueado, o aluno poderá clicar para comprar neste link.
-                        </p>
-                    </div>
+                    )}
 
                     {/* Category */}
                     <div className="space-y-2">
