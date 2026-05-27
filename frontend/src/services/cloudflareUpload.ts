@@ -1,30 +1,25 @@
+import { apiClient } from "./apiClient";
+import type { CloudflareR2PresignResponse } from "./integrations";
+
 /**
- * Upload de vídeo via proxy do backend → Cloudflare R2.
+ * Upload de vídeo direto do browser para o Cloudflare R2 via Presigned URLs.
  *
- * ## Por que proxy e não upload direto ao R2?
+ * ## Por que Direct Upload?
  *
- * O Cloudflare R2 bloqueia requisições cross-origin do browser (CORS) a menos que
- * o bucket tenha uma política CORS explícita configurada. Configurar CORS no R2
- * requer um API Token separado e acesso ao dashboard do Cloudflare.
+ * Ao fazer o upload diretamente para o R2, evitamos passar dados de arquivos
+ * grandes pelo backend. Isso resolve limites de corpo de requisição (413 Payload Too Large)
+ * impostos por proxies como Nginx ou Cloudflare Proxy (que limita a 100MB no plano Free/Pro).
  *
- * Com o proxy, o browser envia o arquivo para o nosso backend, e o backend
- * usa boto3 (sem restrições de CORS) para enviar ao R2 via multipart streaming.
+ * ## Requisito de CORS
  *
- * ## Performance
- *
- * O gargalo real é sempre o browser → servidor (limitado pela internet do usuário).
- * O trecho servidor → R2 acontece em data center com fibra de 1 Gbps — na prática
- * não adiciona tempo perceptível ao usuário.
+ * O Cloudflare R2 exige que o bucket tenha uma política CORS explícita configurada
+ * no Dashboard da Cloudflare para permitir requisições PUT e OPTIONS a partir do domínio do frontend.
  *
  * ## Fluxo
  *
- *   Browser ──(upload speed)──► Backend ──(1 Gbps)──► R2
- *
- * O backend usa boto3 TransferConfig com chunks de 8 MB e upload multipart paralelo,
- * então nunca carrega o arquivo inteiro na RAM.
+ *   1. Browser pede URL Pré-assinada ao Backend (JSON rápido).
+ *   2. Browser faz PUT do arquivo diretamente no R2.
  */
-
-const UPLOAD_ENDPOINT = "/api/settings/cloudflare-r2/upload";
 
 export interface CloudflareUploadResult {
     /** URL pública no custom domain R2 — salvar na lição */
@@ -42,43 +37,62 @@ export interface CloudflareUploadOptions {
 
 export const cloudflareUploadService = {
     /**
-     * Envia um arquivo para o R2 via proxy do backend.
+     * Obtém uma URL pré-assinada do backend e envia o arquivo diretamente para o R2.
      * Usa XHR para suportar progresso de upload (fetch não expõe isso).
      */
     async upload(
         file: File,
         options: CloudflareUploadOptions = {},
     ): Promise<CloudflareUploadResult> {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("content_type", file.type || "video/mp4");
+        // 1. Obter a URL pré-assinada e os headers necessários
+        const presignRes = await apiClient.post<CloudflareR2PresignResponse>(
+            "/settings/cloudflare-r2/presign",
+            {
+                filename: file.name,
+                content_type: file.type || "video/mp4",
+            }
+        );
 
-        const result = await uploadViaXhr(UPLOAD_ENDPOINT, formData, options);
-        return { publicUrl: result.public_url, key: result.key };
+        if (!presignRes.success || !presignRes.upload_url) {
+            throw new Error(presignRes.message || "Falha ao obter URL de upload do R2");
+        }
+
+        // 2. Fazer o PUT do arquivo bruto diretamente no R2
+        await uploadDirectViaXhr(
+            presignRes.upload_url,
+            file,
+            presignRes.headers || {},
+            options
+        );
+
+        return {
+            publicUrl: presignRes.public_url,
+            key: presignRes.key,
+        };
     },
 };
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
-interface UploadResponse {
-    success: boolean;
-    public_url: string;
-    key: string;
-    message?: string;
-}
-
-function uploadViaXhr(
+function uploadDirectViaXhr(
     url: string,
-    body: FormData,
+    file: File,
+    headers: Record<string, string>,
     { onProgress, signal }: CloudflareUploadOptions,
-): Promise<UploadResponse> {
+): Promise<void> {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open("POST", url, true);
-        // Envia cookies de sessão — necessário para @admin_required no backend
-        xhr.withCredentials = true;
+        xhr.open("PUT", url, true);
 
-        // Progresso reflete o upload browser → servidor (a leg mais lenta)
+        // O upload direto usa a assinatura contida na URL, dispensando cookies/credenciais do app
+        xhr.withCredentials = false;
+
+        // Adiciona os headers exigidos pela assinatura do S3/R2 (como o Content-Type)
+        Object.entries(headers).forEach(([key, value]) => {
+            xhr.setRequestHeader(key, value);
+        });
+
+        // Acompanha o progresso real do envio do arquivo ao R2
         xhr.upload.onprogress = (evt) => {
             if (onProgress && evt.lengthComputable) {
                 onProgress(evt.loaded / evt.total);
@@ -86,29 +100,20 @@ function uploadViaXhr(
         };
 
         xhr.onload = () => {
-            let data: UploadResponse;
-            try {
-                data = JSON.parse(xhr.responseText);
-            } catch {
-                reject(new Error(`Resposta inválida do servidor (${xhr.status})`));
-                return;
-            }
-
-            if (xhr.status >= 200 && xhr.status < 300 && data.success) {
+            if (xhr.status >= 200 && xhr.status < 300) {
                 onProgress?.(1);
-                resolve(data);
+                resolve();
             } else {
                 reject(
                     new Error(
-                        data.message ||
-                            `Upload falhou (${xhr.status}): ${xhr.statusText}`,
+                        `Falha no upload direto para R2 (${xhr.status}): ${xhr.statusText}`
                     ),
                 );
             }
         };
 
         xhr.onerror = () =>
-            reject(new Error("Erro de rede ao enviar arquivo para o servidor"));
+            reject(new Error("Erro de rede ao enviar arquivo para o Cloudflare R2"));
         xhr.onabort = () =>
             reject(new DOMException("Upload cancelado", "AbortError"));
 
@@ -120,6 +125,6 @@ function uploadViaXhr(
             signal.addEventListener("abort", () => xhr.abort(), { once: true });
         }
 
-        xhr.send(body);
+        xhr.send(file);
     });
 }
