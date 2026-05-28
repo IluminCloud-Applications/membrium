@@ -62,10 +62,12 @@ export interface CourseModificationData {
     id: number;
     name: string;
     description: string;
+    category: string;
     isPublished: boolean;
     modules: CourseModule[];
     cover: CourseCover;
     menuItems: CourseMenuItem[];
+    hasPrincipalCover: boolean;
 }
 
 /* ---- Form data types ---- */

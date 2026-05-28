@@ -40,10 +40,12 @@ export interface CourseFullResponse {
     id: number;
     name: string;
     description: string;
+    category: string;
     is_published: boolean;
     modules: ModuleResponse[];
     cover: { desktop: string | null; mobile: string | null };
     menu_items: MenuItemResponse[];
+    has_principal_cover: boolean;
 }
 
 export interface MenuItemResponse {

@@ -43,6 +43,7 @@ class Course(db.Model):
     cover_desktop = db.Column(db.String(255))  # filename for desktop cover
     cover_mobile = db.Column(db.String(255))   # filename for mobile cover
     checkout_url = db.Column(db.String(500), nullable=True) # URL de compra opcional
+    order = db.Column(db.Integer, default=0, nullable=False)
 
     menu_items = db.Column(db.JSON, default=list)  # [{name, url, icon, order}]
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

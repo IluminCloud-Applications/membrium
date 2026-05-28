@@ -60,9 +60,12 @@ export function MemberHomePage() {
 
     // Auto-scroll on mobile when banner covers the full screen
     const courseHeaderRef = useRef<HTMLDivElement>(null);
-    const primaryCourseForScroll = courses.find((c) => c.category === "principal");
+    const hasCustomOrder = courses.some((c) => (c.order ?? 0) > 0);
+    const topCourse = hasCustomOrder
+        ? courses[0]
+        : courses.find((c) => c.category === "principal" && c.hasAccess !== false) || courses.find((c) => c.category === "principal");
     useAutoScrollPastBanner(courseHeaderRef, {
-        hasMobileCover: !!primaryCourseForScroll?.coverMobile,
+        hasMobileCover: !!topCourse?.coverMobile,
     });
 
     function handleModuleClick(courseId: number, moduleId: number) {
@@ -106,8 +109,8 @@ export function MemberHomePage() {
         );
     }
 
-    const primaryCourse = courses.find((c) => c.category === "principal" && c.hasAccess !== false);
-    const secondaryCourses = courses.filter((c) => c !== primaryCourse);
+    const primaryCourse = hasCustomOrder ? null : courses.find((c) => c.category === "principal" && c.hasAccess !== false);
+    const secondaryCourses = hasCustomOrder ? courses : courses.filter((c) => c !== primaryCourse);
 
     return (
         <div className="member-page dark">
@@ -129,14 +132,22 @@ export function MemberHomePage() {
                     />
                 )}
 
-                {secondaryCourses.map((course) => (
-                    <CourseSection
-                        key={course.id}
-                        course={course}
-                        onModuleClick={handleModuleClick}
-                        hideModuleInfo={hideModuleInfo}
-                    />
-                ))}
+                {secondaryCourses.map((course, index) => {
+                    const isFirstInSecondary = index === 0;
+                    const isPrimaryCourse = hasCustomOrder && isFirstInSecondary;
+                    const headerRef = hasCustomOrder && isFirstInSecondary ? courseHeaderRef : undefined;
+
+                    return (
+                        <CourseSection
+                            key={course.id}
+                            course={course}
+                            isPrimary={isPrimaryCourse}
+                            courseHeaderRef={headerRef}
+                            onModuleClick={handleModuleClick}
+                            hideModuleInfo={hideModuleInfo}
+                        />
+                    );
+                })}
 
                 <ShowcaseSection showcases={showcases} />
             </main>

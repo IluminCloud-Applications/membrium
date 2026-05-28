@@ -28,6 +28,7 @@ export interface MemberCourse {
     menuItems: MemberMenuItem[];
     modules: MemberModule[];
     hasAccess?: boolean;
+    order?: number;
 }
 
 export interface MemberMenuItem {
@@ -73,6 +74,7 @@ export interface MemberCourseDetail {
     checkoutUrl?: string | null;
     menuItems: MemberMenuItem[];
     modules: MemberModuleDetail[];
+    order?: number;
 }
 
 export interface MemberProfile {

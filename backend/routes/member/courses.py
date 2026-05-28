@@ -29,6 +29,7 @@ def _build_courses_structure():
             'coverDesktop': course.cover_desktop,
             'coverMobile': course.cover_mobile,
             'checkoutUrl': course.checkout_url,
+            'order': course.order or 0,
             'modules': [{
                 'id': m.id,
                 'name': m.name,
@@ -79,6 +80,7 @@ def _build_course_detail_structure(course_id):
         'coverDesktop': course.cover_desktop,
         'coverMobile': course.cover_mobile,
         'checkoutUrl': course.checkout_url,
+        'order': course.order or 0,
         'modules': modules,
     }
 
@@ -148,7 +150,7 @@ def get_student_courses(student):
                 'isLocked': False, 'unlockDaysRemaining': 0,
             } for m in c['modules']]
             result.append({
-                **{k: c[k] for k in ('id','uuid','name','description','image','category','moduleFormat','coverDesktop','coverMobile','checkoutUrl')},
+                **{k: c[k] for k in ('id','uuid','name','description','image','category','moduleFormat','coverDesktop','coverMobile','checkoutUrl','order')},
                 'menuItems': global_menu,
                 'modules': modules,
                 'hasAccess': True,
@@ -164,7 +166,7 @@ def get_student_courses(student):
                 'isLocked': True, 'unlockDaysRemaining': 0,
             } for m in c['modules']]
             result.append({
-                **{k: c[k] for k in ('id','uuid','name','description','image','category','moduleFormat','coverDesktop','coverMobile','checkoutUrl')},
+                **{k: c[k] for k in ('id','uuid','name','description','image','category','moduleFormat','coverDesktop','coverMobile','checkoutUrl','order')},
                 'menuItems': [],
                 'modules': modules,
                 'hasAccess': False,
@@ -189,23 +191,30 @@ def get_student_courses(student):
                 'isLocked': is_locked, 'unlockDaysRemaining': unlock_remaining,
             })
         result.append({
-            **{k: c[k] for k in ('id','uuid','name','description','image','category','moduleFormat','coverDesktop','coverMobile','checkoutUrl')},
+            **{k: c[k] for k in ('id','uuid','name','description','image','category','moduleFormat','coverDesktop','coverMobile','checkoutUrl','order')},
             'menuItems': global_menu,
             'modules': modules,
             'hasAccess': True,
         })
 
-    # Priority mapping for sorting: principal (0), upsell (1), order_bump (2), bonus (3)
-    category_priority = {
-        'principal': 0,
-        'upsell': 1,
-        'order_bump': 2,
-        'bonus': 3
-    }
-    result.sort(key=lambda x: (
-        0 if x['hasAccess'] else 1,
-        category_priority.get(x['category'], 4)
-    ))
+    # Check if manual ordering is set (at least one course has order > 0)
+    has_custom_order = any(x.get('order', 0) > 0 for x in result)
+
+    if has_custom_order:
+        # Sort purely by the custom order. If order is 0 (new course), put it at the end.
+        result.sort(key=lambda x: x.get('order', 0) if x.get('order', 0) > 0 else 999999)
+    else:
+        # Priority mapping for sorting: principal (0), upsell (1), order_bump (2), bonus (3)
+        category_priority = {
+            'principal': 0,
+            'upsell': 1,
+            'order_bump': 2,
+            'bonus': 3
+        }
+        result.sort(key=lambda x: (
+            0 if x['hasAccess'] else 1,
+            category_priority.get(x['category'], 4)
+        ))
 
     return jsonify(result)
 
@@ -243,7 +252,7 @@ def get_course_detail(student, course_id):
         modules.append({**m, 'lessons': lessons})
 
     return jsonify({
-        **{k: structure[k] for k in ('id','uuid','name','description','image','category','moduleFormat','coverDesktop','coverMobile','checkoutUrl')},
+        **{k: structure[k] for k in ('id','uuid','name','description','image','category','moduleFormat','coverDesktop','coverMobile','checkoutUrl','order')},
         'menuItems': global_menu,
         'modules': modules,
     })

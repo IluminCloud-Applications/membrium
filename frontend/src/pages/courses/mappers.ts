@@ -16,5 +16,6 @@ export function mapCourse(raw: CourseResponse): Course {
         lessonsCount: raw.lessons_count,
         createdAt: raw.created_at || "",
         isPublished: raw.is_published,
+        order: raw.order || 0,
     };
 }

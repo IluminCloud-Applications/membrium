@@ -16,6 +16,7 @@ export interface Course {
     lessonsCount: number;
     createdAt: string;
     isPublished: boolean;
+    order?: number;
 }
 
 export const categoryLabels: Record<CourseCategory, string> = {

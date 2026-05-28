@@ -350,6 +350,8 @@ export function CourseModificationPage() {
             />
             <CourseTabs
                 modules={course.modules} cover={course.cover} menuItems={course.menuItems}
+                category={course.category}
+                hasPrincipalCover={course.hasPrincipalCover}
                 onAddModule={handleAddModule} onEditModule={handleEditModule} onDeleteModule={handleDeleteModule}
                 onAddLesson={handleAddLesson} onEditLesson={handleEditLesson} onDeleteLesson={handleDeleteLesson}
                 onToggleLessonStatus={handleToggleLessonStatus}

@@ -69,6 +69,7 @@ export function mapCourse(raw: CourseFullResponse): CourseModificationData {
         id: raw.id,
         name: raw.name,
         description: raw.description,
+        category: raw.category || "principal",
         isPublished: raw.is_published,
         modules: raw.modules.map(mapModule),
         cover: {
@@ -76,5 +77,6 @@ export function mapCourse(raw: CourseFullResponse): CourseModificationData {
             mobile: raw.cover?.mobile || null,
         } as CourseCover,
         menuItems: (raw.menu_items || []).map(mapMenuItem),
+        hasPrincipalCover: raw.has_principal_cover || false,
     };
 }

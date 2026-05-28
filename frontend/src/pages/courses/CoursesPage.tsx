@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
     CourseFilters,
     CourseCard,
@@ -9,6 +9,7 @@ import { CourseModal } from "@/components/modals/courses/CreateCourseModal";
 import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModal";
 import { WebhookModal } from "@/components/modals/courses/WebhookModal";
 import { ImportCourseModal } from "@/components/modals/courses/ImportCourseModal";
+import { ReorderCoursesModal } from "@/components/modals/courses/ReorderCoursesModal";
 import type { ViewMode, SortOption } from "@/components/courses";
 import type { Course, CourseCategory } from "@/types/course";
 import { coursesService } from "@/services/courses";
@@ -30,6 +31,17 @@ export function CoursesPage() {
     const [deleteTarget, setDeleteTarget] = useState<Course | null>(null);
     const [webhookTarget, setWebhookTarget] = useState<Course | null>(null);
     const [importModalOpen, setImportModalOpen] = useState(false);
+    const [reorderModalOpen, setReorderModalOpen] = useState(false);
+
+    // Auto-select custom sorting if at least one course has custom order
+    useEffect(() => {
+        if (courses.length > 0) {
+            const hasCustom = courses.some((c) => (c.order ?? 0) > 0);
+            if (hasCustom) {
+                setSortBy("custom");
+            }
+        }
+    }, [courses]);
 
     function setViewMode(mode: ViewMode) {
         setViewModeState(mode);
@@ -48,6 +60,16 @@ export function CoursesPage() {
             result = result.filter((c) => c.category === activeCategory);
         }
         switch (sortBy) {
+            case "custom":
+                result.sort((a, b) => {
+                    const orderA = a.order ?? 0;
+                    const orderB = b.order ?? 0;
+                    if (orderA > 0 || orderB > 0) {
+                        return (orderA || 999999) - (orderB || 999999);
+                    }
+                    return b.createdAt.localeCompare(a.createdAt);
+                });
+                break;
             case "newest": result.sort((a, b) => b.createdAt.localeCompare(a.createdAt)); break;
             case "oldest": result.sort((a, b) => a.createdAt.localeCompare(b.createdAt)); break;
             case "name": result.sort((a, b) => a.name.localeCompare(b.name)); break;
@@ -118,6 +140,7 @@ export function CoursesPage() {
                 viewMode={viewMode} onViewModeChange={setViewMode}
                 onCreateCourse={handleCreateOpen}
                 onImportCourse={() => setImportModalOpen(true)}
+                onReorderCourses={() => setReorderModalOpen(true)}
             />
 
             {filteredCourses.length === 0 ? (
@@ -147,6 +170,7 @@ export function CoursesPage() {
                 title="Excluir Curso" description={`Tem certeza que deseja excluir "${deleteTarget?.name}"? Todos os alunos e aulas serão removidos permanentemente.`} confirmLabel="Excluir Curso" />
             <WebhookModal open={!!webhookTarget} onOpenChange={() => setWebhookTarget(null)} course={webhookTarget} />
             <ImportCourseModal open={importModalOpen} onOpenChange={setImportModalOpen} onSuccess={refetch} />
+            <ReorderCoursesModal open={reorderModalOpen} onOpenChange={setReorderModalOpen} courses={courses} onSuccess={refetch} />
         </div>
     );
 }

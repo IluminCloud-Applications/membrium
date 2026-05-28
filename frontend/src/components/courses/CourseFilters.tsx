@@ -11,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { CourseCategory } from "@/types/course";
 
 export type ViewMode = "grid" | "list";
-export type SortOption = "newest" | "oldest" | "name" | "students";
+export type SortOption = "newest" | "oldest" | "name" | "students" | "custom";
 
 interface CourseFiltersProps {
     search: string;
@@ -24,6 +24,7 @@ interface CourseFiltersProps {
     onViewModeChange: (value: ViewMode) => void;
     onCreateCourse: () => void;
     onImportCourse: () => void;
+    onReorderCourses?: () => void;
 }
 
 const categories = [
@@ -45,6 +46,7 @@ export function CourseFilters({
     onViewModeChange,
     onCreateCourse,
     onImportCourse,
+    onReorderCourses,
 }: CourseFiltersProps) {
     return (
         <div className="space-y-4">
@@ -65,10 +67,11 @@ export function CourseFilters({
                 <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
                     {/* Sort */}
                     <Select value={sortBy} onValueChange={(v) => onSortChange(v as SortOption)}>
-                        <SelectTrigger className="w-[150px] h-9 flex-shrink-0">
+                        <SelectTrigger className="w-[170px] h-9 flex-shrink-0">
                             <SelectValue placeholder="Ordenar por" />
                         </SelectTrigger>
                         <SelectContent className="rounded-xl">
+                            <SelectItem value="custom" className="rounded-lg">Ordem personalizada</SelectItem>
                             <SelectItem value="newest" className="rounded-lg">Mais recentes</SelectItem>
                             <SelectItem value="oldest" className="rounded-lg">Mais antigos</SelectItem>
                             <SelectItem value="name" className="rounded-lg">Nome A-Z</SelectItem>
@@ -93,6 +96,13 @@ export function CourseFilters({
                             <i className="ri-list-check text-sm" />
                         </button>
                     </div>
+
+                    {onReorderCourses && (
+                        <Button onClick={onReorderCourses} variant="outline" className="h-9 text-sm flex-shrink-0">
+                            <i className="ri-arrow-up-down-line mr-1" />
+                            Reordenar
+                        </Button>
+                    )}
 
                     <Button onClick={onImportCourse} variant="outline" className="h-9 text-sm flex-shrink-0">
                         <i className="ri-upload-2-line mr-1" />

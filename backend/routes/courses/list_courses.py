@@ -22,7 +22,18 @@ def admin_required(f):
 @admin_required
 def get_courses():
     """List all courses with computed stats."""
-    courses = Course.query.order_by(Course.created_at.desc()).all()
+    has_custom_order = Course.query.filter(Course.order > 0).first() is not None
+    if has_custom_order:
+        from sqlalchemy import case
+        courses = Course.query.order_by(
+            case(
+                (Course.order > 0, Course.order),
+                else_=999999
+            ).asc(),
+            Course.created_at.desc()
+        ).all()
+    else:
+        courses = Course.query.order_by(Course.created_at.desc()).all()
 
     result = []
     for course in courses:
@@ -48,6 +59,7 @@ def get_courses():
             'lessons_count': lessons_count,
             'created_at': course.created_at.isoformat() if course.created_at else None,
             'checkout_url': course.checkout_url,
+            'order': course.order or 0,
         })
 
     return jsonify(result)
@@ -79,6 +91,7 @@ def get_course(course_id):
         'lessons_count': lessons_count,
         'created_at': course.created_at.isoformat() if course.created_at else None,
         'checkout_url': course.checkout_url,
+        'order': course.order or 0,
     })
 
 

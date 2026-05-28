@@ -16,6 +16,7 @@ export interface CourseResponse {
     students_count: number;
     lessons_count: number;
     created_at: string | null;
+    order?: number;
 }
 
 export interface CourseSimple {
@@ -74,4 +75,8 @@ export const coursesService = {
         apiClient.request<MutationResult>(`/courses/${id}`, {
             method: "DELETE",
         }),
+
+    /** Reorder courses */
+    reorder: (ids: number[]) =>
+        apiClient.post<MutationResult>("/courses/reorder", { ids }),
 };

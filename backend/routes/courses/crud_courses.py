@@ -201,3 +201,32 @@ def delete_course(course_id):
         print(f"Erro ao deletar curso: {e}")
         db.session.rollback()
         return jsonify({'success': False, 'message': 'Erro ao deletar curso'}), 500
+
+
+@crud_courses_bp.route('/reorder', methods=['POST'])
+@admin_required
+def reorder_courses():
+    """Update the sort order of courses."""
+    try:
+        data = request.get_json()
+        if not data or 'ids' not in data:
+            return jsonify({'success': False, 'message': 'IDs não informados'}), 400
+        
+        ids = data['ids']
+        for index, course_id in enumerate(ids):
+            course = Course.query.get(course_id)
+            if course:
+                course.order = index + 1
+        
+        db.session.commit()
+        
+        # Invalidate member courses list cache
+        from cache import cache_delete
+        cache_delete('courses:published')
+        
+        return jsonify({'success': True, 'message': 'Ordenação atualizada com sucesso'})
+    except Exception as e:
+        print(f"Erro ao reordenar cursos: {e}")
+        db.session.rollback()
+        return jsonify({'success': False, 'message': 'Erro ao reordenar cursos'}), 500
+

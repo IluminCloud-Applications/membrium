@@ -9,6 +9,8 @@ interface CourseTabsProps {
     modules: CourseModule[];
     cover: CourseCover;
     menuItems: CourseMenuItem[];
+    category?: string;
+    hasPrincipalCover?: boolean;
     onAddModule: () => void;
     onEditModule: (mod: CourseModule) => void;
     onDeleteModule: (mod: CourseModule) => void;
@@ -35,6 +37,8 @@ export function CourseTabs({
     modules,
     cover,
     menuItems,
+    category,
+    hasPrincipalCover,
     onAddModule,
     onEditModule,
     onDeleteModule,
@@ -100,6 +104,8 @@ export function CourseTabs({
             <TabsContent value="cover" className="mt-6">
                 <CoverTab
                     cover={cover}
+                    category={category}
+                    hasPrincipalCover={hasPrincipalCover}
                     onCoverChange={onCoverChange}
                     onCoverDelete={onCoverDelete}
                 />

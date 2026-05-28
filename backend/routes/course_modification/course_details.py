@@ -75,10 +75,16 @@ def get_course_full(course_id):
     _, menu_config = get_integration('menu')
     global_menu = menu_config.get('items', [])
 
+    principal_course = Course.query.filter_by(category='principal').first()
+    has_principal_cover = False
+    if principal_course:
+        has_principal_cover = bool(principal_course.cover_desktop or principal_course.cover_mobile)
+
     return jsonify({
         'id': course.id,
         'name': course.name,
         'description': course.description or '',
+        'category': course.category or 'principal',
         'is_published': course.is_published,
         'modules': [_serialize_module(m) for m in course.modules],
         'cover': {
@@ -86,6 +92,7 @@ def get_course_full(course_id):
             'mobile': _image_url(course.cover_mobile),
         },
         'menu_items': global_menu,
+        'has_principal_cover': has_principal_cover,
     })
 
 

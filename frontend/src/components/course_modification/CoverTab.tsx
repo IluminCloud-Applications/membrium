@@ -5,31 +5,57 @@ import type { CourseCover } from "@/types/course-modification";
 
 interface CoverTabProps {
     cover: CourseCover;
+    category?: string;
+    hasPrincipalCover?: boolean;
     onCoverChange: (type: "desktop" | "mobile", file: File | null) => void;
     onCoverDelete: (type: "desktop" | "mobile") => void;
 }
 
-export function CoverTab({ cover, onCoverChange, onCoverDelete }: CoverTabProps) {
+export function CoverTab({
+    cover,
+    category,
+    hasPrincipalCover,
+    onCoverChange,
+    onCoverDelete,
+}: CoverTabProps) {
     const desktopRef = useRef<HTMLInputElement>(null);
     const mobileRef = useRef<HTMLInputElement>(null);
 
+    const showWarning = category !== "principal" && hasPrincipalCover;
+
     return (
         <div className="space-y-6">
-            {/* Info */}
-            <div className="rounded-xl border bg-card p-4 shadow-sm">
-                <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                        <i className="ri-information-line text-blue-600 text-lg" />
-                    </div>
-                    <div>
-                        <h4 className="text-sm font-semibold">Sobre o Cover</h4>
-                        <p className="text-sm text-muted-foreground mt-0.5">
-                            O cover é a imagem de apresentação que aparece acima dos módulos do curso.
-                            Você pode definir um cover diferente para desktop e mobile para melhor experiência.
-                        </p>
+            {/* Info or Warning */}
+            {showWarning ? (
+                <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 shadow-sm">
+                    <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                            <i className="ri-alert-line text-amber-600 text-lg" />
+                        </div>
+                        <div>
+                            <h4 className="text-sm font-semibold text-amber-800 dark:text-amber-400">Banner já configurado</h4>
+                            <p className="text-sm text-amber-700/80 dark:text-amber-300/80 mt-0.5">
+                                O banner já foi configurado no curso principal. Se você prosseguir, aparecerão 2 covers na área de membros.
+                            </p>
+                        </div>
                     </div>
                 </div>
-            </div>
+            ) : (
+                <div className="rounded-xl border bg-card p-4 shadow-sm">
+                    <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                            <i className="ri-information-line text-blue-600 text-lg" />
+                        </div>
+                        <div>
+                            <h4 className="text-sm font-semibold">Sobre o Cover</h4>
+                            <p className="text-sm text-muted-foreground mt-0.5">
+                                O cover é a imagem de apresentação que aparece acima dos módulos do curso.
+                                Você pode definir um cover diferente para desktop e mobile para melhor experiência.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Desktop + Mobile covers — stretch so both cards have the same height */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
