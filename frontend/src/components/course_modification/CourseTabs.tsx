@@ -15,6 +15,7 @@ interface CourseTabsProps {
     onAddLesson: (moduleId: number) => void;
     onEditLesson: (moduleId: number, lessonId: number) => void;
     onDeleteLesson: (moduleId: number, lessonId: number) => void;
+    onToggleLessonStatus?: (lessonId: number, status: 'draft' | 'published') => void;
     onReorderModules?: (orderedIds: number[]) => void;
     onReorderLessons?: (moduleId: number, orderedIds: number[]) => void;
     onCoverChange: (type: "desktop" | "mobile", file: File | null) => void;
@@ -40,6 +41,7 @@ export function CourseTabs({
     onAddLesson,
     onEditLesson,
     onDeleteLesson,
+    onToggleLessonStatus,
     onReorderModules,
     onReorderLessons,
     onCoverChange,
@@ -83,6 +85,7 @@ export function CourseTabs({
                     onAddLesson={onAddLesson}
                     onEditLesson={onEditLesson}
                     onDeleteLesson={onDeleteLesson}
+                    onToggleLessonStatus={onToggleLessonStatus}
                     onReorderModules={onReorderModules}
                     onReorderLessons={onReorderLessons}
                     onBulkUpload={onBulkUpload}

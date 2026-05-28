@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -14,9 +15,10 @@ interface LessonItemProps {
     index: number;
     onEdit: () => void;
     onDelete: () => void;
+    onToggleStatus?: (newStatus: 'draft' | 'published') => void;
 }
 
-export function LessonItem({ lesson, index, onEdit, onDelete }: LessonItemProps) {
+export function LessonItem({ lesson, index, onEdit, onDelete, onToggleStatus }: LessonItemProps) {
     const isDraft = lesson.status === 'draft';
 
     return (
@@ -74,6 +76,16 @@ export function LessonItem({ lesson, index, onEdit, onDelete }: LessonItemProps)
                         CTA
                     </Badge>
                 )}
+            </div>
+
+            {/* Status Toggle */}
+            <div className="flex items-center gap-2">
+                <Switch
+                    checked={!isDraft}
+                    onCheckedChange={(checked) => {
+                        onToggleStatus?.(checked ? "published" : "draft");
+                    }}
+                />
             </div>
 
             {/* Actions */}

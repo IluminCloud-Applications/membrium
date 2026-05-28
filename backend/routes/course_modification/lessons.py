@@ -141,6 +141,26 @@ def update_lesson(lesson_id):
     })
 
 
+@lessons_bp.route('/lessons/<int:lesson_id>/status', methods=['PUT'])
+@admin_required
+def update_lesson_status(lesson_id):
+    """Update only the status (draft/published) of a single lesson."""
+    lesson = Lesson.query.get_or_404(lesson_id)
+    data = request.get_json() or {}
+    status = data.get('status')
+    if status not in ('draft', 'published'):
+        return jsonify({'success': False, 'message': 'Status inválido'}), 400
+
+    lesson.status = status
+    db.session.commit()
+
+    invalidate_lesson(lesson.module.course_id, lesson.module_id)
+    return jsonify({
+        'success': True,
+        'lesson': _serialize_lesson(lesson),
+    })
+
+
 @lessons_bp.route('/lessons/<int:lesson_id>', methods=['DELETE'])
 @admin_required
 def delete_lesson(lesson_id):

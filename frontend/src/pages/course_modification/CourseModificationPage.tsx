@@ -122,6 +122,18 @@ export function CourseModificationPage() {
         setDeleteTarget({ type: "lesson", label: lesson?.title ?? "Aula", moduleId, lessonId });
     }
 
+    async function handleToggleLessonStatus(lessonId: number, status: 'draft' | 'published') {
+        const toastId = toast.loading(status === "published" ? "Publicando aula..." : "Movendo para rascunho...");
+        try {
+            await courseModificationService.updateLessonStatus(lessonId, status);
+            await refetch();
+            toast.success(status === "published" ? "Aula publicada com sucesso!" : "Aula movida para rascunho!", { id: toastId });
+        } catch (err) {
+            console.error("Erro ao alterar status da aula:", err);
+            toast.error("Erro ao alterar status da aula", { id: toastId });
+        }
+    }
+
     async function handleLessonSubmit(data: LessonFormData) {
         // Guard against double submission
         if (lessonSubmitting) return;
@@ -177,6 +189,18 @@ export function CourseModificationPage() {
 
         try {
             if (editingLesson) {
+                // Remove attachments that were deleted in the UI
+                const removedAttachments = editingLesson.attachments.filter(
+                    (att) => !data.existingAttachments.some((ea) => ea.id === att.id)
+                );
+                for (const att of removedAttachments) {
+                    try {
+                        await courseModificationService.deleteLessonFile(editingLesson.id, att.id);
+                    } catch (err) {
+                        console.error(`Erro ao deletar anexo ${att.id}:`, err);
+                    }
+                }
+
                 await courseModificationService.updateLesson(editingLesson.id, formData);
             } else if (activeModuleId) {
                 const result = await courseModificationService.createLesson(activeModuleId, formData);
@@ -328,6 +352,7 @@ export function CourseModificationPage() {
                 modules={course.modules} cover={course.cover} menuItems={course.menuItems}
                 onAddModule={handleAddModule} onEditModule={handleEditModule} onDeleteModule={handleDeleteModule}
                 onAddLesson={handleAddLesson} onEditLesson={handleEditLesson} onDeleteLesson={handleDeleteLesson}
+                onToggleLessonStatus={handleToggleLessonStatus}
                 onReorderModules={handleReorderModules} onReorderLessons={handleReorderLessons}
                 onCoverChange={handleCoverChange} onCoverDelete={handleCoverDelete}
                 onAddMenuItem={handleAddMenuItem} onEditMenuItem={handleEditMenuItem} onDeleteMenuItem={handleDeleteMenuItem}

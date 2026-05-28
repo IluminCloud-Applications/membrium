@@ -24,6 +24,7 @@ interface ModuleCardProps {
     onAddLesson: () => void;
     onEditLesson: (lessonId: number) => void;
     onDeleteLesson: (lessonId: number) => void;
+    onToggleLessonStatus?: (lessonId: number, status: 'draft' | 'published') => void;
     onReorderLessons?: (orderedIds: number[]) => void;
     onBulkUpload?: (platform: "youtube" | "cloudflare") => void;
     onBulkVturb?: () => void;
@@ -40,6 +41,7 @@ export function ModuleCard({
     onAddLesson,
     onEditLesson,
     onDeleteLesson,
+    onToggleLessonStatus,
     onReorderLessons,
     onBulkUpload,
     onBulkVturb,
@@ -223,6 +225,7 @@ export function ModuleCard({
                                         index={lessonIndex}
                                         onEdit={() => onEditLesson(lesson.id)}
                                         onDelete={() => onDeleteLesson(lesson.id)}
+                                        onToggleStatus={(status) => onToggleLessonStatus?.(lesson.id, status)}
                                     />
                                 </div>
                             ))

@@ -11,6 +11,7 @@ interface ModulesTabProps {
     onAddLesson: (moduleId: number) => void;
     onEditLesson: (moduleId: number, lessonId: number) => void;
     onDeleteLesson: (moduleId: number, lessonId: number) => void;
+    onToggleLessonStatus?: (lessonId: number, status: 'draft' | 'published') => void;
     onReorderModules?: (orderedIds: number[]) => void;
     onReorderLessons?: (moduleId: number, orderedIds: number[]) => void;
     onBulkUpload?: (moduleId: number, platform: "youtube" | "cloudflare") => void;
@@ -29,6 +30,7 @@ export function ModulesTab({
     onAddLesson,
     onEditLesson,
     onDeleteLesson,
+    onToggleLessonStatus,
     onReorderModules,
     onReorderLessons,
     onBulkUpload,
@@ -134,6 +136,7 @@ export function ModulesTab({
                             onAddLesson={() => onAddLesson(mod.id)}
                             onEditLesson={(lessonId) => onEditLesson(mod.id, lessonId)}
                             onDeleteLesson={(lessonId) => onDeleteLesson(mod.id, lessonId)}
+                            onToggleLessonStatus={onToggleLessonStatus}
                             onReorderLessons={onReorderLessons ? (ids) => onReorderLessons(mod.id, ids) : undefined}
                             onBulkUpload={onBulkUpload ? (platform) => onBulkUpload(mod.id, platform) : undefined}
                             onBulkVturb={onBulkVturb ? () => onBulkVturb(mod.id) : undefined}

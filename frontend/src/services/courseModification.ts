@@ -140,6 +140,11 @@ export const courseModificationService = {
             `${BASE}/lessons/${lessonId}`, { method: "PUT", body: formData, headers: {} }
         ),
 
+    updateLessonStatus: (lessonId: number, status: "draft" | "published") =>
+        apiClient.put<{ success: boolean; lesson: LessonResponse }>(
+            `${BASE}/lessons/${lessonId}/status`, { status }
+        ),
+
     deleteLesson: (lessonId: number) =>
         apiClient.delete<{ success: boolean }>(`${BASE}/lessons/${lessonId}`),
 
