@@ -2846,30 +2846,74 @@
 }
 
 /* Next lesson button inside player */
-.lesson-player-next-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.3rem 0.7rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: oklch(0.9 0 0);
-  background: oklch(1 0 0 / 10%);
-  border: 1px solid oklch(1 0 0 / 12%);
-  border-radius: 0.4rem;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: inherit;
-  white-space: nowrap;
+.lesson-speed-selector {
+  position: relative;
 }
 
-.lesson-player-next-btn:hover {
-  background: oklch(1 0 0 / 18%);
+.lesson-speed-btn {
+  display: flex !important;
+  align-items: center;
+  gap: 0.25rem;
+  width: auto !important;
+  font-size: 0.78rem !important;
+  font-weight: 600;
+  padding: 0 0.5rem !important;
+  border-radius: 0.4rem !important;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.lesson-speed-btn i {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+.lesson-speed-label {
+  pointer-events: none;
+}
+
+.lesson-speed-dropdown {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: 0;
+  background: oklch(0.16 0 0 / 95%);
+  border: 1px solid oklch(1 0 0 / 12%);
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 6rem;
+  z-index: 50;
+  backdrop-filter: blur(8px);
+}
+
+.lesson-speed-option {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: oklch(0.85 0 0);
+  background: transparent;
+  border: none;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.1s, color 0.1s;
+}
+
+.lesson-speed-option:hover {
+  background: oklch(1 0 0 / 10%);
   color: white;
 }
 
-.lesson-player-next-btn i {
-  font-size: 1rem;
+.lesson-speed-option.active {
+  color: white;
+  font-weight: 700;
+  background: oklch(1 0 0 / 14%);
 }
 
 /* ---- FLOATING NEXT LESSON BANNER ---- */

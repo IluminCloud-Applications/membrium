@@ -14,6 +14,7 @@ import {
     useMediaPlayer,
     type MediaPlayerInstance,
 } from "@vidstack/react";
+import { useCallback } from "react";
 
 import "@vidstack/react/player/styles/base.css";
 import { VTurbPlayer } from "./VTurbPlayer";
@@ -202,7 +203,61 @@ function ClickToPlay() {
     );
 }
 
-function VideoControls({ hasNextLesson, onNextLesson }: { hasNextLesson?: boolean; onNextLesson?: () => void }) {
+const SPEED_OPTIONS = [
+    { label: "0.5x", value: 0.5 },
+    { label: "0.75x", value: 0.75 },
+    { label: "Normal", value: 1 },
+    { label: "1.25x", value: 1.25 },
+    { label: "1.5x", value: 1.5 },
+    { label: "2x", value: 2 },
+];
+
+function SpeedSelector() {
+    const player = useMediaPlayer();
+    const [open, setOpen] = useState(false);
+    const [rate, setRate] = useState(1);
+    const ref = useRef<HTMLDivElement>(null);
+
+    const select = useCallback((value: number) => {
+        if (player) player.playbackRate = value;
+        setRate(value);
+        setOpen(false);
+    }, [player]);
+
+    useEffect(() => {
+        function onOutside(e: MouseEvent) {
+            if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+        }
+        if (open) document.addEventListener("mousedown", onOutside);
+        return () => document.removeEventListener("mousedown", onOutside);
+    }, [open]);
+
+    const label = SPEED_OPTIONS.find(o => o.value === rate)?.label ?? `${rate}x`;
+
+    return (
+        <div className="lesson-speed-selector" ref={ref}>
+            <button className="lesson-ctrl-btn lesson-speed-btn" onClick={() => setOpen(v => !v)}>
+                <i className="ri-speed-up-fill" />
+                <span className="lesson-speed-label">{label}</span>
+            </button>
+            {open && (
+                <div className="lesson-speed-dropdown">
+                    {SPEED_OPTIONS.map(o => (
+                        <button
+                            key={o.value}
+                            className={`lesson-speed-option${rate === o.value ? " active" : ""}`}
+                            onClick={() => select(o.value)}
+                        >
+                            {o.label}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+function VideoControls(_: { hasNextLesson?: boolean; onNextLesson?: () => void }) {
     const paused = useMediaState("paused");
 
     return (
@@ -253,16 +308,7 @@ function VideoControls({ hasNextLesson, onNextLesson }: { hasNextLesson?: boolea
                     </div>
 
                     <div className="lesson-controls-right">
-                        {/* Next lesson button inside player */}
-                        {hasNextLesson && onNextLesson && (
-                            <button
-                                className="lesson-player-next-btn"
-                                onClick={onNextLesson}
-                            >
-                                <span>Próxima aula</span>
-                                <i className="ri-skip-forward-fill" />
-                            </button>
-                        )}
+                        <SpeedSelector />
 
                         <FullscreenButton className="lesson-ctrl-btn">
                             <FullscreenIcon />
