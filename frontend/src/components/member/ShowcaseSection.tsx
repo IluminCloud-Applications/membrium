@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import type { MemberShowcaseItem } from "@/types/member";
 import { memberService } from "@/services/member";
 import { LazyImage } from "@/components/ui/LazyImage";
@@ -8,10 +8,15 @@ interface ShowcaseSectionProps {
     showcases: MemberShowcaseItem[];
 }
 
+const DRAG_THRESHOLD = 8; // px — minimum movement to consider a drag
+
 export function ShowcaseSection({ showcases }: ShowcaseSectionProps) {
     const trackRef = useRef<HTMLDivElement>(null);
     const viewedRef = useRef<Set<number>>(new Set());
-    const [canScroll, setCanScroll] = useState(false);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
+    const dragRef = useRef({ startX: 0, scrollLeft: 0, hasDragged: false, active: false });
 
     useEffect(() => {
         showcases.forEach((item) => {
@@ -22,19 +27,82 @@ export function ShowcaseSection({ showcases }: ShowcaseSectionProps) {
         });
     }, [showcases]);
 
-    useEffect(() => {
-        checkCanScroll();
-        window.addEventListener("resize", checkCanScroll);
-        return () => window.removeEventListener("resize", checkCanScroll);
-    }, [showcases]);
-
-    function checkCanScroll() {
+    const updateScrollState = useCallback(() => {
         const el = trackRef.current;
         if (!el) return;
-        setCanScroll(el.scrollWidth > el.clientWidth);
+        const left = el.scrollLeft > 4;
+        const right = el.scrollLeft < el.scrollWidth - el.clientWidth - 4;
+        setCanScrollLeft(left);
+        setCanScrollRight(right);
+    }, []);
+
+    useEffect(() => {
+        updateScrollState();
+        const el = trackRef.current;
+        if (!el) return;
+
+        el.addEventListener("scroll", updateScrollState, { passive: true });
+        const ro = new ResizeObserver(updateScrollState);
+        ro.observe(el);
+
+        return () => {
+            el.removeEventListener("scroll", updateScrollState);
+            ro.disconnect();
+        };
+    }, [updateScrollState, showcases]);
+
+    // Drag-to-scroll document listeners
+    useEffect(() => {
+        function onDocumentMouseMove(e: MouseEvent) {
+            if (!dragRef.current.active) return;
+            const el = trackRef.current;
+            if (!el) return;
+            const dx = e.clientX - dragRef.current.startX;
+            if (!dragRef.current.hasDragged && Math.abs(dx) < DRAG_THRESHOLD) {
+                return;
+            }
+            e.preventDefault();
+            dragRef.current.hasDragged = true;
+            setIsDragging(true);
+            el.scrollLeft = dragRef.current.scrollLeft - dx;
+        }
+
+        function onDocumentMouseUp() {
+            if (!dragRef.current.active) return;
+            dragRef.current.active = false;
+            requestAnimationFrame(() => {
+                dragRef.current.hasDragged = false;
+                setIsDragging(false);
+            });
+        }
+
+        document.addEventListener("mousemove", onDocumentMouseMove);
+        document.addEventListener("mouseup", onDocumentMouseUp);
+
+        return () => {
+            document.removeEventListener("mousemove", onDocumentMouseMove);
+            document.removeEventListener("mouseup", onDocumentMouseUp);
+        };
+    }, []);
+
+    function handleMouseDown(e: React.MouseEvent) {
+        if (e.button !== 0) return;
+        const el = trackRef.current;
+        if (!el) return;
+        dragRef.current = {
+            startX: e.clientX,
+            scrollLeft: el.scrollLeft,
+            hasDragged: false,
+            active: true,
+        };
+    }
+
+    function handleDragStart(e: React.DragEvent) {
+        e.preventDefault();
     }
 
     function handleClick(item: MemberShowcaseItem) {
+        if (dragRef.current.hasDragged) return;
         memberService.trackShowcaseClick(item.id).catch(() => { });
         window.open(item.url, "_blank", "noopener,noreferrer");
     }
@@ -48,6 +116,8 @@ export function ShowcaseSection({ showcases }: ShowcaseSectionProps) {
 
     if (!showcases.length) return null;
 
+    const showArrows = canScrollLeft || canScrollRight;
+
     return (
         <LazySection as="section" className="member-showcase-section" rootMargin="400px">
             <div className="member-showcase-header">
@@ -55,30 +125,63 @@ export function ShowcaseSection({ showcases }: ShowcaseSectionProps) {
                     <i className="ri-gift-2-line" />
                     Desbloqueie ofertas exclusivas
                 </h3>
-                {canScroll && (
-                    <div className="member-showcase-nav">
-                        <button
-                            className="member-showcase-nav-btn"
-                            onClick={() => scrollTrack("left")}
-                            aria-label="Anterior"
-                        >
-                            <i className="ri-arrow-left-s-line" />
-                        </button>
-                        <button
-                            className="member-showcase-nav-btn"
-                            onClick={() => scrollTrack("right")}
-                            aria-label="Próximo"
-                        >
-                            <i className="ri-arrow-right-s-line" />
-                        </button>
+                {showArrows && (
+                    <div className="member-showcase-nav-arrows">
+                        {canScrollLeft && (
+                            <button
+                                className="member-showcase-nav-btn"
+                                onClick={() => scrollTrack("left")}
+                                aria-label="Anterior"
+                            >
+                                <i className="ri-arrow-left-s-line" />
+                            </button>
+                        )}
+                        {canScrollRight && (
+                            <button
+                                className="member-showcase-nav-btn"
+                                onClick={() => scrollTrack("right")}
+                                aria-label="Próximo"
+                            >
+                                <i className="ri-arrow-right-s-line" />
+                            </button>
+                        )}
                     </div>
                 )}
             </div>
 
-            <div className="member-showcase-track" ref={trackRef}>
-                {showcases.map((item) => (
-                    <ShowcaseCard key={item.id} item={item} onClick={handleClick} />
-                ))}
+            <div className="member-showcase-carousel">
+                {/* Left hover arrow */}
+                {canScrollLeft && (
+                    <button
+                        className="member-showcase-carousel-arrow member-showcase-carousel-arrow-left"
+                        onClick={() => scrollTrack("left")}
+                        aria-label="Anterior"
+                      >
+                          <i className="ri-arrow-left-s-line" />
+                      </button>
+                )}
+
+                <div
+                    ref={trackRef}
+                    className={`member-showcase-track ${isDragging ? "is-dragging" : ""}`}
+                    onMouseDown={handleMouseDown}
+                    onDragStart={handleDragStart}
+                >
+                    {showcases.map((item) => (
+                        <ShowcaseCard key={item.id} item={item} onClick={handleClick} />
+                    ))}
+                </div>
+
+                {/* Right hover arrow */}
+                {canScrollRight && (
+                    <button
+                        className="member-showcase-carousel-arrow member-showcase-carousel-arrow-right"
+                        onClick={() => scrollTrack("right")}
+                        aria-label="Próximo"
+                    >
+                        <i className="ri-arrow-right-s-line" />
+                    </button>
+                )}
             </div>
         </LazySection>
     );

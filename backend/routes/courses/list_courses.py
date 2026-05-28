@@ -47,6 +47,7 @@ def get_courses():
             'students_count': students_count,
             'lessons_count': lessons_count,
             'created_at': course.created_at.isoformat() if course.created_at else None,
+            'checkout_url': course.checkout_url,
         })
 
     return jsonify(result)
@@ -77,6 +78,7 @@ def get_course(course_id):
         'students_count': students_count,
         'lessons_count': lessons_count,
         'created_at': course.created_at.isoformat() if course.created_at else None,
+        'checkout_url': course.checkout_url,
     })
 
 

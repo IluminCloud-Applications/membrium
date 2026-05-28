@@ -64,7 +64,7 @@ export function ShowcaseFormInfo({
                 </Label>
 
                 {imagePreview ? (
-                    <div className="relative rounded-lg overflow-hidden border bg-muted aspect-video">
+                    <div className="relative rounded-lg overflow-hidden border bg-muted aspect-[9/16] w-[180px] mx-auto">
                         <img
                             src={imagePreview}
                             alt="Preview"
@@ -89,7 +89,7 @@ export function ShowcaseFormInfo({
                         </div>
                         <span className="text-sm font-medium">Clique para enviar</span>
                         <span className="text-xs text-muted-foreground">
-                            PNG, JPG ou WebP (16:9)
+                            PNG, JPG ou WebP (9:16 - 1080x1920)
                         </span>
                     </button>
                 )}

@@ -107,7 +107,7 @@ export function MemberHomePage() {
     }
 
     const primaryCourse = courses.find((c) => c.category === "principal" && c.hasAccess !== false);
-    const secondaryCourses = courses.filter((c) => c.category !== "principal");
+    const secondaryCourses = courses.filter((c) => c !== primaryCourse);
 
     return (
         <div className="member-page dark">

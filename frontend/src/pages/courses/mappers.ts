@@ -10,6 +10,7 @@ export function mapCourse(raw: CourseResponse): Course {
         name: raw.name,
         description: raw.description || "",
         image: raw.image,
+        checkoutUrl: raw.checkout_url || null,
         category: (raw.category || "principal") as CourseCategory,
         studentsCount: raw.students_count,
         lessonsCount: raw.lessons_count,

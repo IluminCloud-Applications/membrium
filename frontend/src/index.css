@@ -1216,26 +1216,24 @@
    SHOWCASE SECTION (VITRINE) — Member area
    ============================================ */
 .member-showcase-section {
-  padding: 1.5rem 1.5rem 0;
-  max-width: 1400px;
-  margin: 0 auto;
+  margin-bottom: 1rem;
 }
 
 .member-showcase-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.75rem;
+  padding: 2rem 1.5rem 0.5rem;
 }
 
 .member-showcase-title {
-  font-size: 1.1rem;
+  font-size: 1.35rem;
   font-weight: 700;
-  color: oklch(0.85 0 0);
+  color: oklch(0.95 0 0);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  letter-spacing: -0.01em;
+  gap: 0.75rem;
+  letter-spacing: -0.02em;
 }
 
 .member-showcase-title i {
@@ -1243,48 +1241,107 @@
   color: oklch(0.65 0.12 60);
 }
 
-.member-showcase-nav {
+.member-showcase-nav-arrows {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
+  flex-shrink: 0;
 }
 
 .member-showcase-nav-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid oklch(1 0 0 / 10%);
-  background: oklch(1 0 0 / 5%);
-  color: oklch(0.65 0 0);
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 50%;
+  border: 1px solid oklch(1 0 0 / 12%);
+  background: oklch(1 0 0 / 5%);
+  color: oklch(0.7 0 0);
   cursor: pointer;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   transition: all 0.2s;
 }
 
 .member-showcase-nav-btn:hover {
   background: oklch(1 0 0 / 12%);
   color: oklch(0.95 0 0);
+  border-color: oklch(1 0 0 / 20%);
+}
+
+.member-showcase-carousel {
+  position: relative;
+  padding: 1rem 1.5rem 1.5rem;
+}
+
+.member-showcase-carousel:hover .member-showcase-carousel-arrow {
+  opacity: 1;
 }
 
 .member-showcase-track {
   display: flex;
-  gap: 1rem;
+  gap: 1.1rem;
   overflow-x: auto;
   scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  -ms-overflow-style: none;
+  cursor: grab;
   padding-bottom: 0.5rem;
+  user-select: none;
 }
 
 .member-showcase-track::-webkit-scrollbar {
   display: none;
 }
 
+.member-showcase-track.is-dragging {
+  cursor: grabbing;
+  scroll-behavior: auto;
+}
+
+.member-showcase-track.is-dragging .member-showcase-card {
+  pointer-events: none;
+}
+
+.member-showcase-carousel-arrow {
+  position: absolute;
+  top: 1rem;
+  bottom: calc(1.5rem + 80px);
+  width: 56px;
+  z-index: 10;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  color: oklch(0.95 0 0);
+  font-size: 1.8rem;
+}
+
+.member-showcase-carousel-arrow-left {
+  left: 1.5rem;
+  background: linear-gradient(to right, oklch(0.1 0 0) 40%, transparent);
+  padding-right: 12px;
+  border-top-left-radius: 0.85rem;
+  border-bottom-left-radius: 0.85rem;
+}
+
+.member-showcase-carousel-arrow-right {
+  right: 1.5rem;
+  background: linear-gradient(to left, oklch(0.1 0 0) 40%, transparent);
+  padding-left: 12px;
+  border-top-right-radius: 0.85rem;
+  border-bottom-right-radius: 0.85rem;
+}
+
+.member-showcase-carousel-arrow:hover {
+  color: white;
+}
+
 .member-showcase-card {
-  flex: 0 0 260px;
+  flex: 0 0 240px;
   border: 1px solid oklch(1 0 0 / 8%);
   background: oklch(0.14 0 0);
   border-radius: 0.85rem;
@@ -1305,7 +1362,7 @@
 .member-showcase-card-media {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 9 / 16;
   overflow: hidden;
 }
 
@@ -1406,13 +1463,41 @@
   color: oklch(0.8 0.16 25);
 }
 
+@media (min-width: 768px) {
+  .member-showcase-card {
+    flex: 0 0 260px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .member-showcase-card {
+    flex: 0 0 280px;
+  }
+}
+
 @media (max-width: 640px) {
   .member-showcase-card {
-    flex: 0 0 220px;
+    flex: 0 0 180px;
+  }
+
+  .member-showcase-carousel-arrow {
+    display: none;
+  }
+
+  .member-showcase-track {
+    gap: 0.75rem;
   }
 
   .member-showcase-section {
-    padding: 1rem 1rem 0;
+    padding: 0;
+  }
+
+  .member-showcase-header {
+    padding: 1.5rem 1rem 0.5rem;
+  }
+
+  .member-showcase-carousel {
+    padding: 0.5rem 1rem 1rem;
   }
 }
 
@@ -3948,7 +4033,7 @@
 .lesson-sidebar-showcase {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 7;
+  aspect-ratio: 16 / 10;
   border-radius: 0.6rem;
   overflow: hidden;
   cursor: pointer;
@@ -4104,9 +4189,33 @@
     width: 100%;
     position: static;
     height: auto;
-    max-height: 400px;
+    max-height: none;
+    overflow: visible;
     border-left: none;
     border-top: 1px solid oklch(1 0 0 / 6%);
+  }
+
+  .lesson-sidebar-list {
+    overflow-y: visible;
+    flex: none;
+  }
+
+  .lesson-sidebar-showcases {
+    flex-direction: row;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .lesson-sidebar-showcases::-webkit-scrollbar {
+    display: none;
+  }
+
+  .lesson-sidebar-showcase {
+    flex: 0 0 260px;
+    aspect-ratio: 16 / 10;
   }
 
   .lesson-nav-bar {

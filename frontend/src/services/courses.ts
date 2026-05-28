@@ -10,6 +10,7 @@ export interface CourseResponse {
     name: string;
     description: string;
     image: string | null;
+    checkout_url?: string | null;
     category: string;
     is_published: boolean;
     students_count: number;

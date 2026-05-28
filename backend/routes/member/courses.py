@@ -195,6 +195,18 @@ def get_student_courses(student):
             'hasAccess': True,
         })
 
+    # Priority mapping for sorting: principal (0), upsell (1), order_bump (2), bonus (3)
+    category_priority = {
+        'principal': 0,
+        'upsell': 1,
+        'order_bump': 2,
+        'bonus': 3
+    }
+    result.sort(key=lambda x: (
+        0 if x['hasAccess'] else 1,
+        category_priority.get(x['category'], 4)
+    ))
+
     return jsonify(result)
 
 
