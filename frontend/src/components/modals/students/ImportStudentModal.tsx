@@ -49,7 +49,6 @@ export function ImportStudentModal({
     // Progress State
     const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
     const [importResult, setImportResult] = useState<ImportResult | null>(null);
-    const [actionLoading, setActionLoading] = useState(false);
 
     const isImporting = !!importProgress && !importResult;
     const isFinished = !!importResult;
@@ -127,7 +126,6 @@ export function ImportStudentModal({
     function handleSubmit() {
         if (parsedStudents.length === 0) return;
 
-        setActionLoading(true);
         setImportProgress({
             current: 0,
             total: parsedStudents.length,
@@ -148,13 +146,11 @@ export function ImportStudentModal({
             },
             (result) => {
                 setImportResult(result);
-                setActionLoading(false);
                 if (onImportCompleted) {
                     onImportCompleted();
                 }
             }
         ).catch(() => {
-            setActionLoading(false);
             setImportProgress(null);
         });
     }
