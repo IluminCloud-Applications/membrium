@@ -7,17 +7,15 @@ import {
     StudentStats,
     StudentPagination,
 } from "@/components/students";
-import { ImportProgressFloat } from "@/components/students/ImportProgressFloat";
+import { ImportStudentModal } from "@/components/modals/students/ImportStudentModal";
 import { AddStudentModal } from "@/components/modals/students/AddStudentModal";
 import { EditStudentModal } from "@/components/modals/students/EditStudentModal";
-import { ImportStudentModal, type ImportData } from "@/components/modals/students/ImportStudentModal";
 import { ManageCoursesModal } from "@/components/modals/students/ManageCoursesModal";
 import { ResendAccessModal } from "@/components/modals/students/ResendAccessModal";
 import { QuickAccessModal } from "@/components/modals/students/QuickAccessModal";
 import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModal";
 import type { Student } from "@/types/student";
 import { useStudents } from "@/hooks/useStudents";
-import { studentsService, type ImportProgress, type ImportResult } from "@/services/students";
 
 const DEBOUNCE_MS = 400;
 
@@ -56,33 +54,12 @@ export function StudentsPage() {
     const [quickAccessTarget, setQuickAccessTarget] = useState<Student | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
 
-    // Import progress
-    const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
-    const [importResult, setImportResult] = useState<ImportResult | null>(null);
-
-    /* ---- Import handler ---- */
-    const handleStartImport = useCallback((data: ImportData) => {
-        setImportModalOpen(false);
-        setImportProgress(null);
-        setImportResult(null);
-
-        studentsService.importStudents(
-            data,
-            (p) => setImportProgress({ ...p }),
-            (result) => {
-                setImportResult(result);
-                setImportProgress(null);
-                // Refresh student list
-                const courseId = courseFilter !== "all" ? Number(courseFilter) : undefined;
-                applyFilters(search, courseId);
-            },
-        );
+    // Import completion handler
+    const handleImportCompleted = useCallback(() => {
+        // Refresh student list
+        const courseId = courseFilter !== "all" ? Number(courseFilter) : undefined;
+        applyFilters(search, courseId);
     }, [courseFilter, search, applyFilters]);
-
-    const handleDismissImport = useCallback(() => {
-        setImportProgress(null);
-        setImportResult(null);
-    }, []);
 
     /* ---- CRUD Handlers ---- */
     async function handleCreate(data: { name: string; email: string; password: string; courseIds: number[] }) {
@@ -198,7 +175,7 @@ export function StudentsPage() {
                 open={importModalOpen}
                 onOpenChange={setImportModalOpen}
                 availableCourses={courses}
-                onStartImport={handleStartImport}
+                onImportCompleted={handleImportCompleted}
             />
 
             <EditStudentModal
@@ -244,14 +221,6 @@ export function StudentsPage() {
                 confirmLabel="Excluir Aluno"
             />
 
-            {/* Import progress float */}
-            {(importProgress || importResult) && (
-                <ImportProgressFloat
-                    progress={importProgress}
-                    result={importResult}
-                    onDismiss={handleDismissImport}
-                />
-            )}
         </div>
     );
 }

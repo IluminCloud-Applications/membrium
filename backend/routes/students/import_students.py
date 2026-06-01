@@ -45,17 +45,17 @@ def import_students():
     if not default_password:
         default_password = 'senha123'
 
-    # Resolve courses
-    courses = []
-    for cid in course_ids:
-        course = Course.query.get(cid)
-        if course:
-            courses.append(course)
-
     app = current_app._get_current_object()
 
     def generate():
         with app.app_context():
+            # Resolve courses inside the generator's active session
+            courses = []
+            for cid in course_ids:
+                course = Course.query.get(cid)
+                if course:
+                    courses.append(course)
+
             total = len(student_list)
             imported = 0
             skipped = 0
