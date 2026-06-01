@@ -1,4 +1,4 @@
-from flask import Blueprint, Response, jsonify, session, request
+from flask import Blueprint, Response, jsonify, session, request, current_app
 from functools import wraps
 from werkzeug.security import generate_password_hash
 from db.database import db
@@ -52,19 +52,58 @@ def import_students():
         if course:
             courses.append(course)
 
+    app = current_app._get_current_object()
+
     def generate():
-        total = len(student_list)
-        imported = 0
-        skipped = 0
-        errors = []
+        with app.app_context():
+            total = len(student_list)
+            imported = 0
+            skipped = 0
+            errors = []
 
-        for i, entry in enumerate(student_list):
-            name = entry.get('name', '').strip()
-            email = entry.get('email', '').strip().lower()
+            for i, entry in enumerate(student_list):
+                name = entry.get('name', '').strip()
+                email = entry.get('email', '').strip().lower()
 
-            if not email:
-                errors.append(f'Linha {i + 1}: email vazio')
-                skipped += 1
+                if not email:
+                    errors.append(f'Linha {i + 1}: email vazio')
+                    skipped += 1
+                    yield json.dumps({
+                        'progress': {
+                            'current': i + 1,
+                            'total': total,
+                            'imported': imported,
+                            'skipped': skipped,
+                        }
+                    }) + '\n'
+                    continue
+
+                if not name:
+                    name = email.split('@')[0]
+
+                # Check existing
+                existing = Student.query.filter(
+                    Student.email.ilike(email)
+                ).first()
+
+                if existing:
+                    # Add courses to existing student
+                    for c in courses:
+                        if c not in existing.courses:
+                            existing.courses.append(c)
+                    db.session.commit()
+                    skipped += 1
+                else:
+                    # Create new student
+                    hashed = generate_password_hash(default_password)
+                    new_student = Student(email=email, password=hashed, name=name)
+                    db.session.add(new_student)
+                    db.session.flush()
+                    for c in courses:
+                        new_student.courses.append(c)
+                    db.session.commit()
+                    imported += 1
+
                 yield json.dumps({
                     'progress': {
                         'current': i + 1,
@@ -73,49 +112,13 @@ def import_students():
                         'skipped': skipped,
                     }
                 }) + '\n'
-                continue
-
-            if not name:
-                name = email.split('@')[0]
-
-            # Check existing
-            existing = Student.query.filter(
-                Student.email.ilike(email)
-            ).first()
-
-            if existing:
-                # Add courses to existing student
-                for c in courses:
-                    if c not in existing.courses:
-                        existing.courses.append(c)
-                db.session.commit()
-                skipped += 1
-            else:
-                # Create new student
-                hashed = generate_password_hash(default_password)
-                new_student = Student(email=email, password=hashed, name=name)
-                db.session.add(new_student)
-                db.session.flush()
-                for c in courses:
-                    new_student.courses.append(c)
-                db.session.commit()
-                imported += 1
 
             yield json.dumps({
-                'progress': {
-                    'current': i + 1,
-                    'total': total,
-                    'imported': imported,
-                    'skipped': skipped,
-                }
+                'done': True,
+                'imported': imported,
+                'skipped': skipped,
+                'total': total,
+                'errors': errors,
             }) + '\n'
-
-        yield json.dumps({
-            'done': True,
-            'imported': imported,
-            'skipped': skipped,
-            'total': total,
-            'errors': errors,
-        }) + '\n'
 
     return Response(generate(), mimetype='application/x-ndjson')
