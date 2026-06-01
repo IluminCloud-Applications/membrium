@@ -58,7 +58,7 @@ export function ForgotPasswordModal({
 
     return (
         <Dialog open={open} onOpenChange={handleClose}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
                 {step === "success" ? (
                     <SuccessView email={values.email} onClose={handleClose} />
                 ) : (

@@ -51,7 +51,7 @@ export function PublishLessonsModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md flex flex-col max-h-[82vh]">
+            <DialogContent className="max-w-md flex flex-col max-h-[90vh]">
                 <DialogHeader className="shrink-0">
                     <DialogTitle className="flex items-center gap-2">
                         <i className="ri-send-plane-line text-destructive" />
