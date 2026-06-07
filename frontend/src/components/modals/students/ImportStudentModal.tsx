@@ -26,9 +26,10 @@ interface ImportStudentModalProps {
 }
 
 export interface ImportData {
-    students: { name: string; email: string }[];
+    students: { name: string; email: string; phone?: string }[];
     courseIds: number[];
     sendEmail: boolean;
+    sendWhatsapp: boolean;
     defaultPassword: string;
 }
 
@@ -41,9 +42,10 @@ export function ImportStudentModal({
     const [mode, setMode] = useState<InputMode>("paste");
     const [pasteText, setPasteText] = useState("");
     const [fileName, setFileName] = useState("");
-    const [fileStudents, setFileStudents] = useState<{ name: string; email: string }[]>([]);
+    const [fileStudents, setFileStudents] = useState<{ name: string; email: string; phone?: string }[]>([]);
     const [hasHeader, setHasHeader] = useState(true);
     const [sendEmail, setSendEmail] = useState(true);
+    const [sendWhatsapp, setSendWhatsapp] = useState(false);
     const [defaultPassword, setDefaultPassword] = useState("senha123");
 
     // Progress State
@@ -139,6 +141,7 @@ export function ImportStudentModal({
                 students: parsedStudents,
                 courseIds: selectedCourseIds,
                 sendEmail,
+                sendWhatsapp,
                 defaultPassword: defaultPassword.trim() || "senha123",
             },
             (progress) => {
@@ -163,6 +166,7 @@ export function ImportStudentModal({
         setCourseToAdd("");
         setHasHeader(true);
         setSendEmail(true);
+        setSendWhatsapp(false);
         setDefaultPassword("senha123");
         setImportProgress(null);
         setImportResult(null);
@@ -313,6 +317,8 @@ export function ImportStudentModal({
                         <ImportOptions
                             sendEmail={sendEmail}
                             onSendEmailChange={setSendEmail}
+                            sendWhatsapp={sendWhatsapp}
+                            onSendWhatsappChange={setSendWhatsapp}
                             defaultPassword={defaultPassword}
                             onPasswordChange={setDefaultPassword}
                         />

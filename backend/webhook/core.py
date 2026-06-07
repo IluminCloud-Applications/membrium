@@ -180,7 +180,15 @@ def _trigger_notifications(student, course, password, phone=None):
 
 
 def _get_base_url():
-    """Retorna a URL base da aplicação."""
+    """Retorna a URL base da aplicação, priorizando o CUSTOM_DOMAIN se configurado."""
+    import os
+    custom_domain = os.environ.get('CUSTOM_DOMAIN')
+    if custom_domain and custom_domain.strip():
+        domain = custom_domain.strip()
+        if not domain.startswith(('http://', 'https://')):
+            domain = f"https://{domain}"
+        return domain
+
     if request.headers.get('X-Forwarded-Proto') and request.headers.get('X-Forwarded-Host'):
         return f"{request.headers.get('X-Forwarded-Proto')}://{request.headers.get('X-Forwarded-Host')}"
     return request.url_root.rstrip('/')

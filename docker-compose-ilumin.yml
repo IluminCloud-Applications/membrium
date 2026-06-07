@@ -9,6 +9,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - SECRET_KEY=${SECRET_KEY}
       - REDIS_URL=redis://redis:6379/0
+      - CUSTOM_DOMAIN=${CUSTOM_DOMAIN}
     volumes:
       - uploads_data:/app/backend/static/uploads
     networks:

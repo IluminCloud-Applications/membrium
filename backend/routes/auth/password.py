@@ -32,7 +32,15 @@ def _get_settings_dict():
 
 
 def _get_base_url():
-    """Retorna a URL base da aplicação."""
+    """Retorna a URL base da aplicação, priorizando o CUSTOM_DOMAIN se configurado."""
+    import os
+    custom_domain = os.environ.get('CUSTOM_DOMAIN')
+    if custom_domain and custom_domain.strip():
+        domain = custom_domain.strip()
+        if not domain.startswith(('http://', 'https://')):
+            domain = f"https://{domain}"
+        return domain
+
     proto = request.headers.get('X-Forwarded-Proto')
     host = request.headers.get('X-Forwarded-Host')
     if proto and host:

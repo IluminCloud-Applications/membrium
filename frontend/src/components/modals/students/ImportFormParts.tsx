@@ -37,17 +37,37 @@ export function ModeSelector({ mode, onChange }: { mode: InputMode; onChange: (m
 export function PasteInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
     return (
         <div className="space-y-2">
-            <Label className="text-sm font-medium">Emails dos alunos</Label>
+            <Label className="text-sm font-medium">Lista de alunos</Label>
             <Textarea
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                placeholder={"joao@email.com\nmaria@email.com\ncarlos@email.com\n\nOu com nome:\nJoão Silva, joao@email.com\nMaria Santos, maria@email.com"}
+                placeholder={"joao@email.com\nmaria@email.com\ncarlos@email.com\n\nOu com Nome e E-mail:\nJoão Silva, joao@email.com\n\nOu com Nome, E-mail e Telefone:\nJoão Silva, joao@email.com, 5511999999999"}
                 rows={8}
                 className="font-mono text-sm resize-none"
             />
-            <p className="text-xs text-muted-foreground">
-                Um email por linha. Opcionalmente: <code className="bg-muted px-1 rounded">Nome, email</code>
-            </p>
+            <div className="bg-muted/40 p-3 rounded-xl border text-xs text-muted-foreground space-y-2">
+                <span className="font-semibold text-foreground flex items-center gap-1">
+                    <i className="ri-information-line text-primary" />
+                    Como organizar os dados de cada linha:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 font-sans">
+                    <div className="bg-background px-2.5 py-1.5 rounded-lg border flex flex-col gap-0.5">
+                        <span className="font-semibold text-[9px] text-primary uppercase tracking-wider">Apenas E-mail</span>
+                        <code className="text-foreground text-[10px] truncate">email@exemplo.com</code>
+                    </div>
+                    <div className="bg-background px-2.5 py-1.5 rounded-lg border flex flex-col gap-0.5">
+                        <span className="font-semibold text-[9px] text-primary uppercase tracking-wider">Nome & E-mail</span>
+                        <code className="text-foreground text-[10px] truncate">Nome, email@exemplo.com</code>
+                    </div>
+                    <div className="bg-background px-2.5 py-1.5 rounded-lg border flex flex-col gap-0.5">
+                        <span className="font-semibold text-[9px] text-primary uppercase tracking-wider">Completo com Tel.</span>
+                        <code className="text-foreground text-[10px] truncate">Nome, email, telefone</code>
+                    </div>
+                </div>
+                <p className="text-[10px] text-muted-foreground/80 italic">
+                    * Você pode separar os campos por vírgula (,), ponto e vírgula (;) ou espaço de tabulação (Tab).
+                </p>
+            </div>
         </div>
     );
 }
@@ -122,25 +142,46 @@ export function FileInput({
 export function ImportOptions({
     sendEmail,
     onSendEmailChange,
+    sendWhatsapp,
+    onSendWhatsappChange,
     defaultPassword,
     onPasswordChange,
 }: {
     sendEmail: boolean;
     onSendEmailChange: (v: boolean) => void;
+    sendWhatsapp: boolean;
+    onSendWhatsappChange: (v: boolean) => void;
     defaultPassword: string;
     onPasswordChange: (v: string) => void;
 }) {
     return (
-        <div className="space-y-3 border-t pt-4">
-            <div className="flex items-center gap-2">
-                <Checkbox
-                    id="send-email"
-                    checked={sendEmail}
-                    onCheckedChange={(c) => onSendEmailChange(c === true)}
-                />
-                <Label htmlFor="send-email" className="text-sm cursor-pointer">
-                    Enviar email de acesso para novos alunos
-                </Label>
+        <div className="space-y-4 border-t pt-4">
+            <div className="space-y-2">
+                <Label className="text-sm font-semibold text-foreground">Disparos de acesso para novos alunos</Label>
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex items-center gap-2.5 bg-card border rounded-xl px-4 py-3 flex-1 hover:bg-muted/20 transition-colors">
+                        <Checkbox
+                            id="send-email"
+                            checked={sendEmail}
+                            onCheckedChange={(c) => onSendEmailChange(c === true)}
+                        />
+                        <Label htmlFor="send-email" className="text-sm font-medium cursor-pointer flex items-center gap-2 select-none w-full">
+                            <i className="ri-mail-line text-muted-foreground text-base" />
+                            Enviar por E-mail
+                        </Label>
+                    </div>
+                    <div className="flex items-center gap-2.5 bg-card border rounded-xl px-4 py-3 flex-1 hover:bg-muted/20 transition-colors">
+                        <Checkbox
+                            id="send-whatsapp"
+                            checked={sendWhatsapp}
+                            onCheckedChange={(c) => onSendWhatsappChange(c === true)}
+                        />
+                        <Label htmlFor="send-whatsapp" className="text-sm font-medium cursor-pointer flex items-center gap-2 select-none w-full">
+                            <i className="ri-whatsapp-line text-emerald-600 text-base" />
+                            Enviar por WhatsApp
+                        </Label>
+                    </div>
+                </div>
             </div>
 
             <div className="space-y-2">
@@ -155,7 +196,7 @@ export function ImportOptions({
                     className="max-w-xs"
                 />
                 <p className="text-xs text-muted-foreground">
-                    Todos os alunos importados receberão esta senha inicial.
+                    Todos os alunos novos importados receberão esta senha inicial.
                 </p>
             </div>
         </div>
@@ -164,7 +205,7 @@ export function ImportOptions({
 
 /* ---- Preview of parsed students ---- */
 
-export function ImportPreview({ students }: { students: { name: string; email: string }[] }) {
+export function ImportPreview({ students }: { students: { name: string; email: string; phone?: string }[] }) {
     const preview = students.slice(0, 5);
     const remaining = students.length - preview.length;
 
@@ -186,9 +227,15 @@ export function ImportPreview({ students }: { students: { name: string; email: s
                         <span className="font-medium truncate max-w-[140px]">
                             {s.name || "—"}
                         </span>
-                        <span className="text-muted-foreground truncate">
+                        <span className="text-muted-foreground truncate max-w-[180px]">
                             {s.email}
                         </span>
+                        {s.phone && (
+                            <span className="text-emerald-600 dark:text-emerald-500 font-sans text-[10px] font-medium bg-emerald-50 dark:bg-emerald-950/20 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-900/30 flex items-center gap-0.5 shrink-0 ml-auto">
+                                <i className="ri-whatsapp-line text-[11px]" />
+                                {s.phone}
+                            </span>
+                        )}
                     </div>
                 ))}
                 {remaining > 0 && (

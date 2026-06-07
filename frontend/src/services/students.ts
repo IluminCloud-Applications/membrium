@@ -55,9 +55,10 @@ interface MutationResponse {
 }
 
 export interface ImportStudentsPayload {
-    students: { name: string; email: string }[];
+    students: { name: string; email: string; phone?: string }[];
     courseIds: number[];
     sendEmail?: boolean;
+    sendWhatsapp?: boolean;
     defaultPassword?: string;
 }
 
