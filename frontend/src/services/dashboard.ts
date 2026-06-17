@@ -28,6 +28,7 @@ export interface RecentStudent {
     email: string;
     course_name: string | null;
     courses: string[];
+    created_at?: string | null;
 }
 
 export interface RecentStudentsResponse {
@@ -39,6 +40,7 @@ export interface UserInfo {
     name: string;
     email: string;
     platform_name: string;
+    role?: string;
 }
 
 /* ============================================

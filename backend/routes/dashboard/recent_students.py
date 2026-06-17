@@ -34,6 +34,7 @@ def get_recent_students():
             'email': student.email,
             'course_name': course_names[0] if course_names else None,
             'courses': course_names,
+            'created_at': (student.created_at.isoformat() + 'Z') if student.created_at else None,
         })
 
     return jsonify({'students': result})

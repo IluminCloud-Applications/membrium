@@ -27,4 +27,5 @@ def get_user_info():
         'name': admin.name or 'Admin',
         'email': admin.email,
         'platform_name': admin.platform_name,
+        'role': admin.role,
     })

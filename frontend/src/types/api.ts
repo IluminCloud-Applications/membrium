@@ -16,6 +16,7 @@ export interface LoginResponse {
         type: "admin" | "student";
         email: string;
         name?: string;
+        role?: 'admin' | 'support';
     };
 }
 
@@ -58,5 +59,6 @@ export interface CheckMeResponse {
         type: "admin" | "student";
         email: string;
         name: string;
+        role?: 'admin' | 'support';
     };
 }

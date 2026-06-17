@@ -24,6 +24,7 @@ def api_me():
                     'type': 'admin',
                     'email': admin.email,
                     'name': admin.name or 'Admin',
+                    'role': admin.role,
                 },
             })
     elif user_type == 'student':

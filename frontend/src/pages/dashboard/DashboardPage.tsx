@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { WelcomeHeader } from "./WelcomeHeader";
 import {
     StatsOverview,
-    QuickActions,
     RecentStudents,
     StudentsChart,
 } from "@/components/dashboard";
@@ -76,7 +75,6 @@ export function DashboardPage({ userName }: DashboardPageProps) {
 
                 {/* Right — 1 col */}
                 <div className="space-y-6">
-                    <QuickActions />
                     <RecentStudents students={recentStudents} />
                 </div>
             </div>

@@ -11,6 +11,7 @@ import { FilesPage } from "@/pages/files";
 import { TranscriptsPage } from "@/pages/transcripts";
 import { FAQPage } from "@/pages/faq";
 import { SettingsGeneralPage, IntegrationsPage, AIPage } from "@/pages/settings";
+import { UsersPage } from "@/pages/settings/UsersPage";
 import { CustomizationPage } from "@/pages/customization";
 import { CourseModificationPage } from "@/pages/course_modification";
 import { dashboardService, type UserInfo } from "@/services/dashboard";
@@ -24,7 +25,7 @@ interface AdminRoutesProps {
  * Fetches real user info from the API for sidebar and dashboard.
  */
 export function AdminRoutes({ platformName }: AdminRoutesProps) {
-    const [user, setUser] = useState({ name: "Admin", email: "" });
+    const [user, setUser] = useState({ name: "Admin", email: "", role: "admin" });
 
     useEffect(() => {
         loadUserInfo();
@@ -36,6 +37,7 @@ export function AdminRoutes({ platformName }: AdminRoutesProps) {
             setUser({
                 name: data.name,
                 email: data.email,
+                role: data.role || 'admin',
             });
         } catch {
             // Fallback to defaults
@@ -70,6 +72,7 @@ export function AdminRoutes({ platformName }: AdminRoutesProps) {
                 <Route path="configuracoes/personalizacao" element={<CustomizationPage />} />
                 <Route path="configuracoes/integracoes" element={<IntegrationsPage />} />
                 <Route path="configuracoes/ia" element={<AIPage />} />
+                <Route path="configuracoes/usuarios" element={<UsersPage />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/admin" replace />} />

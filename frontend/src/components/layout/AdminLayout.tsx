@@ -7,7 +7,7 @@ import { authService } from "@/services/authService";
 
 interface AdminLayoutProps {
     platformName: string;
-    user: { name: string };
+    user: { name: string; role?: string };
     pageTitle: string;
 }
 
@@ -37,7 +37,7 @@ export function AdminLayout({ platformName, user }: AdminLayoutProps) {
                         <Outlet />
                     </div>
                 </SidebarInset>
-                <AdminMobileBottomNav />
+                <AdminMobileBottomNav userRole={user.role} />
             </SidebarProvider>
         </TooltipProvider>
     );

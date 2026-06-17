@@ -25,6 +25,7 @@ def api_login():
         session.permanent = True
         session['user_id'] = admin.id
         session['user_type'] = 'admin'
+        session['user_role'] = admin.role
         return jsonify({
             'success': True,
             'message': 'Login realizado com sucesso!',
@@ -33,6 +34,7 @@ def api_login():
                 'type': 'admin',
                 'email': admin.email,
                 'name': admin.name or 'Admin',
+                'role': admin.role,
             },
         })
 

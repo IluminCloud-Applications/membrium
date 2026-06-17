@@ -1,6 +1,29 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { RecentStudent } from "@/services/dashboard";
+import { formatDistanceToNow, format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+function formatRelativeDate(dateString?: string | null) {
+    if (!dateString) return "";
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return "";
+
+        const now = new Date();
+        const diffInMs = now.getTime() - date.getTime();
+        const diffInHours = diffInMs / (1000 * 60 * 60);
+
+        if (diffInHours < 24) {
+            return formatDistanceToNow(date, { addSuffix: true, locale: ptBR });
+        } else {
+            return `no dia ${format(date, "dd/MM/yyyy")}`;
+        }
+    } catch {
+        return "";
+    }
+}
+
 
 interface RecentStudentsProps {
     students: RecentStudent[];
@@ -53,7 +76,7 @@ export function RecentStudents({ students }: RecentStudentsProps) {
                             key={student.id}
                             className="flex items-center gap-3 rounded-lg p-2 hover:bg-muted/50 transition-colors"
                         >
-                            <Avatar className="h-9 w-9">
+                            <Avatar className="h-9 w-9 flex-shrink-0">
                                 <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
                                     {initials}
                                 </AvatarFallback>
@@ -64,6 +87,11 @@ export function RecentStudents({ students }: RecentStudentsProps) {
                                     {student.course_name || student.email}
                                 </p>
                             </div>
+                            {student.created_at && (
+                                <span className="text-[10px] text-muted-foreground whitespace-nowrap flex-shrink-0 self-start mt-1">
+                                    {formatRelativeDate(student.created_at)}
+                                </span>
+                            )}
                         </div>
                     );
                 })}

@@ -17,6 +17,20 @@ def admin_required(f):
     return decorated_function
 
 
+def full_admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session or session.get('user_type') != 'admin':
+            return jsonify({'error': 'Acesso não autorizado.'}), 403
+        admin = Admin.query.get(session['user_id'])
+        if not admin:
+            return jsonify({'error': 'Acesso não autorizado.'}), 403
+        if admin.role != 'admin':
+            return jsonify({'error': 'Permissão insuficiente. Apenas administradores completos podem acessar este recurso.'}), 403
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 # ─── GET all settings ────────────────────────────────────────────
 
 @general_bp.route('/api/settings', methods=['GET'])
@@ -66,7 +80,7 @@ def get_settings():
 # ─── Platform name ───────────────────────────────────────────────
 
 @general_bp.route('/api/settings/platform', methods=['POST'])
-@admin_required
+@full_admin_required
 def update_platform():
     data = request.json or request.form
     platform_name = data.get('platform_name')
@@ -87,7 +101,7 @@ def update_platform():
 # ─── Admin info (name, email, password) ──────────────────────────
 
 @general_bp.route('/api/settings/admin', methods=['POST'])
-@admin_required
+@full_admin_required
 def update_admin():
     data = request.json or request.form
     email = data.get('email')
@@ -95,7 +109,7 @@ def update_admin():
     current_password = data.get('current_password')
     new_password = data.get('new_password')
 
-    admin = Admin.query.first()
+    admin = Admin.query.get(session['user_id'])
     if not admin:
         return jsonify({'success': False, 'message': 'Administrador não encontrado'}), 404
 

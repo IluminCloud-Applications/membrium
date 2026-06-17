@@ -24,6 +24,7 @@ class Admin(db.Model):
     password = db.Column(db.String(255), nullable=False)
     platform_name = db.Column(db.String(120), nullable=False)
     is_installed = db.Column(db.Boolean, default=False)
+    role = db.Column(db.String(20), nullable=False, default='admin')  # 'admin' or 'support'
 
     def set_password(self, password):
         self.password = generate_password_hash(password)

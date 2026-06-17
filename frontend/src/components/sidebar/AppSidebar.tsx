@@ -8,15 +8,17 @@ import {
 import { SidebarBrand } from "./SidebarBrand";
 import { NavGroup } from "./NavGroup";
 import { NavUser } from "./NavUser";
-import { sidebarNavGroups } from "./sidebar-data";
+import { sidebarNavGroups, filterNavGroupsByRole } from "./sidebar-data";
 
 interface AppSidebarProps {
     platformName: string;
-    user: { name: string };
+    user: { name: string; role?: string };
     onLogout: () => void;
 }
 
 export function AppSidebar({ platformName, user, onLogout }: AppSidebarProps) {
+    const filteredGroups = filterNavGroupsByRole(sidebarNavGroups, user.role || 'admin');
+
     return (
         <Sidebar collapsible="icon">
             <SidebarHeader>
@@ -25,7 +27,7 @@ export function AppSidebar({ platformName, user, onLogout }: AppSidebarProps) {
 
             <SidebarContent>
                 {/* Navigation groups */}
-                {sidebarNavGroups.map((group) => (
+                {filteredGroups.map((group) => (
                     <NavGroup key={group.label} label={group.label} items={group.items} />
                 ))}
             </SidebarContent>

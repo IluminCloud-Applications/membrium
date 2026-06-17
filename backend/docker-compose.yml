@@ -11,6 +11,7 @@ services:
       - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
       - GUNICORN_WORKERS=1
       - REDIS_URL=redis://redis:6379/0
+      - CUSTOM_DOMAIN=celiomaximiano.com
     volumes:
       - .:/app
       - uploads_data:/app/static/uploads
