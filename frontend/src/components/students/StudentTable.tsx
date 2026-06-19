@@ -239,6 +239,21 @@ function StudentRow({
                             Link de Acesso Rápido
                         </DropdownMenuItem>
 
+                        <DropdownMenuItem
+                            asChild
+                            className="rounded-lg cursor-pointer"
+                        >
+                            <a
+                                href={`/member?preview=true&student_uuid=${student.quickAccessToken}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center w-full"
+                            >
+                                <i className="ri-eye-line mr-2 text-base" />
+                                Visualizar como Aluno
+                            </a>
+                        </DropdownMenuItem>
+
                         <DropdownMenuSeparator />
 
                         <DropdownMenuItem

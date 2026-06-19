@@ -16,7 +16,15 @@ import type { ApiResponse } from "@/types/api";
 function withPreview(endpoint: string, preview?: boolean): string {
     if (!preview) return endpoint;
     const separator = endpoint.includes("?") ? "&" : "?";
-    return `${endpoint}${separator}preview=true`;
+    let url = `${endpoint}${separator}preview=true`;
+    
+    // Automatically retrieve the student_uuid from current window location
+    const searchParams = new URLSearchParams(window.location.search);
+    const studentUuid = searchParams.get("student_uuid");
+    if (studentUuid) {
+        url += `&preview_student_uuid=${studentUuid}`;
+    }
+    return url;
 }
 
 export const memberService = {

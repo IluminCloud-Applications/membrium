@@ -56,7 +56,7 @@ export function NavUser({ user, onLogout }: NavUserProps) {
                             <div className="grid flex-1 text-left text-sm leading-tight">
                                 <span className="truncate font-medium">{user.name}</span>
                                 <span className="truncate text-[10px] text-muted-foreground/60">
-                                    v1.2.9
+                                    v1.3.0
                                 </span>
                             </div>
                             <i className="ri-arrow-up-down-line text-base text-muted-foreground" />
@@ -78,7 +78,7 @@ export function NavUser({ user, onLogout }: NavUserProps) {
                                 <div className="grid flex-1 text-left text-sm leading-tight">
                                     <span className="truncate font-medium">{user.name}</span>
                                     <span className="truncate text-[10px] text-muted-foreground/60">
-                                        v1.2.9
+                                        v1.3.0
                                     </span>
                                 </div>
                             </div>
@@ -94,7 +94,7 @@ export function NavUser({ user, onLogout }: NavUserProps) {
                                 {theme === "dark" ? "Modo Claro" : "Modo Escuro"}
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                                <a href="https://ilumin.app?src=membrium" target="_blank" rel="noopener noreferrer">
+                                <a href="https://www.youtube.com/watch?v=rORgTqN-3uA" target="_blank" rel="noopener noreferrer">
                                     <i className="ri-lifebuoy-line mr-2" />
                                     Ajuda
                                 </a>

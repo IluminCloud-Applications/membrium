@@ -37,6 +37,13 @@ def member_or_preview(f):
             admin = Admin.query.get(session['user_id'])
             if not admin:
                 return jsonify({'error': 'Admin não encontrado'}), 401
+            
+            student_uuid = request.args.get('preview_student_uuid')
+            if student_uuid:
+                student = Student.query.filter_by(uuid=student_uuid).first()
+                if student:
+                    return f(student, *args, **kwargs)
+
             return f(None, *args, **kwargs)
 
         # Regular student access

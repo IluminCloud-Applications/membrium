@@ -116,6 +116,26 @@ export function QuickAccessModal({
                         </div>
                     </div>
 
+                    <div className="pt-3 border-t space-y-2">
+                        <p className="text-xs text-muted-foreground">
+                            Como administrador, você pode visualizar a área de membros com o progresso e cursos deste aluno sem precisar deslogar de sua conta.
+                        </p>
+                        <Button
+                            asChild
+                            variant="secondary"
+                            className="w-full justify-center gap-2"
+                        >
+                            <a
+                                href={`/member?preview=true&student_uuid=${student.quickAccessToken}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <i className="ri-eye-line" />
+                                Visualizar como Aluno
+                            </a>
+                        </Button>
+                    </div>
+
                     <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400">
                         <i className="ri-error-warning-line text-lg shrink-0 mt-0.5" />
                         <p className="text-xs">
