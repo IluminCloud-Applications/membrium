@@ -13,10 +13,12 @@ export interface Student {
     id: number;
     name: string;
     email: string;
+    phone?: string;
     status: StudentStatus;
     courses: StudentCourse[];
     createdAt: string;
     quickAccessToken?: string;
+    extra_data?: Record<string, any>;
 }
 
 export const statusLabels: Record<StudentStatus, string> = {

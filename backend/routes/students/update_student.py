@@ -38,6 +38,8 @@ def update_student(student_id):
 
         student.name = data.get('name', student.name).strip()
         student.email = new_email
+        if 'phone' in data:
+            student.phone = data.get('phone', '').strip()
 
         new_password = data.get('password', '').strip()
         if new_password:
@@ -52,9 +54,11 @@ def update_student(student_id):
                 'id': student.id,
                 'name': student.name,
                 'email': student.email,
+                'phone': student.phone or '',
                 'status': 'active' if student.courses else 'inactive',
                 'courses': [{'id': c.id, 'name': c.name} for c in student.courses],
                 'quickAccessToken': student.uuid,
+                'extra_data': student.extra_data or {},
             }
         })
 

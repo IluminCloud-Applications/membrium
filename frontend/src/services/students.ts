@@ -33,6 +33,7 @@ export interface CreateStudentPayload {
     name: string;
     email: string;
     password: string;
+    phone?: string;
     courseIds: number[];
 }
 
@@ -40,6 +41,7 @@ export interface UpdateStudentPayload {
     name: string;
     email: string;
     password: string;
+    phone?: string;
 }
 
 export interface CourseOption {

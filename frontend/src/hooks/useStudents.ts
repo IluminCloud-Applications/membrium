@@ -16,6 +16,7 @@ function mapStudent(s: StudentFromAPI): Student {
         id: s.id,
         name: s.name,
         email: s.email,
+        phone: s.phone ?? "",
         status: s.status,
         courses: s.courses,
         createdAt: s.createdAt ?? "",
@@ -102,7 +103,7 @@ export function useStudents() {
     }
 
     /* ---- Mutations ---- */
-    async function createStudent(data: { name: string; email: string; password: string; courseIds: number[] }) {
+    async function createStudent(data: { name: string; email: string; password: string; phone?: string; courseIds: number[] }) {
         setActionLoading(true);
         try {
             await studentsService.create(data);
@@ -116,13 +117,14 @@ export function useStudents() {
         }
     }
 
-    async function updateStudent(data: { id: number; name: string; email: string; password: string }) {
+    async function updateStudent(data: { id: number; name: string; email: string; password: string; phone?: string }) {
         setActionLoading(true);
         try {
             await studentsService.update(data.id, {
                 name: data.name,
                 email: data.email,
                 password: data.password,
+                phone: data.phone,
             });
             await refreshCurrentPage();
             return true;

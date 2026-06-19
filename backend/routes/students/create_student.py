@@ -30,6 +30,7 @@ def create_student():
     name = data.get('name', '').strip()
     email = data.get('email', '').strip().lower()
     password = data.get('password', '').strip()
+    phone = data.get('phone', '').strip()
     course_ids = data.get('courseIds', [])
 
     if not name or not email or not password:
@@ -43,7 +44,7 @@ def create_student():
     hashed_password = generate_password_hash(password)
 
     try:
-        new_student = Student(email=email, password=hashed_password, name=name)
+        new_student = Student(email=email, password=hashed_password, name=name, phone=phone)
         db.session.add(new_student)
         db.session.flush()
 
@@ -62,10 +63,12 @@ def create_student():
                 'id': new_student.id,
                 'name': new_student.name,
                 'email': new_student.email,
+                'phone': new_student.phone or '',
                 'status': 'active' if new_student.courses else 'inactive',
                 'courses': [{'id': c.id, 'name': c.name} for c in new_student.courses],
                 'createdAt': new_student.created_at.isoformat() if new_student.created_at else None,
                 'quickAccessToken': new_student.uuid,
+                'extra_data': new_student.extra_data or {},
             }
         })
 

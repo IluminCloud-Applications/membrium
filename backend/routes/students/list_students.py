@@ -42,7 +42,12 @@ def list_students():
     if search:
         like = f'%{search}%'
         query = query.filter(
-            or_(Student.name.ilike(like), Student.email.ilike(like))
+            or_(
+                Student.name.ilike(like),
+                Student.email.ilike(like),
+                Student.phone.ilike(like),
+                Student.extra_data.cast(db.Text).ilike(like)
+            )
         )
 
     if course_id:
@@ -84,6 +89,7 @@ def _serialize(s: Student) -> dict:
         'courses': [{'id': c.id, 'name': c.name} for c in s.courses],
         'createdAt': s.created_at.isoformat() if s.created_at else None,
         'quickAccessToken': s.uuid,
+        'extra_data': s.extra_data or {},
     }
 
 

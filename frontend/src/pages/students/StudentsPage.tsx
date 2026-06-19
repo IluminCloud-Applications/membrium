@@ -13,6 +13,7 @@ import { EditStudentModal } from "@/components/modals/students/EditStudentModal"
 import { ManageCoursesModal } from "@/components/modals/students/ManageCoursesModal";
 import { ResendAccessModal } from "@/components/modals/students/ResendAccessModal";
 import { QuickAccessModal } from "@/components/modals/students/QuickAccessModal";
+import { StudentInfoModal } from "@/components/modals/students/StudentInfoModal";
 import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModal";
 import type { Student } from "@/types/student";
 import { useStudents } from "@/hooks/useStudents";
@@ -53,6 +54,7 @@ export function StudentsPage() {
     const [resendTarget, setResendTarget] = useState<Student | null>(null);
     const [quickAccessTarget, setQuickAccessTarget] = useState<Student | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
+    const [infoTarget, setInfoTarget] = useState<Student | null>(null);
 
     // Import completion handler
     const handleImportCompleted = useCallback(() => {
@@ -62,12 +64,12 @@ export function StudentsPage() {
     }, [courseFilter, search, applyFilters]);
 
     /* ---- CRUD Handlers ---- */
-    async function handleCreate(data: { name: string; email: string; password: string; courseIds: number[] }) {
+    async function handleCreate(data: { name: string; email: string; password: string; phone?: string; courseIds: number[] }) {
         const ok = await createStudent(data);
         if (ok) setAddModalOpen(false);
     }
 
-    async function handleUpdate(data: { id: number; name: string; email: string; password: string }) {
+    async function handleUpdate(data: { id: number; name: string; email: string; password: string; phone?: string }) {
         const ok = await updateStudent(data);
         if (ok) setEditTarget(null);
     }
@@ -149,6 +151,7 @@ export function StudentsPage() {
                         onResendAccess={setResendTarget}
                         onQuickAccess={setQuickAccessTarget}
                         onDelete={setDeleteTarget}
+                        onViewInfo={setInfoTarget}
                     />
                     {!hasActiveFilters && (
                         <StudentPagination
@@ -219,6 +222,12 @@ export function StudentsPage() {
                 title="Excluir Aluno"
                 description={`Tem certeza que deseja excluir "${deleteTarget?.name}"? O aluno será removido de todos os cursos permanentemente.`}
                 confirmLabel="Excluir Aluno"
+            />
+
+            <StudentInfoModal
+                open={!!infoTarget}
+                onOpenChange={() => setInfoTarget(null)}
+                student={infoTarget}
             />
 
         </div>

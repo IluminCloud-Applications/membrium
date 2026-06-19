@@ -32,6 +32,7 @@ interface StudentTableProps {
     onResendAccess: (student: Student) => void;
     onQuickAccess: (student: Student) => void;
     onDelete: (student: Student) => void;
+    onViewInfo: (student: Student) => void;
 }
 
 export function StudentTable({
@@ -41,6 +42,7 @@ export function StudentTable({
     onResendAccess,
     onQuickAccess,
     onDelete,
+    onViewInfo,
 }: StudentTableProps) {
     return (
         <div className="rounded-xl border bg-card shadow-sm overflow-hidden p-2">
@@ -68,6 +70,7 @@ export function StudentTable({
                             onResendAccess={onResendAccess}
                             onQuickAccess={onQuickAccess}
                             onDelete={onDelete}
+                            onViewInfo={onViewInfo}
                         />
                     ))}
                 </TableBody>
@@ -85,6 +88,7 @@ interface StudentRowProps {
     onResendAccess: (student: Student) => void;
     onQuickAccess: (student: Student) => void;
     onDelete: (student: Student) => void;
+    onViewInfo: (student: Student) => void;
 }
 
 function StudentRow({
@@ -94,6 +98,7 @@ function StudentRow({
     onResendAccess,
     onQuickAccess,
     onDelete,
+    onViewInfo,
 }: StudentRowProps) {
     const maxVisibleCourses = 2;
     const visibleCourses = student.courses.slice(0, maxVisibleCourses);
@@ -113,7 +118,13 @@ function StudentRow({
 
             {/* Email */}
             <TableCell className="text-muted-foreground text-sm px-4">
-                {student.email}
+                <div>{student.email}</div>
+                {student.phone && (
+                    <div className="text-[11px] text-muted-foreground/70 flex items-center gap-1 mt-0.5" title="Telefone">
+                        <i className="ri-phone-line text-[12px] text-primary/60" />
+                        {student.phone}
+                    </div>
+                )}
             </TableCell>
 
             {/* Courses */}
@@ -207,6 +218,14 @@ function StudentRow({
                         align="end"
                         className="w-48 rounded-xl"
                     >
+                        <DropdownMenuItem
+                            onClick={() => onViewInfo(student)}
+                            className="rounded-lg cursor-pointer"
+                        >
+                            <i className="ri-information-line mr-2 text-base" />
+                            Informações
+                        </DropdownMenuItem>
+
                         <DropdownMenuItem
                             onClick={() => onEdit(student)}
                             className="rounded-lg cursor-pointer"

@@ -26,6 +26,7 @@ export interface EditStudentFormData {
     email: string;
     /** Empty string means keep current password */
     password: string;
+    phone?: string;
 }
 
 export function EditStudentModal({
@@ -38,6 +39,7 @@ export function EditStudentModal({
 }: EditStudentModalProps) {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
+    const [phone, setPhone] = useState("");
     const [password, setPassword] = useState("");
     const [emailExists, setEmailExists] = useState(false);
     const [checkingEmail, setCheckingEmail] = useState(false);
@@ -47,6 +49,7 @@ export function EditStudentModal({
         if (student) {
             setName(student.name);
             setEmail(student.email);
+            setPhone(student.phone ?? "");
             setPassword("");
             setEmailExists(false);
         }
@@ -55,7 +58,7 @@ export function EditStudentModal({
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         if (!student) return;
-        onSubmit({ id: student.id, name, email, password });
+        onSubmit({ id: student.id, name, email, password, phone });
     }
 
     const isAdminEmail = adminEmail !== "" && email.trim().toLowerCase() === adminEmail;
@@ -147,6 +150,19 @@ export function EditStudentModal({
                                 Já existe um aluno cadastrado com este email.
                             </div>
                         )}
+                    </div>
+
+                    {/* Phone */}
+                    <div className="space-y-2">
+                        <Label htmlFor="edit-phone" className="text-sm font-medium">
+                            Telefone (opcional)
+                        </Label>
+                        <Input
+                            id="edit-phone"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            placeholder="Ex: +55 (11) 99999-9999"
+                        />
                     </div>
 
                     {/* Password */}

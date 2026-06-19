@@ -8,6 +8,7 @@ def _extract_extra_data(data: dict) -> dict:
         'seller_id': data.get('seller_id'),
         'customer_code': data.get('customer', {}).get('code'),
         'payment_method': data.get('transaction', {}).get('payment_method'),
+        'customer': data.get('customer', {}),
     }
 
     # UTMs e source

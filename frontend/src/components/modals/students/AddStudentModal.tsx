@@ -24,6 +24,7 @@ export interface AddStudentFormData {
     name: string;
     email: string;
     password: string;
+    phone?: string;
     courseIds: number[];
 }
 
@@ -37,6 +38,7 @@ export function AddStudentModal({
 }: AddStudentModalProps) {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
+    const [phone, setPhone] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([]);
@@ -53,6 +55,7 @@ export function AddStudentModal({
     function resetForm() {
         setName("");
         setEmail("");
+        setPhone("");
         setPassword("");
         setSelectedCourseIds([]);
         setCourseToAdd("");
@@ -108,7 +111,7 @@ export function AddStudentModal({
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        onSubmit({ name, email, password, courseIds: selectedCourseIds });
+        onSubmit({ name, email, password, phone, courseIds: selectedCourseIds });
     }
 
     const canSubmit = name.trim() && email.trim() && password.trim() && !hasEmailError;
@@ -175,6 +178,19 @@ export function AddStudentModal({
                                 Já existe um aluno cadastrado com este email.
                             </div>
                         )}
+                    </div>
+
+                    {/* Phone */}
+                    <div className="space-y-2">
+                        <Label htmlFor="student-phone" className="text-sm font-medium">
+                            Telefone (opcional)
+                        </Label>
+                        <Input
+                            id="student-phone"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            placeholder="Ex: +55 (11) 99999-9999"
+                        />
                     </div>
 
                     {/* Password */}
