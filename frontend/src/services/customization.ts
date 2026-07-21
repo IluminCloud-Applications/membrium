@@ -22,6 +22,7 @@ export interface DeviceConfig {
 export interface LoginPageConfig {
     layout: LoginLayout;
     logo: string | null;
+    favicon: string | null;
     subtitle: string | null;
     custom_css: string | null;
     /** HTML mode fields */
@@ -50,6 +51,7 @@ export const DEFAULT_DEVICE_CONFIG: DeviceConfig = {
 export const DEFAULT_LOGIN_CONFIG: LoginPageConfig = {
     layout: "simple",
     logo: null,
+    favicon: null,
     subtitle: "Faça login para acessar sua área de membros",
     custom_css: null,
     custom_html: null,

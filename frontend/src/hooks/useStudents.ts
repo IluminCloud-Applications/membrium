@@ -21,6 +21,7 @@ function mapStudent(s: StudentFromAPI): Student {
         courses: s.courses,
         createdAt: s.createdAt ?? "",
         quickAccessToken: s.quickAccessToken,
+        extra_data: s.extra_data,
     };
 }
 

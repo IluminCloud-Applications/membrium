@@ -18,12 +18,47 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AuthRedirect } from "@/components/auth/AuthRedirect";
 import { YouTubeCallbackPage } from "@/pages/settings/YouTubeCallbackPage";
 import { authService } from "@/services/authService";
+import { customizationService } from "@/services/customization";
 
 type AppState = "loading" | "setup" | "maintenance" | "ready";
 
 export default function App() {
   const [appState, setAppState] = useState<AppState>("loading");
   const [platformName, setPlatformName] = useState("Área de Membros");
+
+  useEffect(() => {
+    async function loadMeta() {
+      try {
+        const config = await customizationService.getLoginConfig();
+        if (config.favicon) {
+          const faviconUrl = `/static/uploads/${config.favicon}`;
+          
+          // Update favicon
+          let link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
+          if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            document.head.appendChild(link);
+          }
+          link.href = faviconUrl;
+
+          // Update og:image
+          let ogImage: HTMLMetaElement | null = document.querySelector("meta[property='og:image']");
+          if (!ogImage) {
+            ogImage = document.createElement('meta');
+            ogImage.setAttribute('property', 'og:image');
+            document.head.appendChild(ogImage);
+          }
+          // The base URL for the OG image
+          const origin = window.location.origin;
+          ogImage.setAttribute('content', `${origin}${faviconUrl}`);
+        }
+      } catch (err) {
+        // Silent error
+      }
+    }
+    loadMeta();
+  }, []);
 
   const checkInstallation = useCallback(async () => {
     try {

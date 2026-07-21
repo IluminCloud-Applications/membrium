@@ -33,6 +33,7 @@ DEFAULT_DEVICE_CONFIG = {
 DEFAULT_LOGIN_PAGE = {
     'layout': 'simple',
     'logo': None,
+    'favicon': None,
     'subtitle': 'Faça login para acessar sua área de membros',
     'custom_css': None,
     'custom_html': None,
@@ -43,7 +44,7 @@ DEFAULT_LOGIN_PAGE = {
     'mobile': {**DEFAULT_DEVICE_CONFIG},
 }
 
-GLOBAL_ALLOWED = {'layout', 'logo', 'subtitle', 'custom_css', 'custom_html', 'custom_css_html', 'custom_js_html', 'quick_access_enabled'}
+GLOBAL_ALLOWED = {'layout', 'logo', 'favicon', 'subtitle', 'custom_css', 'custom_html', 'custom_css_html', 'custom_js_html', 'quick_access_enabled'}
 DEVICE_ALLOWED = set(DEFAULT_DEVICE_CONFIG.keys())
 
 

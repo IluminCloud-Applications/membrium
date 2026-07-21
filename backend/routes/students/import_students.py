@@ -155,7 +155,7 @@ def import_students():
                 else:
                     # Create new student
                     hashed = generate_password_hash(default_password)
-                    new_student = Student(email=email, password=hashed, name=name, phone=phone)
+                    new_student = Student(email=email, password=hashed, name=name, phone=phone, extra_data={'source': 'manual'})
                     db.session.add(new_student)
                     db.session.flush()
                     for c in courses:

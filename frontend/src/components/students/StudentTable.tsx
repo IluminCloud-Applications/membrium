@@ -53,6 +53,7 @@ export function StudentTable({
                         <TableHead className="font-semibold px-4">Email</TableHead>
                         <TableHead className="font-semibold px-4">Cursos</TableHead>
                         <TableHead className="font-semibold px-4">Cadastro</TableHead>
+                        <TableHead className="font-semibold px-4">Origem</TableHead>
                         <TableHead className="font-semibold px-4">Status</TableHead>
                         <TableHead className="font-semibold text-right pr-6 px-4">
                             Ações
@@ -76,6 +77,54 @@ export function StudentTable({
                 </TableBody>
             </Table>
         </div>
+    );
+}
+
+function PlatformBadge({ source }: { source?: string }) {
+    if (!source) {
+        return (
+            <span className="text-xs text-muted-foreground/60 italic pl-2">
+                N/A
+            </span>
+        );
+    }
+
+    if (source === "manual") {
+        return (
+            <Badge variant="secondary" className="bg-muted text-muted-foreground text-[11px] font-medium border border-border/50 shadow-sm">
+                <i className="ri-user-add-line mr-1.5" /> Manual
+            </Badge>
+        );
+    }
+
+    const platformConfig: Record<string, { name: string; logo: string }> = {
+        hotmart: { name: "Hotmart", logo: "/platforms/hotmart.png" },
+        kiwify: { name: "Kiwify", logo: "/platforms/kiwify.png" },
+        payt: { name: "PayT", logo: "/platforms/payt.png" },
+        monetizze: { name: "Monetizze", logo: "/platforms/monetizze.png" },
+        perfectpay: { name: "PerfectPay", logo: "/platforms/perfectpay.png" },
+        kirvano: { name: "Kirvano", logo: "/platforms/kirvano.png" },
+        lastlink: { name: "LastLink", logo: "/platforms/lastlink.png" },
+        cartpanda: { name: "CartPanda", logo: "/platforms/cartpanda.svg" },
+        activecampaign: { name: "Active", logo: "/platforms/active.png" },
+        hubla: { name: "Hubla", logo: "/platforms/hubla.png" },
+    };
+
+    const config = platformConfig[source.toLowerCase()];
+
+    if (config) {
+        return (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-border/50 bg-background/50 shadow-sm w-fit">
+                <img src={config.logo} alt={config.name} className="w-4 h-4 rounded-full object-cover bg-white shrink-0" />
+                <span className="text-[11px] font-medium text-foreground/80">{config.name}</span>
+            </div>
+        );
+    }
+
+    return (
+        <Badge variant="outline" className="text-[11px] capitalize border-border/50 text-muted-foreground shadow-sm">
+            {source}
+        </Badge>
     );
 }
 
@@ -183,6 +232,11 @@ function StudentRow({
                 <span className="text-sm text-muted-foreground whitespace-nowrap">
                     {formatBrazilianDate(student.createdAt)}
                 </span>
+            </TableCell>
+
+            {/* Origin */}
+            <TableCell className="px-4">
+                <PlatformBadge source={student.extra_data?.source} />
             </TableCell>
 
             {/* Status */}

@@ -44,7 +44,7 @@ def create_student():
     hashed_password = generate_password_hash(password)
 
     try:
-        new_student = Student(email=email, password=hashed_password, name=name, phone=phone)
+        new_student = Student(email=email, password=hashed_password, name=name, phone=phone, extra_data={'source': 'manual'})
         db.session.add(new_student)
         db.session.flush()
 

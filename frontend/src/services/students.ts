@@ -13,6 +13,7 @@ export interface StudentFromAPI {
     courses: { id: number; name: string }[];
     createdAt: string | null;
     quickAccessToken: string;
+    extra_data?: Record<string, any>;
 }
 
 export interface PaginatedStudents {

@@ -14,6 +14,7 @@ from .platforms.perfectpay import parse_perfectpay
 from .platforms.kirvano import parse_kirvano
 from .platforms.lastlink import parse_lastlink
 from .platforms.activecampaign import parse_activecampaign
+from .platforms.hubla import parse_hubla
 from .core import process_student
 import logging
 
@@ -32,6 +33,7 @@ PLATFORM_PARSERS = {
     'perfectpay': parse_perfectpay,
     'kirvano': parse_kirvano,
     'lastlink': parse_lastlink,
+    'hubla': parse_hubla,
 }
 
 # Lista de plataformas suportadas (para o frontend)
@@ -45,6 +47,7 @@ SUPPORTED_PLATFORMS = [
     {'id': 'lastlink', 'name': 'LastLink', 'logo': '/platforms/lastlink.png'},
     {'id': 'cartpanda', 'name': 'CartPanda', 'logo': '/platforms/cartpanda.svg'},
     {'id': 'activecampaign', 'name': 'ActiveCampaign', 'logo': '/platforms/active.png'},
+    {'id': 'hubla', 'name': 'Hubla', 'logo': '/platforms/hubla.png'},
     {'id': 'manual', 'name': 'API (n8n)', 'logo': '/platforms/n8n.webp'},
 ]
 

@@ -8,6 +8,7 @@ from .perfectpay import parse_perfectpay
 from .kirvano import parse_kirvano
 from .lastlink import parse_lastlink
 from .activecampaign import parse_activecampaign
+from .hubla import parse_hubla
 
 __all__ = [
     'parse_manual',
@@ -20,4 +21,5 @@ __all__ = [
     'parse_kirvano',
     'parse_lastlink',
     'parse_activecampaign',
+    'parse_hubla',
 ]

@@ -1,6 +1,6 @@
 """Quick access — authenticate student via UUID link."""
 from flask import Blueprint, session, jsonify, redirect, request
-from models import Student
+from models import Student, Admin
 
 quick_access_bp = Blueprint('quick_access', __name__)
 
@@ -60,6 +60,16 @@ def api_quick_access_check():
 
     student = Student.query.filter_by(email=email).first()
     if not student:
+        admin = Admin.query.filter_by(email=email).first()
+        if admin:
+            # Admins bypass quick access and go straight to password login
+            return jsonify({
+                'success': True,
+                'exists': True,
+                'has_integrations': False,
+                'channels': {'email': False, 'whatsapp': False},
+            })
+
         return jsonify({
             'success': False,
             'message': 'E-mail não cadastrado',

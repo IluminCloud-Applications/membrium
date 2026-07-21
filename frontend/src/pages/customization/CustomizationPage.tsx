@@ -2,17 +2,19 @@ import { useState } from "react";
 import { SettingsHeader } from "@/components/settings";
 import { LoginCustomizationSection } from "./login/LoginCustomizationSection";
 import { MemberCustomizationSection } from "./member/MemberCustomizationSection";
+import { GeneralCustomizationSection } from "./general/GeneralCustomizationSection";
 import { cn } from "@/lib/utils";
 
-type PersonalizationTab = "login" | "member";
+type PersonalizationTab = "general" | "login" | "member";
 
 const TABS: { key: PersonalizationTab; label: string; icon: string }[] = [
+    { key: "general", label: "Geral", icon: "ri-global-line" },
     { key: "login", label: "Login", icon: "ri-lock-line" },
     { key: "member", label: "Área de Membros", icon: "ri-layout-2-line" },
 ];
 
 export function CustomizationPage() {
-    const [activeTab, setActiveTab] = useState<PersonalizationTab>("login");
+    const [activeTab, setActiveTab] = useState<PersonalizationTab>("general");
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -23,7 +25,7 @@ export function CustomizationPage() {
             />
 
             {/* Tab selector */}
-            <div className="flex items-center gap-1 bg-muted/60 rounded-lg p-1 w-fit">
+            <div className="flex items-center gap-1 bg-muted/60 rounded-lg p-1 w-fit flex-wrap">
                 {TABS.map((tab) => (
                     <button
                         key={tab.key}
@@ -43,6 +45,7 @@ export function CustomizationPage() {
             </div>
 
             {/* Tab content */}
+            {activeTab === "general" && <GeneralCustomizationSection />}
             {activeTab === "login" && <LoginCustomizationSection />}
             {activeTab === "member" && <MemberCustomizationSection />}
         </div>
