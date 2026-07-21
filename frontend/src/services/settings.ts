@@ -10,6 +10,7 @@ export interface GeneralSettings {
     admin_name: string;
     support_email: string;
     support_whatsapp: string;
+    new_student_password: string;
 }
 
 export interface UpdatePlatformPayload {
@@ -60,6 +61,10 @@ export const settingsService = {
     /** Update support info (email + whatsapp) */
     updateSupport: (data: UpdateSupportPayload) =>
         apiClient.post<ApiResponse>("/settings/support", data),
+
+    /** Update student signup info (default password) */
+    updateStudentSignup: (data: { new_student_password: string }) =>
+        apiClient.post<ApiResponse>("/settings/student-signup", data),
 
     /** Get global platform menu */
     getMenu: () =>

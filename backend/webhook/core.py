@@ -62,7 +62,9 @@ def process_student(nome, email, course_id, add=True, password=None, phone=None,
     student = Student.query.filter_by(email=email).first()
 
     if not student and add:
-        password = password or 'senha123'
+        _, signup_config = get_integration('student_signup')
+        default_pw = signup_config.get('new_student_password', '').strip() or 'senha123'
+        password = password or default_pw
         student = Student(
             email=email,
             password=generate_password_hash(password),
@@ -159,11 +161,14 @@ def _trigger_notifications(student, course, password, phone=None):
     settings_dict = get_settings_dict()
     base_url = _get_base_url()
 
+    _, signup_config = get_integration('student_signup')
+    default_pw = signup_config.get('new_student_password', '').strip() or 'senha123'
+
     student_data = {
         'name': student.name,
         'first_name': student.name.split()[0] if student.name else student.name,
         'email': student.email,
-        'password': password or 'senha123',
+        'password': password or default_pw,
         'link': f"{base_url}/login",
         'fast_link': f"{base_url}/access/{student.uuid}",
         'curso': course.name,

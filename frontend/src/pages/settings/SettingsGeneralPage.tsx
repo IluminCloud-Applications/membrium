@@ -2,6 +2,7 @@ import { SettingsHeader } from "@/components/settings";
 import { PlatformSection } from "@/components/settings/general/PlatformSection";
 import { AdminSection } from "@/components/settings/general/AdminSection";
 import { SupportEmailSection } from "@/components/settings/general/SupportEmailSection";
+import { StudentSignupSection } from "@/components/settings/general/StudentSignupSection";
 
 export function SettingsGeneralPage() {
     return (
@@ -15,6 +16,7 @@ export function SettingsGeneralPage() {
             <PlatformSection />
             <AdminSection />
             <SupportEmailSection />
+            <StudentSignupSection />
         </div>
     );
 }

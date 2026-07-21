@@ -87,13 +87,13 @@ def import_students():
     course_ids = data.get('courseIds', [])
     send_email = data.get('sendEmail', False)
     send_wa = data.get('sendWhatsapp', False)
-    default_password = data.get('defaultPassword', 'senha123').strip()
+    from db.integration_helpers import get_integration
+    _, signup_config = get_integration('student_signup')
+    default_pw_from_settings = signup_config.get('new_student_password', '').strip() or 'senha123'
+    default_password = data.get('defaultPassword', '').strip() or default_pw_from_settings
 
     if not student_list:
         return jsonify({'success': False, 'message': 'Nenhum aluno para importar'}), 400
-
-    if not default_password:
-        default_password = 'senha123'
 
     # Carregar configurações e base_url sob o request context ATIVO da rota HTTP
     from routes.students.resend_access import _get_settings_dict, _get_base_url

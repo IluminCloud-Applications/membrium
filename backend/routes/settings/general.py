@@ -43,6 +43,7 @@ def get_settings():
     evolution_enabled, evolution = get_integration('evolution')
     gemini_enabled, gemini = get_integration('gemini')
     openai_enabled, openai = get_integration('openai')
+    _, signup_config = get_integration('student_signup')
 
     return jsonify({
         'platform_name': admin.platform_name,
@@ -50,6 +51,7 @@ def get_settings():
         'admin_name': admin.name or '',
         'support_email': support.get('email', ''),
         'support_whatsapp': support.get('whatsapp', ''),
+        'new_student_password': signup_config.get('new_student_password', ''),
         'brevo': {
             'enabled': brevo_enabled,
             'api_key': brevo.get('api_key'),
@@ -145,6 +147,18 @@ def update_support():
 
     set_integration('support', True, current)
     return jsonify({'success': True, 'message': 'Suporte atualizado com sucesso'})
+
+
+# ─── Student Signup Settings ─────────────────────────────────────
+
+@general_bp.route('/api/settings/student-signup', methods=['POST'])
+@admin_required
+def update_student_signup():
+    data = request.json or request.form
+    new_student_password = data.get('new_student_password', '').strip()
+
+    set_integration('student_signup', True, {'new_student_password': new_student_password})
+    return jsonify({'success': True, 'message': 'Configurações de cadastro de alunos atualizadas com sucesso'})
 
 
 # ─── Public support email endpoint ───────────────────────────────
