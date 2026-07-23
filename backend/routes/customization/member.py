@@ -9,6 +9,7 @@ from db.database import db
 from sqlalchemy.orm.attributes import flag_modified
 from models import Admin, Customization
 from cache import cache_get, cache_set, invalidate_member_area
+from db.utils import get_or_create_customization
 
 member_customization_bp = Blueprint('member_customization', __name__)
 
@@ -28,15 +29,6 @@ def admin_required(f):
             return jsonify({'error': 'Unauthorized'}), 401
         return f(*args, **kwargs)
     return decorated_function
-
-
-def get_or_create_customization():
-    custom = Customization.query.first()
-    if not custom:
-        custom = Customization(login_page={}, member_area={})
-        db.session.add(custom)
-        db.session.commit()
-    return custom
 
 
 def merge_with_defaults(stored):

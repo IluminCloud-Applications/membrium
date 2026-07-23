@@ -10,8 +10,8 @@ def _extract_extra_data(event: dict, invoice: dict) -> dict:
         'currency': invoice.get('currency'),
     }
 
-    # UTMs
-    session = invoice.get('firstPaymentSession', {})
+    # UTMs (pode vir em paymentSession ou firstPaymentSession)
+    session = invoice.get('paymentSession') or invoice.get('firstPaymentSession', {})
     utm = session.get('utm', {})
     extra['utms'] = {
         'utm_source': utm.get('source'),
@@ -26,11 +26,18 @@ def _extract_extra_data(event: dict, invoice: dict) -> dict:
 
 def parse_hubla(data: dict) -> dict:
     """
-    Formato Hubla (invoice.status_updated)
+    Formato Hubla (invoice.status_updated, invoice.payment_succeeded, invoice.refunded, etc.)
     """
     event_type = data.get('type')
 
-    if event_type != 'invoice.status_updated':
+    # Eventos de adição/ativação
+    ADD_EVENTS = ('invoice.payment_succeeded',)
+    # Eventos de remoção/cancelamento/reembolso
+    REMOVE_EVENTS = ('invoice.refunded', 'invoice.charged_back', 'invoice.canceled')
+    # Outros eventos genéricos de atualização de status
+    ALLOWED_EVENTS = ('invoice.status_updated',) + ADD_EVENTS + REMOVE_EVENTS
+
+    if event_type not in ALLOWED_EVENTS:
         return {'skip': True, 'message': f'Evento {event_type} não processado'}
 
     event = data.get('event', {})
@@ -60,10 +67,14 @@ def parse_hubla(data: dict) -> dict:
     extra_data = _extract_extra_data(event, invoice)
     metadata = {'source': 'hubla', 'full_name': name, 'hubla': extra_data}
 
-    if status == 'paid':
+    # Adição de aluno
+    if event_type in ADD_EVENTS or status in ('paid', 'succeeded'):
         return {'name': first_name_only, 'email': email, 'add': True, 'phone': phone, 'metadata': metadata}
 
-    if status in ('refunded', 'chargeback', 'canceled'):
+    # Remoção de aluno (reembolso / estorno / cancelamento)
+    if event_type in REMOVE_EVENTS or status in ('refunded', 'chargeback', 'canceled'):
         return {'name': first_name_only, 'email': email, 'add': False, 'phone': phone, 'metadata': {'source': 'hubla'}}
 
     return {'skip': True, 'message': 'Status não processado'}
+
+

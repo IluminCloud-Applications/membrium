@@ -35,3 +35,29 @@ def check_installation():
     from models import Admin
     admin = Admin.query.first()
     return admin is not None and admin.is_installed
+
+
+def get_or_create_customization():
+    """Fetch single Customization instance. Auto-deduplicates if corrupt multiple rows exist."""
+    from models import Customization
+    from db.database import db
+
+    customs = Customization.query.all()
+    if not customs:
+        custom = Customization(login_page={}, member_area={})
+        db.session.add(custom)
+        db.session.commit()
+        return custom
+
+    if len(customs) > 1:
+        try:
+            db.session.execute(
+                db.text("DELETE FROM customization WHERE ctid NOT IN (SELECT min(ctid) FROM customization)")
+            )
+            db.session.commit()
+            customs = Customization.query.all()
+        except Exception:
+            db.session.rollback()
+
+    return customs[0]
+
