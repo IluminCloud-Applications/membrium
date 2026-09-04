@@ -60,11 +60,10 @@ export function ComboModal({
     }
 
     function handleSelectAll() {
-        if (selectedCourseIds.length === courses.length) {
-            setSelectedCourseIds([]);
-        } else {
-            setSelectedCourseIds(courses.map((c) => c.id));
-        }
+        setSelectedCourseIds((prev) => {
+            const isAll = courses.length > 0 && courses.every((c) => prev.includes(c.id));
+            return isAll ? [] : courses.map((c) => c.id);
+        });
     }
 
     async function handleSubmit(e: React.FormEvent) {

@@ -17,7 +17,7 @@ export function ComboCoursePicker({
     onToggleCourse,
     onSelectAll,
 }: ComboCoursePickerProps) {
-    const allSelected = courses.length > 0 && selectedCourseIds.length === courses.length;
+    const allSelected = courses.length > 0 && courses.every((c) => selectedCourseIds.includes(c.id));
 
     return (
         <div className="space-y-2 pt-2">
@@ -29,8 +29,12 @@ export function ComboCoursePicker({
                 {courses.length > 0 && (
                     <button
                         type="button"
-                        onClick={onSelectAll}
-                        className="text-xs text-primary hover:underline font-medium"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onSelectAll();
+                        }}
+                        className="text-xs text-primary hover:underline font-medium cursor-pointer"
                     >
                         {allSelected ? "Desmarcar todos" : "Selecionar todos"}
                     </button>
@@ -48,16 +52,25 @@ export function ComboCoursePicker({
                         return (
                             <div
                                 key={course.id}
+                                role="checkbox"
+                                aria-checked={isChecked}
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                    if (e.key === " " || e.key === "Enter") {
+                                        e.preventDefault();
+                                        onToggleCourse(course.id);
+                                    }
+                                }}
                                 onClick={() => onToggleCourse(course.id)}
-                                className={`p-2.5 flex items-center justify-between gap-3 cursor-pointer hover:bg-accent/50 transition-colors ${
+                                className={`p-2.5 flex items-center justify-between gap-3 cursor-pointer hover:bg-accent/50 transition-colors select-none ${
                                     isChecked ? "bg-primary/5" : ""
                                 }`}
                             >
                                 <div className="flex items-center gap-3 min-w-0">
                                     <Checkbox
                                         checked={isChecked}
-                                        onCheckedChange={() => onToggleCourse(course.id)}
-                                        onClick={(e) => e.stopPropagation()}
+                                        tabIndex={-1}
+                                        className="pointer-events-none"
                                     />
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate">{course.name}</p>
