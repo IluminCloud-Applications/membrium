@@ -22,10 +22,15 @@ interface PlatformsResponse {
     base_url: string;
 }
 
+export interface WebhookTarget {
+    name: string;
+    uuid?: string;
+}
+
 interface WebhookModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    course: Course | null;
+    course: WebhookTarget | Course | null;
 }
 
 export function WebhookModal({ open, onOpenChange, course }: WebhookModalProps) {

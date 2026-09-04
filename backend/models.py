@@ -14,6 +14,8 @@ student_lessons = db.Table('student_lessons',
     db.Column('lesson_id', db.Integer, db.ForeignKey('lesson.id'), primary_key=True)
 )
 
+from models_combo import CourseCombo, combo_courses
+
 
 
 

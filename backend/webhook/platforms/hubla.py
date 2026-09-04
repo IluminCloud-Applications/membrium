@@ -1,18 +1,34 @@
 """Parser para webhook Hubla."""
 
 
-def _extract_extra_data(event: dict, invoice: dict) -> dict:
+def _extract_extra_data(event: dict, invoice: dict, subscription: dict) -> dict:
     """Extrai dados extras do payload da Hubla para salvar em extra_data."""
+    transaction_id = invoice.get('id') or subscription.get('id')
+    payment_method = invoice.get('paymentMethod') or subscription.get('paymentMethod')
+
     extra = {
-        'transaction_id': invoice.get('id'),
-        'payment_method': invoice.get('paymentMethod'),
+        'transaction_id': transaction_id,
+        'payment_method': payment_method,
         'installments': invoice.get('installments'),
         'currency': invoice.get('currency'),
+        'subscription_id': subscription.get('id'),
+        'subscription_status': subscription.get('status'),
+        'free_trial': subscription.get('freeTrial', False),
     }
 
-    # UTMs (pode vir em paymentSession ou firstPaymentSession)
-    session = invoice.get('paymentSession') or invoice.get('firstPaymentSession', {})
-    utm = session.get('utm', {})
+    # UTMs (podem vir na invoice ou na subscription)
+    session = (
+        invoice.get('paymentSession')
+        or invoice.get('firstPaymentSession')
+        or subscription.get('paymentSession')
+        or subscription.get('firstPaymentSession')
+        or {}
+    )
+    if not isinstance(session, dict):
+        session = {}
+
+    utm = session.get('utm', {}) if isinstance(session.get('utm'), dict) else {}
+
     extra['utms'] = {
         'utm_source': utm.get('source'),
         'utm_medium': utm.get('medium'),
@@ -26,54 +42,57 @@ def _extract_extra_data(event: dict, invoice: dict) -> dict:
 
 def parse_hubla(data: dict) -> dict:
     """
-    Formato Hubla (invoice.status_updated, invoice.payment_succeeded, invoice.refunded, etc.)
+    Formato Hubla:
+    - Faturas: invoice.payment_succeeded, invoice.status_updated, invoice.refunded, etc.
+    - Membros: customer.member_added (acesso concedido / free trial), customer.member_removed (acesso removido).
     """
     event_type = data.get('type')
 
-    # Eventos de adição/ativação
-    ADD_EVENTS = ('invoice.payment_succeeded',)
-    # Eventos de remoção/cancelamento/reembolso
-    REMOVE_EVENTS = ('invoice.refunded', 'invoice.charged_back', 'invoice.canceled')
+    # Eventos de adição/ativação (compra confirmada, acesso liberado ou free trial)
+    ADD_EVENTS = ('invoice.payment_succeeded', 'customer.member_added')
+    # Eventos de remoção/cancelamento/reembolso/acesso removido
+    REMOVE_EVENTS = ('invoice.refunded', 'invoice.charged_back', 'invoice.canceled', 'customer.member_removed')
     # Outros eventos genéricos de atualização de status
     ALLOWED_EVENTS = ('invoice.status_updated',) + ADD_EVENTS + REMOVE_EVENTS
 
     if event_type not in ALLOWED_EVENTS:
         return {'skip': True, 'message': f'Evento {event_type} não processado'}
 
-    event = data.get('event', {})
-    invoice = event.get('invoice', {})
+    event = data.get('event') if isinstance(data.get('event'), dict) else {}
+    invoice = event.get('invoice') if isinstance(event.get('invoice'), dict) else {}
+    subscription = event.get('subscription') if isinstance(event.get('subscription'), dict) else {}
 
-    status = invoice.get('status')
+    status = invoice.get('status') or subscription.get('status')
 
-    user = event.get('user')
-    payer = invoice.get('payer', {})
+    user = event.get('user') if isinstance(event.get('user'), dict) else {}
+    payer = invoice.get('payer') if isinstance(invoice.get('payer'), dict) else {}
 
     if user and user.get('email'):
         target_user = user
     else:
         target_user = payer
 
-    email = target_user.get('email', '')
-    first_name = target_user.get('firstName', '')
-    last_name = target_user.get('lastName', '')
-    name = f"{first_name} {last_name}".strip()
+    email = (target_user.get('email') or '').strip()
+    first_name = (target_user.get('firstName') or '').strip()
+    last_name = (target_user.get('lastName') or '').strip()
+    full_name = f"{first_name} {last_name}".strip()
 
-    first_name_only = first_name.strip() if first_name else name.split(" ")[0] if name else ''
-    phone = target_user.get('phone', '')
+    name = first_name if first_name else (full_name.split(" ")[0] if full_name else '')
+    phone = (target_user.get('phone') or '').strip()
 
-    if not first_name_only or not email:
+    if not name or not email:
         return {'error': 'Nome e email são obrigatórios'}
 
-    extra_data = _extract_extra_data(event, invoice)
-    metadata = {'source': 'hubla', 'full_name': name, 'hubla': extra_data}
+    extra_data = _extract_extra_data(event, invoice, subscription)
+    metadata = {'source': 'hubla', 'full_name': full_name or name, 'hubla': extra_data}
 
-    # Adição de aluno
+    # Adição de aluno (acesso liberado, free trial ou pagamento confirmado)
     if event_type in ADD_EVENTS or status in ('paid', 'succeeded'):
-        return {'name': first_name_only, 'email': email, 'add': True, 'phone': phone, 'metadata': metadata}
+        return {'name': name, 'email': email, 'add': True, 'phone': phone, 'metadata': metadata}
 
-    # Remoção de aluno (reembolso / estorno / cancelamento)
-    if event_type in REMOVE_EVENTS or status in ('refunded', 'chargeback', 'canceled'):
-        return {'name': first_name_only, 'email': email, 'add': False, 'phone': phone, 'metadata': {'source': 'hubla'}}
+    # Remoção de aluno (reembolso / cancelamento / acesso removido)
+    if event_type in REMOVE_EVENTS or status in ('refunded', 'chargeback', 'canceled', 'inactive'):
+        return {'name': name, 'email': email, 'add': False, 'phone': phone, 'metadata': metadata}
 
     return {'skip': True, 'message': 'Status não processado'}
 

@@ -1,23 +1,22 @@
-import { useState, useMemo, useEffect } from "react";
-import {
-    CourseFilters,
-    CourseCard,
-    CourseListItem,
-    CourseEmptyState,
-} from "@/components/courses";
+import { useState, useEffect } from "react";
 import { CourseModal } from "@/components/modals/courses/CreateCourseModal";
 import { DeleteConfirmModal } from "@/components/modals/shared/DeleteConfirmModal";
-import { WebhookModal } from "@/components/modals/courses/WebhookModal";
+import { WebhookModal, type WebhookTarget } from "@/components/modals/courses/WebhookModal";
 import { ImportCourseModal } from "@/components/modals/courses/ImportCourseModal";
 import { ReorderCoursesModal } from "@/components/modals/courses/ReorderCoursesModal";
 import type { ViewMode, SortOption } from "@/components/courses";
 import type { Course, CourseCategory } from "@/types/course";
 import { coursesService } from "@/services/courses";
 import { useCourses } from "./useCourses";
+import { useCombos } from "./useCombos";
+import { CoursesSection } from "./CoursesSection";
+import { CombosSection } from "./CombosSection";
 import { toast } from "sonner";
 
 export function CoursesPage() {
     const { courses, loading, refetch } = useCourses();
+    const { combos, loading: combosLoading, refetch: refetchCombos } = useCombos();
+    const [mainTab, setMainTab] = useState<"courses" | "combos">("courses");
     const [search, setSearch] = useState("");
     const [activeCategory, setActiveCategory] = useState<CourseCategory | "all">("all");
     const [sortBy, setSortBy] = useState<SortOption>("newest");
@@ -29,17 +28,14 @@ export function CoursesPage() {
     const [courseModalOpen, setCourseModalOpen] = useState(false);
     const [editingCourse, setEditingCourse] = useState<Course | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Course | null>(null);
-    const [webhookTarget, setWebhookTarget] = useState<Course | null>(null);
+    const [webhookTarget, setWebhookTarget] = useState<WebhookTarget | null>(null);
     const [importModalOpen, setImportModalOpen] = useState(false);
     const [reorderModalOpen, setReorderModalOpen] = useState(false);
 
     // Auto-select custom sorting if at least one course has custom order
     useEffect(() => {
-        if (courses.length > 0) {
-            const hasCustom = courses.some((c) => (c.order ?? 0) > 0);
-            if (hasCustom) {
-                setSortBy("custom");
-            }
+        if (courses.length > 0 && courses.some((c) => (c.order ?? 0) > 0)) {
+            setSortBy("custom");
         }
     }, [courses]);
 
@@ -48,48 +44,14 @@ export function CoursesPage() {
         localStorage.setItem("courses-view-mode", mode);
     }
 
-    const filteredCourses = useMemo(() => {
-        let result = [...courses];
-        if (search.trim()) {
-            const q = search.toLowerCase();
-            result = result.filter(
-                (c) => c.name.toLowerCase().includes(q) || (c.description && c.description.toLowerCase().includes(q))
-            );
-        }
-        if (activeCategory !== "all") {
-            result = result.filter((c) => c.category === activeCategory);
-        }
-        switch (sortBy) {
-            case "custom":
-                result.sort((a, b) => {
-                    const orderA = a.order ?? 0;
-                    const orderB = b.order ?? 0;
-                    if (orderA > 0 || orderB > 0) {
-                        return (orderA || 999999) - (orderB || 999999);
-                    }
-                    return b.createdAt.localeCompare(a.createdAt);
-                });
-                break;
-            case "newest": result.sort((a, b) => b.createdAt.localeCompare(a.createdAt)); break;
-            case "oldest": result.sort((a, b) => a.createdAt.localeCompare(b.createdAt)); break;
-            case "name": result.sort((a, b) => a.name.localeCompare(b.name)); break;
-            case "students": result.sort((a, b) => b.studentsCount - a.studentsCount); break;
-        }
-        return result;
-    }, [courses, search, activeCategory, sortBy]);
-
-    const hasActiveFilters = search.trim() !== "" || activeCategory !== "all";
-
-    // Handlers
-    function handleCreateOpen() { setEditingCourse(null); setCourseModalOpen(true); }
-    function handleEdit(course: Course) { setEditingCourse(course); setCourseModalOpen(true); }
-    function handleDelete(course: Course) { setDeleteTarget(course); }
-    function handleWebhook(course: Course) { setWebhookTarget(course); }
-
     async function handleConfirmDelete() {
         if (!deleteTarget) return;
-        try { await coursesService.delete(deleteTarget.id); await refetch(); }
-        catch (err) { console.error("Erro ao deletar curso:", err); }
+        try {
+            await coursesService.delete(deleteTarget.id);
+            await refetch();
+        } catch (err) {
+            console.error("Erro ao deletar curso:", err);
+        }
         setDeleteTarget(null);
     }
 
@@ -123,40 +85,71 @@ export function CoursesPage() {
 
     return (
         <div className="space-y-6 animate-fade-in">
-            <div>
-                <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-                    <i className="ri-book-open-line text-primary" />
-                    Cursos
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                    Gerencie todos os cursos da sua plataforma
-                </p>
+            {/* Header com título e seletor Cursos / Combos */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                        <i className="ri-book-open-line text-primary" />
+                        Cursos & Combos
+                    </h1>
+                    <p className="text-sm text-muted-foreground">
+                        Gerencie cursos individuais ou crie combos de ofertas para liberar múltiplos cursos de uma só vez
+                    </p>
+                </div>
+
+                <div className="flex items-center gap-1 p-1 bg-muted rounded-xl w-fit shrink-0">
+                    <button
+                        onClick={() => setMainTab("courses")}
+                        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                            mainTab === "courses"
+                                ? "bg-card text-foreground shadow-sm"
+                                : "text-muted-foreground hover:text-foreground"
+                        }`}
+                    >
+                        <i className="ri-book-open-line" />
+                        Cursos ({courses.length})
+                    </button>
+                    <button
+                        onClick={() => setMainTab("combos")}
+                        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                            mainTab === "combos"
+                                ? "bg-card text-foreground shadow-sm"
+                                : "text-muted-foreground hover:text-foreground"
+                        }`}
+                    >
+                        <i className="ri-stack-line" />
+                        Combos ({combos.length})
+                    </button>
+                </div>
             </div>
 
-            <CourseFilters
-                search={search} onSearchChange={setSearch}
-                activeCategory={activeCategory} onCategoryChange={setActiveCategory}
-                sortBy={sortBy} onSortChange={setSortBy}
-                viewMode={viewMode} onViewModeChange={setViewMode}
-                onCreateCourse={handleCreateOpen}
-                onImportCourse={() => setImportModalOpen(true)}
-                onReorderCourses={() => setReorderModalOpen(true)}
-            />
-
-            {filteredCourses.length === 0 ? (
-                <CourseEmptyState hasFilters={hasActiveFilters} onCreateCourse={handleCreateOpen} />
-            ) : viewMode === "grid" ? (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {filteredCourses.map((c) => (
-                        <CourseCard key={c.id} course={c} onEdit={handleEdit} onDelete={handleDelete} onWebhook={handleWebhook} />
-                    ))}
-                </div>
+            {/* Alternância de Abas */}
+            {mainTab === "courses" ? (
+                <CoursesSection
+                    courses={courses}
+                    search={search}
+                    onSearchChange={setSearch}
+                    activeCategory={activeCategory}
+                    onCategoryChange={setActiveCategory}
+                    sortBy={sortBy}
+                    onSortChange={setSortBy}
+                    viewMode={viewMode}
+                    onViewModeChange={setViewMode}
+                    onCreateCourse={() => { setEditingCourse(null); setCourseModalOpen(true); }}
+                    onImportCourse={() => setImportModalOpen(true)}
+                    onReorderCourses={() => setReorderModalOpen(true)}
+                    onEdit={(course) => { setEditingCourse(course); setCourseModalOpen(true); }}
+                    onDelete={(course) => setDeleteTarget(course)}
+                    onWebhook={(course) => setWebhookTarget(course)}
+                />
             ) : (
-                <div className="space-y-2">
-                    {filteredCourses.map((c) => (
-                        <CourseListItem key={c.id} course={c} onEdit={handleEdit} onDelete={handleDelete} onWebhook={handleWebhook} />
-                    ))}
-                </div>
+                <CombosSection
+                    courses={courses}
+                    combos={combos}
+                    loading={combosLoading}
+                    refetch={refetchCombos}
+                    onOpenWebhook={(combo) => setWebhookTarget(combo)}
+                />
             )}
 
             <CourseModal
@@ -166,9 +159,19 @@ export function CoursesPage() {
                 onSubmit={handleCourseSubmit}
                 hasPrincipal={courses.some((c) => c.category === "principal")}
             />
-            <DeleteConfirmModal open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)} onConfirm={handleConfirmDelete}
-                title="Excluir Curso" description={`Tem certeza que deseja excluir "${deleteTarget?.name}"? Todos os alunos e aulas serão removidos permanentemente.`} confirmLabel="Excluir Curso" />
-            <WebhookModal open={!!webhookTarget} onOpenChange={() => setWebhookTarget(null)} course={webhookTarget} />
+            <DeleteConfirmModal
+                open={!!deleteTarget}
+                onOpenChange={() => setDeleteTarget(null)}
+                onConfirm={handleConfirmDelete}
+                title="Excluir Curso"
+                description={`Tem certeza que deseja excluir "${deleteTarget?.name}"? Todos os alunos e aulas serão removidos permanentemente.`}
+                confirmLabel="Excluir Curso"
+            />
+            <WebhookModal
+                open={!!webhookTarget}
+                onOpenChange={() => setWebhookTarget(null)}
+                course={webhookTarget}
+            />
             <ImportCourseModal open={importModalOpen} onOpenChange={setImportModalOpen} onSuccess={refetch} />
             <ReorderCoursesModal open={reorderModalOpen} onOpenChange={setReorderModalOpen} courses={courses} onSuccess={refetch} />
         </div>

@@ -25,6 +25,7 @@ from webhook import webhook_bp
 from routes.youtube import youtube_bp
 from routes.customization import customization_bp
 from routes.admin_users import admin_users_root_bp
+from routes.combos import combos_bp
 
 
 def create_app():
@@ -60,6 +61,7 @@ def create_app():
     app.register_blueprint(youtube_bp)
     app.register_blueprint(customization_bp)
     app.register_blueprint(admin_users_root_bp)
+    app.register_blueprint(combos_bp)
 
     # Ensure upload directory exists
     with app.app_context():

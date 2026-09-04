@@ -3,7 +3,7 @@ Rotas de webhook — ponto de entrada para todas as plataformas.
 Registra as URLs e despacha para o processador correto.
 """
 from flask import Blueprint, request, jsonify
-from models import Course
+from models import Course, CourseCombo
 from .platforms.manual import parse_manual
 from .platforms.payt import parse_payt
 from .platforms.cartpanda import parse_cartpanda
@@ -16,6 +16,7 @@ from .platforms.lastlink import parse_lastlink
 from .platforms.activecampaign import parse_activecampaign
 from .platforms.hubla import parse_hubla
 from .core import process_student
+from .combo import process_combo_student
 import logging
 
 logger = logging.getLogger(__name__)
@@ -69,14 +70,18 @@ def list_platforms():
 
 @webhook_bp.route('/webhook/<platform>/<uuid>', methods=['POST'])
 def receive_webhook(platform, uuid):
-    """Rota principal de webhook — recebe dados de qualquer plataforma."""
+    """Rota principal de webhook — recebe dados de qualquer plataforma para curso ou combo."""
     course = Course.query.filter_by(uuid=uuid).first()
+    combo = None
     if not course:
-        return jsonify({'error': 'Curso não encontrado'}), 404
+        combo = CourseCombo.query.filter_by(uuid=uuid).first()
+
+    if not course and not combo:
+        return jsonify({'error': 'Curso ou Combo não encontrado'}), 404
 
     # ActiveCampaign tem tratamento especial (form data + query param)
     if platform == 'activecampaign':
-        return _handle_activecampaign(course)
+        return _handle_activecampaign(course, combo=combo)
 
     # Verifica se a plataforma é suportada
     parser = PLATFORM_PARSERS.get(platform)
@@ -96,6 +101,16 @@ def receive_webhook(platform, uuid):
     if result.get('skip'):
         return jsonify({'message': result.get('message', 'Evento não processado')}), 200
 
+    if combo:
+        return process_combo_student(
+            nome=result['name'],
+            email=result['email'],
+            combo=combo,
+            add=result['add'],
+            phone=result.get('phone'),
+            extra_data=result.get('metadata'),
+        )
+
     return process_student(
         nome=result['name'],
         email=result['email'],
@@ -106,7 +121,7 @@ def receive_webhook(platform, uuid):
     )
 
 
-def _handle_activecampaign(course):
+def _handle_activecampaign(course, combo=None):
     """Tratamento especial para ActiveCampaign (envia via form data)."""
     status = request.args.get('status')
     if not status:
@@ -125,6 +140,16 @@ def _handle_activecampaign(course):
 
     if result.get('skip'):
         return jsonify({'message': result.get('message', 'Evento não processado')}), 200
+
+    if combo:
+        return process_combo_student(
+            nome=result['name'],
+            email=result['email'],
+            combo=combo,
+            add=result['add'],
+            phone=result.get('phone'),
+            extra_data=result.get('metadata'),
+        )
 
     return process_student(
         nome=result['name'],
