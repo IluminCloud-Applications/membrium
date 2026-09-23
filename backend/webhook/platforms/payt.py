@@ -58,7 +58,7 @@ def parse_payt(data: dict) -> dict:
     if status == 'paid':
         return {'name': name, 'email': email, 'add': True, 'phone': phone, 'metadata': metadata}
 
-    if status in ('canceled', 'chargeback'):
+    if status in ('canceled', 'chargeback', 'refunded', 'reembolsado'):
         return {'name': name, 'email': email, 'add': False, 'phone': phone, 'metadata': {'source': 'payt'}}
 
     return {'skip': True, 'message': 'Status não processado'}

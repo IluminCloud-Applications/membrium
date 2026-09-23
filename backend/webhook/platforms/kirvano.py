@@ -23,7 +23,7 @@ def parse_kirvano(data: dict) -> dict:
     if event == 'SALE_APPROVED':
         return {'name': name, 'email': email, 'add': True, 'phone': phone, 'metadata': {'source': 'kirvano', 'full_name': full_name}}
 
-    if event in ('SALE_REFUNDED', 'SALE_CHARGEBACK'):
+    if event in ('SALE_REFUNDED', 'SALE_CHARGEBACK', 'SALE_CANCELED'):
         return {'name': name, 'email': email, 'add': False, 'phone': phone, 'metadata': {'source': 'kirvano'}}
 
     return {'skip': True, 'message': 'Evento não processado'}

@@ -114,18 +114,20 @@ def get_student_courses(student):
         courses_structure = _build_courses_structure()
         cache_set('courses:published', courses_structure)
 
-    # 2. Auto-provision bonus courses for real students
+    # 2. Auto-provision bonus courses for real students with access to principal course
     if student is not None:
-        bonus_ids = [c['id'] for c in courses_structure if c['category'] == 'bonus']
-        if bonus_ids:
-            for cid in bonus_ids:
-                db.session.execute(
-                    text("INSERT INTO student_courses (student_id, course_id) "
-                         "VALUES (:sid, :cid) ON CONFLICT DO NOTHING"),
-                    {"sid": student.id, "cid": cid},
-                )
-            db.session.commit()
-            db.session.refresh(student)
+        has_principal = any((c.category or 'principal') == 'principal' for c in student.courses)
+        if has_principal:
+            bonus_ids = [c['id'] for c in courses_structure if c['category'] == 'bonus']
+            if bonus_ids:
+                for cid in bonus_ids:
+                    db.session.execute(
+                        text("INSERT INTO student_courses (student_id, course_id) "
+                             "VALUES (:sid, :cid) ON CONFLICT DO NOTHING"),
+                        {"sid": student.id, "cid": cid},
+                    )
+                db.session.commit()
+                db.session.refresh(student)
 
     # 3. One query for all completed lesson IDs
     all_lesson_ids = [lid for c in courses_structure for m in c['modules'] for lid in m['lessonIds']]

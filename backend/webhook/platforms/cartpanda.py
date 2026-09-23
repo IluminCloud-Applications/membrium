@@ -24,7 +24,7 @@ def parse_cartpanda(data: dict) -> dict:
     if event == 'order.paid':
         return {'name': name, 'email': email, 'add': True, 'phone': phone, 'metadata': {'source': 'cartpanda', 'full_name': full_name}}
 
-    if event == 'order.refunded':
+    if event in ('order.refunded', 'order.chargeback', 'order.canceled'):
         return {'name': name, 'email': email, 'add': False, 'phone': phone, 'metadata': {'source': 'cartpanda'}}
 
     return {'skip': True, 'message': 'Evento não processado'}

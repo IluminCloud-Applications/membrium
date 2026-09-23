@@ -22,7 +22,7 @@ def parse_kiwify(data: dict) -> dict:
     if order_status == 'paid':
         return {'name': name, 'email': email, 'add': True, 'phone': phone, 'metadata': {'source': 'kiwify'}}
 
-    if order_status in ('refunded', 'chargedback'):
+    if order_status in ('refunded', 'chargedback', 'canceled'):
         return {'name': name, 'email': email, 'add': False, 'phone': phone, 'metadata': {'source': 'kiwify'}}
 
     return {'skip': True, 'message': 'Status não processado'}

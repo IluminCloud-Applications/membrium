@@ -24,7 +24,7 @@ def parse_hotmart(data: dict) -> dict:
     if event == 'PURCHASE_APPROVED':
         return {'name': name, 'email': email, 'add': True, 'phone': phone, 'metadata': {'source': 'hotmart', 'full_name': full_name}}
 
-    if event in ('PURCHASE_REFUNDED', 'PURCHASE_CHARGEBACK'):
+    if event in ('PURCHASE_REFUNDED', 'PURCHASE_CHARGEBACK', 'PURCHASE_CANCELED', 'PURCHASE_PROTESTED'):
         return {'name': name, 'email': email, 'add': False, 'phone': phone, 'metadata': {'source': 'hotmart'}}
 
     return {'skip': True, 'message': 'Evento não processado'}

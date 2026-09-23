@@ -100,16 +100,33 @@ def _add_student_to_combo(student, combo, password, phone=None):
 
 
 def _remove_student_from_combo(student, combo):
-    """Remove o aluno de todos os cursos que fazem parte do combo."""
+    """Remove o aluno de todos os cursos que fazem parte do combo e bônus se sair do curso principal."""
     removed_courses = []
+    combo_had_principal = False
+
     for course in combo.courses:
+        if (course.category or 'principal') == 'principal':
+            combo_had_principal = True
         if course in student.courses:
             student.courses.remove(course)
             removed_courses.append(course.name)
 
+    # Se o combo incluía o curso principal ou o aluno não tem mais nenhum curso principal ativo, remove os bônus
+    removed_bonus = []
+    has_principal_left = any((c.category or 'principal') == 'principal' for c in student.courses)
+    if combo_had_principal or not has_principal_left:
+        for c in list(student.courses):
+            if c.category == 'bonus':
+                student.courses.remove(c)
+                removed_bonus.append(c.name)
+                removed_courses.append(f"{c.name} (Bônus)")
+
     try:
         db.session.commit()
-        logger.info(f"Estudante removido dos cursos do combo: {', '.join(removed_courses)}")
+        if removed_bonus:
+            logger.info(f"Estudante removido dos cursos do combo '{combo.name}' + bônus: {', '.join(removed_courses)}")
+        else:
+            logger.info(f"Estudante removido dos cursos do combo '{combo.name}': {', '.join(removed_courses)}")
     except IntegrityError:
         db.session.rollback()
         return jsonify({'error': 'Erro ao atualizar dados do combo'}), 500
@@ -117,6 +134,7 @@ def _remove_student_from_combo(student, combo):
     return jsonify({
         'message': f'Estudante removido com sucesso dos cursos do combo "{combo.name}"',
         'removed_courses': removed_courses,
+        'removed_bonus': removed_bonus,
     }), 200
 
 

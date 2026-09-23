@@ -142,18 +142,35 @@ def _add_student_to_course(student, course, password, phone=None):
 
 
 def _remove_student_from_course(student, course):
-    """Remove aluno do curso especificado."""
-    if course in student.courses:
+    """Remove aluno do curso especificado e remove os bônus ao sair do curso principal."""
+    was_enrolled = course in student.courses
+    if was_enrolled:
         student.courses.remove(course)
+
+    removed_bonus = []
+    # Se o curso removido for o curso principal, remove também todos os bônus
+    is_principal = (course.category or 'principal') == 'principal'
+    if is_principal:
+        for c in list(student.courses):
+            if c.category == 'bonus':
+                student.courses.remove(c)
+                removed_bonus.append(c.name)
 
     try:
         db.session.commit()
-        logger.info("Estudante removido do curso com sucesso")
+        if removed_bonus:
+            logger.info(f"Estudante removido do curso '{course.name}' + bônus: {', '.join(removed_bonus)}")
+        else:
+            logger.info(f"Estudante removido do curso '{course.name}' com sucesso")
     except IntegrityError:
         db.session.rollback()
         return jsonify({'error': 'Erro ao salvar os dados'}), 500
 
-    return jsonify({'message': 'Estudante removido do curso com sucesso'}), 200
+    bonus_msg = f" + {len(removed_bonus)} bônus removidos" if removed_bonus else ""
+    return jsonify({
+        'message': f'Estudante removido do curso com sucesso{bonus_msg}',
+        'removed_bonus': removed_bonus,
+    }), 200
 
 
 def _trigger_notifications(student, course, password, phone=None):
