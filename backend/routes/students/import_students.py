@@ -52,7 +52,9 @@ def start_background_notifications(app, settings_dict, students_list, default_pa
                     'fast_link': f"{base_url}/access/{student['uuid']}",
                     'curso': courses_names,
                     'unsubscribe_link': f"{base_url}/unsubscribe?email={student['email']}",
+                    'base_url': base_url,
                 }
+
                 
                 try:
                     dispatch_notifications(
@@ -135,6 +137,12 @@ def import_students():
             has_active_email = bool(settings_dict.get('brevo_enabled') and settings_dict.get('brevo_api_key') and send_email)
             has_active_wa = bool(settings_dict.get('evolution_enabled') and settings_dict.get('evolution_api_key') and send_wa)
             should_notify = has_active_email or has_active_wa
+
+            if send_email and not (settings_dict.get('brevo_enabled') and settings_dict.get('brevo_api_key')):
+                errors.append("Aviso: 'Enviar por E-mail' estava marcado, mas a Brevo não está ativada ou com API Key preenchida em Configurações > Integrações.")
+            if send_wa and not (settings_dict.get('evolution_enabled') and settings_dict.get('evolution_api_key')):
+                errors.append("Aviso: 'Enviar por WhatsApp' estava marcado, mas a Evolution API não está ativada ou configurada em Configurações > Integrações.")
+
 
             for batch_start in range(0, total, BATCH_SIZE):
                 batch_raw = student_list[batch_start:batch_start + BATCH_SIZE]

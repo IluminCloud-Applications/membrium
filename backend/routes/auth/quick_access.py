@@ -32,6 +32,7 @@ def api_quick_access(uuid):
     session.permanent = True
     session['user_id'] = student.id
     session['user_type'] = 'student'
+    student.record_access(force=True)
     return jsonify({
         'success': True,
         'message': 'Acesso rápido realizado com sucesso!',

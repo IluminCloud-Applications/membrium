@@ -8,7 +8,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Student } from "@/types/student";
-import { formatBrazilianDate } from "@/utils/formatDate";
+import { formatBrazilianDate, formatBrazilianDateTime } from "@/utils/formatDate";
 import { statusColors, statusLabels } from "@/types/student";
 
 interface StudentInfoModalProps {
@@ -79,8 +79,69 @@ export function StudentInfoModal({ open, onOpenChange, student }: StudentInfoMod
                                     </span>
                                 } 
                             />
+                            <div className="col-span-2 pt-1 border-t border-dashed border-border/60">
+                                <DataRow 
+                                    label="Último Acesso" 
+                                    value={
+                                        (student.lastAccessAt || extra.last_access_at) ? (
+                                            <span className="text-emerald-600 dark:text-emerald-400 font-semibold inline-flex items-center gap-1">
+                                                <i className="ri-login-circle-line text-xs" />
+                                                {formatBrazilianDateTime(student.lastAccessAt || extra.last_access_at)}
+                                            </span>
+                                        ) : (
+                                            <span className="text-amber-600 dark:text-amber-400 italic inline-flex items-center gap-1 font-medium">
+                                                <i className="ri-error-warning-line text-xs" />
+                                                Nunca acessou a plataforma
+                                            </span>
+                                        )
+                                    } 
+                                />
+                            </div>
+                            <div className="col-span-2 pt-1 border-t border-dashed border-border/60">
+                                <DataRow 
+                                    label="Status do E-mail" 
+                                    value={
+                                        (student.emailOpenedAt || student.emailStatus === "opened") ? (
+                                            <span className="text-emerald-600 dark:text-emerald-400 font-semibold inline-flex items-center gap-1.5 flex-wrap">
+                                                <span className="inline-flex items-center gap-1">
+                                                    <i className="ri-mail-check-line text-xs" />
+                                                    E-mail aberto
+                                                </span>
+                                                {student.emailOpenedAt && (
+                                                    <span className="text-[10px] text-muted-foreground font-normal">
+                                                        ({formatBrazilianDateTime(student.emailOpenedAt)})
+                                                    </span>
+                                                )}
+                                            </span>
+                                        ) : student.emailStatus === "fallback_sent" ? (
+                                            <span className="text-orange-600 dark:text-orange-400 font-medium inline-flex items-center gap-1.5">
+                                                <i className="ri-mail-forbid-line text-xs" />
+                                                Não abriu (aviso de SPAM e suporte enviado)
+                                            </span>
+                                        ) : student.emailStatus === "pending" ? (
+                                            <span className="text-amber-600 dark:text-amber-400 font-medium inline-flex items-center gap-1.5 flex-wrap">
+                                                <span className="inline-flex items-center gap-1">
+                                                    <i className="ri-mail-unread-line text-xs" />
+                                                    Não abriu ainda {student.emailStage === 2 ? "(2º envio feito)" : "(1º envio pendente)"}
+                                                </span>
+                                                {student.emailLastSentAt && (
+                                                    <span className="text-[10px] text-muted-foreground font-normal">
+                                                        ({formatBrazilianDateTime(student.emailLastSentAt)})
+                                                    </span>
+                                                )}
+                                            </span>
+                                        ) : (
+                                            <span className="text-muted-foreground italic inline-flex items-center gap-1.5 font-normal">
+                                                <i className="ri-mail-line text-xs" />
+                                                Nenhum disparo registrado
+                                            </span>
+                                        )
+                                    } 
+                                />
+                            </div>
                         </div>
                     </div>
+
 
                     {/* Dados de Venda / Checkout */}
                     {(transactionId || customerCode || sellerId || paymentMethod || customerUrl) && (

@@ -13,6 +13,7 @@ def student_required(f):
         student = Student.query.get(session['user_id'])
         if not student:
             return jsonify({'error': 'Aluno não encontrado'}), 401
+        student.record_access()
         return f(student, *args, **kwargs)
     return decorated
 
@@ -51,6 +52,7 @@ def member_or_preview(f):
             student = Student.query.get(session['user_id'])
             if not student:
                 return jsonify({'error': 'Aluno não encontrado'}), 401
+            student.record_access()
             return f(student, *args, **kwargs)
 
         return jsonify({'error': 'Não autorizado'}), 401

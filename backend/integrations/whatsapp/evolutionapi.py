@@ -6,9 +6,53 @@ Suporta ambas as versões: v1.8.x e v2.x.x.
 import requests
 import json
 import logging
+import socket
+import struct
+from urllib.parse import urlparse, urlunparse
 from integrations.utils.template import replace_template_variables
 
 logger = logging.getLogger(__name__)
+
+
+def get_docker_gateway() -> str | None:
+    """Detects default bridge gateway IP inside a Docker container."""
+    try:
+        with open('/proc/net/route') as f:
+            for line in f:
+                fields = line.strip().split()
+                if fields[1] == '00000000':
+                    return socket.inet_ntoa(struct.pack('<L', int(fields[2], 16)))
+    except Exception:
+        pass
+    return None
+
+
+def resolve_docker_url(url: str) -> str:
+    """
+    If running inside Docker and URL points to localhost or 127.0.0.1,
+    checks if that port is actually listening inside the container.
+    If not, rewrites it to the host gateway IP (e.g. 172.18.0.1) so requests
+    reach the host where Evolution API is running.
+    """
+    if not url:
+        return url
+    try:
+        parsed = urlparse(url)
+        if parsed.hostname in ('localhost', '127.0.0.1'):
+            port = parsed.port or (443 if parsed.scheme == 'https' else 80)
+            # Test if listening locally
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(0.2)
+            res = sock.connect_ex(('127.0.0.1', port))
+            sock.close()
+            if res != 0:
+                gateway = get_docker_gateway()
+                if gateway:
+                    target = f"{gateway}:{port}" if parsed.port else gateway
+                    return urlunparse(parsed._replace(netloc=target))
+    except Exception:
+        pass
+    return url
 
 
 class EvolutionClient:
@@ -16,6 +60,11 @@ class EvolutionClient:
 
     def __init__(self, settings_dict: dict):
         self.settings = settings_dict
+
+    @property
+    def api_url(self) -> str:
+        raw_url = self.settings.get('evolution_url', '').rstrip('/')
+        return resolve_docker_url(raw_url)
 
     def is_configured(self) -> bool:
         """Verifica se a Evolution API está configurada e habilitada."""
@@ -120,7 +169,7 @@ class EvolutionClient:
     def _send_v1(self, phone: str, message: str) -> tuple[bool, str]:
         """Envio via Evolution API v1.8.x."""
         try:
-            url = f"{self.settings['evolution_url']}/message/sendText/{self.settings['evolution_instance']}"
+            url = f"{self.api_url}/message/sendText/{self.settings['evolution_instance']}"
             headers = {
                 'Content-Type': 'application/json',
                 'apikey': self.settings['evolution_api_key'],
@@ -146,7 +195,7 @@ class EvolutionClient:
     def _send_go(self, phone: str, message: str) -> tuple[bool, str]:
         """Envio via Evolution GO."""
         try:
-            url = f"{self.settings['evolution_url']}/send/text"
+            url = f"{self.api_url}/send/text"
             headers = {
                 'Content-Type': 'application/json',
                 'apikey': self.settings['evolution_api_key'],
@@ -173,7 +222,7 @@ class EvolutionClient:
         """Envio via Evolution API v2.x.x."""
         try:
             instance = self.settings['evolution_instance']
-            url = f"{self.settings['evolution_url']}/message/sendText/{instance}"
+            url = f"{self.api_url}/message/sendText/{instance}"
             headers = {
                 'Content-Type': 'application/json',
                 'apikey': self.settings['evolution_api_key'],

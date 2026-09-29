@@ -64,14 +64,70 @@ def _dispatch_email(settings_dict: dict, student_data: dict) -> dict:
         print(f"[Brevo] Email {email} está na blacklist")
         return {'sent': False, 'reason': 'blacklisted'}
 
+    # Configurar rastreamento de abertura de email e reenvios se for primeiro envio
+    tracking_token = None
+    is_retry = student_data.get('_is_retry', False)
+    base_url = student_data.get('base_url')
+    if not base_url and student_data.get('link'):
+        base_url = student_data['link'].replace('/login', '').rstrip('/')
+        student_data['base_url'] = base_url
+
+    if not is_retry and base_url and email:
+        import secrets
+        tracking_token = secrets.token_urlsafe(32)
+        student_data['tracking_token'] = tracking_token
+        student_data['tracking_pixel_url'] = f"{base_url}/api/track/email-open/{tracking_token}"
+
     try:
         print(f"[Brevo] Enviando email para {email}...")
         success, message = send_brevo_email(settings_dict, student_data)
         print(f"[Brevo] Resultado: {'OK' if success else 'FALHOU'} - {message}")
+
+        # Se enviou com sucesso e gerou token novo, registrar na fila de tracking
+        if success and tracking_token and not is_retry:
+            try:
+                from models import StudentEmailAccessTracker, Student
+                from db.database import db
+                from datetime import datetime, timedelta
+
+                clean_email = email.strip().lower()
+                student = Student.query.filter_by(email=clean_email).first()
+
+                # Marca trackers pendentes anteriores desse aluno como substituídos
+                prev_trackers = StudentEmailAccessTracker.query.filter_by(
+                    email=clean_email, status='pending'
+                ).all()
+                for pt in prev_trackers:
+                    pt.status = 'superseded'
+
+                new_tracker = StudentEmailAccessTracker(
+                    student_id=student.id if student else None,
+                    email=clean_email,
+                    tracking_token=tracking_token,
+                    stage=1,
+                    status='pending',
+                    first_sent_at=datetime.utcnow(),
+                    last_sent_at=datetime.utcnow(),
+                    next_check_at=datetime.utcnow() + timedelta(minutes=30),
+                    base_url=base_url,
+                    student_data=student_data
+                )
+                db.session.add(new_tracker)
+                db.session.commit()
+                print(f"[Email Tracker] Rastreamento registrado para {clean_email} (token: {tracking_token})")
+            except Exception as e:
+                logger.error(f"[Email Tracker] Erro ao registrar rastreamento de abertura: {e}")
+                try:
+                    from db.database import db
+                    db.session.rollback()
+                except Exception:
+                    pass
+
         return {'sent': success, 'message': message}
     except Exception as e:
         print(f"[Brevo] ERRO: {str(e)}")
         return {'sent': False, 'message': str(e)}
+
 
 
 def _dispatch_whatsapp(settings_dict: dict, student_data: dict, phone: str | None) -> dict:

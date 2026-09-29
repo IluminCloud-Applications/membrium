@@ -56,8 +56,9 @@ def list_students():
     # When filters are active → return ALL matching (no pagination)
     if has_filters:
         students = query.all()
+        tracker_map = _get_trackers_for_students(students)
         return jsonify({
-            'students': [_serialize(s) for s in students],
+            'students': [_serialize(s, tracker_map.get(s.id) or tracker_map.get((s.email or '').lower())) for s in students],
             'total': len(students),
             'page': 1,
             'per_page': len(students),
@@ -68,9 +69,10 @@ def list_students():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', DEFAULT_PER_PAGE, type=int)
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    tracker_map = _get_trackers_for_students(pagination.items)
 
     return jsonify({
-        'students': [_serialize(s) for s in pagination.items],
+        'students': [_serialize(s, tracker_map.get(s.id) or tracker_map.get((s.email or '').lower())) for s in pagination.items],
         'total': pagination.total,
         'page': pagination.page,
         'per_page': pagination.per_page,
@@ -78,8 +80,52 @@ def list_students():
     })
 
 
-def _serialize(s: Student) -> dict:
+def _get_trackers_for_students(students_list):
+    """Retorna um dicionário mapeando student_id e email para o tracker mais recente."""
+    if not students_list:
+        return {}
+
+    from models import StudentEmailAccessTracker
+    student_ids = [s.id for s in students_list if s.id]
+    student_emails = [s.email.lower() for s in students_list if s.email]
+
+    conditions = []
+    if student_ids:
+        conditions.append(StudentEmailAccessTracker.student_id.in_(student_ids))
+    if student_emails:
+        conditions.append(StudentEmailAccessTracker.email.in_(student_emails))
+
+    if not conditions:
+        return {}
+
+    trackers = StudentEmailAccessTracker.query.filter(
+        or_(*conditions)
+    ).order_by(StudentEmailAccessTracker.id.asc()).all()
+
+    tracker_map = {}
+    for t in trackers:
+        if t.student_id:
+            tracker_map[t.student_id] = t
+        if t.email:
+            tracker_map[t.email.lower()] = t
+    return tracker_map
+
+
+def _serialize(s: Student, tracker=None) -> dict:
     has_courses = len(s.courses) > 0
+    extra = s.extra_data or {}
+
+    email_status = None
+    email_opened_at = None
+    email_last_sent_at = None
+    email_stage = None
+
+    if tracker:
+        email_status = tracker.status
+        email_opened_at = tracker.opened_at.isoformat() if tracker.opened_at else None
+        email_last_sent_at = tracker.last_sent_at.isoformat() if tracker.last_sent_at else None
+        email_stage = tracker.stage
+
     return {
         'id': s.id,
         'name': s.name,
@@ -88,9 +134,44 @@ def _serialize(s: Student) -> dict:
         'status': 'active' if has_courses else 'inactive',
         'courses': [{'id': c.id, 'name': c.name} for c in s.courses],
         'createdAt': s.created_at.isoformat() if s.created_at else None,
+        'lastAccessAt': extra.get('last_access_at'),
+        'emailStatus': email_status,
+        'emailOpenedAt': email_opened_at,
+        'emailLastSentAt': email_last_sent_at,
+        'emailStage': email_stage,
         'quickAccessToken': s.uuid,
-        'extra_data': s.extra_data or {},
+        'extra_data': extra,
     }
+
+
+@list_students_bp.route('/<int:student_id>/access', methods=['GET'])
+@admin_required
+def get_student_access(student_id):
+    """Return access info for a specific student."""
+    student = Student.query.get_or_404(student_id)
+    extra = student.extra_data or {}
+    last_access = extra.get('last_access_at')
+
+    from models import StudentEmailAccessTracker
+    tracker = StudentEmailAccessTracker.query.filter(
+        or_(
+            StudentEmailAccessTracker.student_id == student.id,
+            StudentEmailAccessTracker.email == student.email.lower()
+        )
+    ).order_by(StudentEmailAccessTracker.id.desc()).first()
+
+    return jsonify({
+        'student_id': student.id,
+        'name': student.name,
+        'email': student.email,
+        'has_accessed': bool(last_access),
+        'last_access_at': last_access,
+        'email_status': tracker.status if tracker else 'not_sent',
+        'email_opened_at': tracker.opened_at.isoformat() if tracker and tracker.opened_at else None,
+        'email_last_sent_at': tracker.last_sent_at.isoformat() if tracker and tracker.last_sent_at else None,
+        'created_at': student.created_at.isoformat() if student.created_at else None
+    })
+
 
 
 @list_students_bp.route('/courses', methods=['GET'])

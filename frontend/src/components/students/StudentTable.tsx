@@ -52,7 +52,7 @@ export function StudentTable({
                         <TableHead className="font-semibold pl-6 px-4">Nome</TableHead>
                         <TableHead className="font-semibold px-4">Email</TableHead>
                         <TableHead className="font-semibold px-4">Cursos</TableHead>
-                        <TableHead className="font-semibold px-4">Cadastro</TableHead>
+                        <TableHead className="font-semibold px-4">Cadastro / Acesso</TableHead>
                         <TableHead className="font-semibold px-4">Origem</TableHead>
                         <TableHead className="font-semibold px-4">Status</TableHead>
                         <TableHead className="font-semibold text-right pr-6 px-4">
@@ -227,11 +227,22 @@ function StudentRow({
                 </div>
             </TableCell>
 
-            {/* Created At */}
+            {/* Created At & Last Access */}
             <TableCell className="px-4">
                 <span className="text-sm text-muted-foreground whitespace-nowrap">
                     {formatBrazilianDate(student.createdAt)}
                 </span>
+                {(student.lastAccessAt || student.extra_data?.last_access_at) ? (
+                    <div className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-0.5 whitespace-nowrap font-medium" title="Último acesso">
+                        <i className="ri-login-circle-line text-[12px]" />
+                        {formatBrazilianDate(student.lastAccessAt || student.extra_data?.last_access_at)}
+                    </div>
+                ) : (
+                    <div className="text-[11px] text-muted-foreground/50 italic flex items-center gap-1 mt-0.5 whitespace-nowrap" title="Nunca acessou">
+                        <i className="ri-time-line text-[12px]" />
+                        Sem acessos
+                    </div>
+                )}
             </TableCell>
 
             {/* Origin */}

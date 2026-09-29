@@ -17,9 +17,15 @@ export interface Student {
     status: StudentStatus;
     courses: StudentCourse[];
     createdAt: string;
+    lastAccessAt?: string | null;
+    emailStatus?: "opened" | "pending" | "fallback_sent" | "superseded" | string | null;
+    emailOpenedAt?: string | null;
+    emailLastSentAt?: string | null;
+    emailStage?: number | null;
     quickAccessToken?: string;
     extra_data?: Record<string, any>;
 }
+
 
 export const statusLabels: Record<StudentStatus, string> = {
     active: "Ativo",

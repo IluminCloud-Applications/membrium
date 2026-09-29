@@ -68,8 +68,8 @@ export function EvolutionTab() {
             } else {
                 setFeedback(res.message || "Não foi possível detectar a versão");
             }
-        } catch {
-            setFeedback("Erro ao detectar versão");
+        } catch (err: any) {
+            setFeedback(err?.message || "Erro ao detectar versão");
         } finally {
             setDetecting(false);
             setTimeout(() => setFeedback(null), 3000);
@@ -105,8 +105,8 @@ export function EvolutionTab() {
             } else {
                 setFeedback(res.message || "Erro ao buscar instâncias");
             }
-        } catch {
-            setFeedback("Erro ao buscar instâncias");
+        } catch (err: any) {
+            setFeedback(err?.message || "Erro ao buscar instâncias");
         } finally {
             setFetchingInstances(false);
             setTimeout(() => setFeedback(null), 3000);
@@ -138,8 +138,8 @@ export function EvolutionTab() {
             if (typeof overrideEnabled === "boolean") {
                 setData(prev => ({ ...prev, enabled: overrideEnabled }));
             }
-        } catch {
-            setFeedback("Erro ao salvar");
+        } catch (err: any) {
+            setFeedback(err?.message || "Erro ao salvar");
         } finally {
             setSaving(false);
             setTimeout(() => setFeedback(null), 3000);

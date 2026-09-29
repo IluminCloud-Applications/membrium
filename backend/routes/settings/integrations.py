@@ -3,6 +3,7 @@ from functools import wraps
 from db.database import db
 from models import Admin
 from db.integration_helpers import get_integration, set_integration
+from integrations.whatsapp.evolutionapi import resolve_docker_url
 
 integrations_bp = Blueprint('settings_integrations', __name__)
 
@@ -190,52 +191,79 @@ def update_evolution():
 @admin_required
 def detect_evolution_version():
     data = request.json or request.form
-    url = data.get('url', '').rstrip('/')
+    raw_url = data.get('url', '').rstrip('/')
     api_key = data.get('api_key')
 
-    if not url or not api_key:
+    if not raw_url or not api_key:
         return jsonify({'success': False, 'message': 'URL e API Key são obrigatórios'}), 400
+
+    url = resolve_docker_url(raw_url)
 
     import requests as http_requests
     try:
-        # Try Evolution GO first
-        resp_go = http_requests.get(
-            f"{url}/instance/all",
-            headers={'apikey': api_key},
-            timeout=10
-        )
-        if resp_go.status_code == 200:
-            body_go = resp_go.json()
-            if isinstance(body_go, dict) and 'data' in body_go:
-                return jsonify({'success': True, 'version': 'go'})
+        # 1. Try Root endpoint (Evolution v2/v1 root returns version & clientName directly)
+        try:
+            resp_root = http_requests.get(
+                f"{url}/",
+                headers={'apikey': api_key},
+                timeout=5
+            )
+            if resp_root.status_code == 200:
+                body_root = resp_root.json()
+                if isinstance(body_root, dict):
+                    client_name = str(body_root.get('clientName', '')).lower()
+                    ver_str = str(body_root.get('version', '')).lower()
+                    if client_name == 'evolution_v2' or ver_str.startswith('2.'):
+                        return jsonify({'success': True, 'version': '2.x.x'})
+                    if ver_str.startswith('1.'):
+                        return jsonify({'success': True, 'version': '1.8.x'})
+                    if 'go' in client_name or 'go' in ver_str:
+                        return jsonify({'success': True, 'version': 'go'})
+        except Exception:
+            pass
 
-        # Try v2 endpoint
-        resp = http_requests.get(
-            f"{url}/instance/fetchInstances",
-            headers={'apikey': api_key},
-            timeout=10
-        )
-        if resp.status_code == 200:
-            body = resp.json()
-            if isinstance(body, list) and len(body) > 0:
-                item = body[0]
-                if isinstance(item, dict) and 'instance' in item and 'instanceName' in item['instance']:
-                    return jsonify({'success': True, 'version': '2.x.x'})
-            return jsonify({'success': True, 'version': '2.x.x'})
+        # 2. Try Evolution GO
+        try:
+            resp_go = http_requests.get(
+                f"{url}/instance/all",
+                headers={'apikey': api_key},
+                timeout=5
+            )
+            if resp_go.status_code == 200:
+                body_go = resp_go.json()
+                if isinstance(body_go, dict) and 'data' in body_go:
+                    return jsonify({'success': True, 'version': 'go'})
+        except Exception:
+            pass
 
-        # Fallback: try v1.8.x
-        resp_v1 = http_requests.get(
-            f"{url}/instance/list",
-            headers={'apikey': api_key},
-            timeout=10
-        )
-        if resp_v1.status_code == 200:
-            return jsonify({'success': True, 'version': '1.8.x'})
+        # 3. Try v2 endpoint (/instance/fetchInstances)
+        try:
+            resp_v2 = http_requests.get(
+                f"{url}/instance/fetchInstances",
+                headers={'apikey': api_key},
+                timeout=5
+            )
+            if resp_v2.status_code == 200:
+                return jsonify({'success': True, 'version': '2.x.x'})
+        except Exception:
+            pass
 
-        return jsonify({'success': False, 'message': f'Não foi possível detectar a versão (status {resp.status_code})'}), 400
+        # 4. Fallback: try v1.8.x (/instance/list)
+        try:
+            resp_v1 = http_requests.get(
+                f"{url}/instance/list",
+                headers={'apikey': api_key},
+                timeout=5
+            )
+            if resp_v1.status_code == 200:
+                return jsonify({'success': True, 'version': '1.8.x'})
+        except Exception:
+            pass
+
+        return jsonify({'success': False, 'message': 'Não foi possível detectar a versão da Evolution API. Verifique a URL e a API Key.'}), 400
 
     except http_requests.exceptions.ConnectionError:
-        return jsonify({'success': False, 'message': 'Não foi possível conectar à Evolution API'}), 400
+        return jsonify({'success': False, 'message': 'Não foi possível conectar à Evolution API (conexão recusada). Verifique se a URL está correta e acessível.'}), 400
     except http_requests.exceptions.Timeout:
         return jsonify({'success': False, 'message': 'Timeout ao conectar à Evolution API'}), 400
     except Exception as e:
@@ -248,12 +276,13 @@ def detect_evolution_version():
 @admin_required
 def fetch_evolution_instances():
     data = request.json or request.form
-    url = data.get('url', '').rstrip('/')
+    raw_url = data.get('url', '').rstrip('/')
     api_key = data.get('api_key')
 
-    if not url or not api_key:
+    if not raw_url or not api_key:
         return jsonify({'success': False, 'message': 'URL e API Key são obrigatórios'}), 400
 
+    url = resolve_docker_url(raw_url)
     version = data.get('version', '')
 
     import requests as http_requests
@@ -286,14 +315,29 @@ def fetch_evolution_instances():
                     })
             return jsonify({'success': True, 'instances': instances})
 
+        endpoint = "/instance/list" if version == '1.8.x' else "/instance/fetchInstances"
         resp = http_requests.get(
-            f"{url}/instance/fetchInstances",
+            f"{url}{endpoint}",
             headers={'apikey': api_key},
             timeout=10
         )
 
+        # Fallback between /instance/fetchInstances and /instance/list
         if resp.status_code != 200:
-            return jsonify({'success': False, 'message': f'Erro da API: {resp.status_code}'}), 400
+            alt_endpoint = "/instance/fetchInstances" if version == '1.8.x' else "/instance/list"
+            try:
+                resp_alt = http_requests.get(
+                    f"{url}{alt_endpoint}",
+                    headers={'apikey': api_key},
+                    timeout=10
+                )
+                if resp_alt.status_code == 200:
+                    resp = resp_alt
+            except Exception:
+                pass
+
+        if resp.status_code != 200:
+            return jsonify({'success': False, 'message': f'Erro da API: status {resp.status_code}'}), 400
 
         body = resp.json()
         instances = []
@@ -303,9 +347,11 @@ def fetch_evolution_instances():
                 if not isinstance(item, dict):
                     continue
 
-                name = item.get('name', '')
-                status = item.get('connectionStatus', 'unknown')
-                owner_jid = item.get('ownerJid', '')
+                # Support both v2 (flat properties) and v1 (nested under 'instance')
+                inst_data = item.get('instance') if isinstance(item.get('instance'), dict) else item
+                name = item.get('name') or inst_data.get('instanceName') or inst_data.get('name', '')
+                status = item.get('connectionStatus') or inst_data.get('status') or 'unknown'
+                owner_jid = item.get('ownerJid') or inst_data.get('owner') or ''
 
                 phone = ''
                 if owner_jid and '@' in owner_jid:
@@ -321,7 +367,7 @@ def fetch_evolution_instances():
         return jsonify({'success': True, 'instances': instances})
 
     except http_requests.exceptions.ConnectionError:
-        return jsonify({'success': False, 'message': 'Não foi possível conectar à Evolution API'}), 400
+        return jsonify({'success': False, 'message': 'Não foi possível conectar à Evolution API (conexão recusada). Verifique se a URL está correta e acessível.'}), 400
     except http_requests.exceptions.Timeout:
         return jsonify({'success': False, 'message': 'Timeout ao conectar à Evolution API'}), 400
     except Exception as e:

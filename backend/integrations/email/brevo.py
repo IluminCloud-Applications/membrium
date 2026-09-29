@@ -92,6 +92,15 @@ class BrevoClient:
         else:
             html_content = text_to_html(template, student_data)
 
+        # Injetar pixel invisível de tracking se configurado
+        tracking_pixel_url = student_data.get('tracking_pixel_url')
+        if tracking_pixel_url:
+            pixel_tag = f'<img src="{tracking_pixel_url}" width="1" height="1" style="display:none;width:1px;height:1px;border:0;opacity:0;" alt="" />'
+            if '</body>' in html_content:
+                html_content = html_content.replace('</body>', f'{pixel_tag}</body>')
+            else:
+                html_content = f'{html_content}\n{pixel_tag}'
+
         return self._send_request(
             sender_name=sender_name,
             sender_email=sender_email,
@@ -100,6 +109,33 @@ class BrevoClient:
             subject=subject,
             html_content=html_content,
         )
+
+    def send_raw_email(
+        self,
+        to_email: str,
+        to_name: str,
+        subject: str,
+        html_content: str,
+    ) -> tuple[bool, str]:
+        """Envia um email direto com assunto e HTML customizados (ex: aviso de spam/suporte)."""
+        if not self.is_configured():
+            return False, "Brevo não está configurada ou habilitada"
+
+        sender_name = self.settings.get('sender_name') or 'Suporte'
+        sender_email = self.settings.get('sender_email') or self.settings.get('support_email')
+
+        if not sender_email:
+            return False, "Email do remetente não configurado"
+
+        return self._send_request(
+            sender_name=sender_name,
+            sender_email=sender_email,
+            to_name=to_name or '',
+            to_email=to_email,
+            subject=subject,
+            html_content=html_content,
+        )
+
 
     def _send_request(
         self,

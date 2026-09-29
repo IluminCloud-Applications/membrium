@@ -101,7 +101,9 @@ def resend_student_access(student_id):
             'fast_link': f"{base_url}/access/{student.uuid}",
             'curso': courses_names,
             'unsubscribe_link': f"{base_url}/unsubscribe?email={student.email}",
+            'base_url': base_url,
         }
+
 
         # Disparar notificações via dispatcher
         results = dispatch_notifications(

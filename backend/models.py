@@ -104,11 +104,62 @@ class Student(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password, password)
 
+    def record_access(self, force=False, min_interval_seconds=300):
+        """Records student's last access timestamp in extra_data['last_access_at']."""
+        from sqlalchemy.orm.attributes import flag_modified
+
+        now = datetime.utcnow()
+        extra = dict(self.extra_data or {})
+        last_str = extra.get('last_access_at')
+
+        if not force and last_str:
+            try:
+                last_dt = datetime.fromisoformat(last_str)
+                if (now - last_dt).total_seconds() < min_interval_seconds:
+                    return
+            except Exception:
+                pass
+
+        extra['last_access_at'] = now.isoformat()
+        self.extra_data = extra
+        flag_modified(self, 'extra_data')
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
 class EmailBlacklist(db.Model):
     """Emails que fizeram unsubscribe e não devem receber notificações."""
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class StudentEmailAccessTracker(db.Model):
+    """Rastreamento de abertura do e-mail de acesso e reenvios automáticos em caso de não abertura."""
+    __tablename__ = 'student_email_access_tracker'
+
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('student.id', ondelete='CASCADE'), nullable=True)
+    email = db.Column(db.String(120), nullable=False, index=True)
+    tracking_token = db.Column(db.String(64), unique=True, index=True, nullable=False)
+
+    stage = db.Column(db.Integer, default=1, nullable=False)  # 1: 1º envio, 2: reenvio 30m, 3: aviso spam 60m
+    status = db.Column(db.String(20), default='pending', nullable=False)  # 'pending', 'opened', 'fallback_sent', 'superseded'
+
+    first_sent_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    last_sent_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    next_check_at = db.Column(db.DateTime, nullable=True, index=True)
+    opened_at = db.Column(db.DateTime, nullable=True)
+
+    base_url = db.Column(db.String(255), nullable=True)
+    student_data = db.Column(db.JSON, default=dict)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    student = db.relationship('Student', backref=db.backref('email_trackers', lazy=True, cascade="all, delete-orphan"))
+
 
 
 

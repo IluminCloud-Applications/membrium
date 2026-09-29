@@ -30,6 +30,7 @@ def api_me():
     elif user_type == 'student':
         student = Student.query.get(session['user_id'])
         if student:
+            student.record_access()
             return jsonify({
                 'authenticated': True,
                 'user': {

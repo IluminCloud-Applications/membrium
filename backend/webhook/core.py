@@ -190,7 +190,9 @@ def _trigger_notifications(student, course, password, phone=None):
         'fast_link': f"{base_url}/access/{student.uuid}",
         'curso': course.name,
         'unsubscribe_link': f"{base_url}/unsubscribe?email={student.email}",
+        'base_url': base_url,
     }
+
 
     results = dispatch_notifications(
         settings_dict=settings_dict,

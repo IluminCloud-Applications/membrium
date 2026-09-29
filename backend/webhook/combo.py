@@ -155,7 +155,9 @@ def _trigger_combo_notifications(student, combo, password, phone=None):
         'fast_link': f"{base_url}/access/{student.uuid}",
         'curso': combo.name,
         'unsubscribe_link': f"{base_url}/unsubscribe?email={student.email}",
+        'base_url': base_url,
     }
+
 
     results = dispatch_notifications(
         settings_dict=settings_dict,

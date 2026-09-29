@@ -12,6 +12,7 @@ export interface StudentFromAPI {
     status: "active" | "inactive";
     courses: { id: number; name: string }[];
     createdAt: string | null;
+    lastAccessAt?: string | null;
     quickAccessToken: string;
     extra_data?: Record<string, any>;
 }

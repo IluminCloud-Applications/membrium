@@ -63,8 +63,20 @@ def run_scheduler(app):
             except Exception as e:
                 print(f"Error in event scheduler: {e}")
                 db.session.rollback()
+
+            # ─── Email Access Tracking & Retries (Anti-refund) ────────────
+            try:
+                from services.email_tracker import process_email_tracking_queue
+                process_email_tracking_queue(app)
+            except Exception as e:
+                print(f"Error in email tracking processor: {e}")
+                try:
+                    db.session.rollback()
+                except Exception:
+                    pass
             
             time.sleep(60)
+
 
 def start_scheduler(app):
     thread = threading.Thread(target=run_scheduler, args=(app,), daemon=True)

@@ -26,10 +26,30 @@ def init_db(app):
     if db_password and raw_url:
         import urllib.parse
         encoded_password = urllib.parse.quote_plus(db_password)
-        safe_url = raw_url.replace(f":{db_password}@", f":{encoded_password}@", 1)
-        app.config['SQLALCHEMY_DATABASE_URI'] = safe_url
-    else:
-        app.config['SQLALCHEMY_DATABASE_URI'] = raw_url
+        raw_url = raw_url.replace(f":{db_password}@", f":{encoded_password}@", 1)
+
+    # Normalize PostgreSQL URL scheme and driver compatibility
+    if raw_url.startswith('postgres://'):
+        raw_url = raw_url.replace('postgres://', 'postgresql://', 1)
+
+    if raw_url.startswith('postgresql+psycopg://'):
+        try:
+            import psycopg
+        except ImportError:
+            raw_url = raw_url.replace('postgresql+psycopg://', 'postgresql+psycopg2://', 1)
+    elif raw_url.startswith('postgresql://'):
+        try:
+            import psycopg2
+            raw_url = raw_url.replace('postgresql://', 'postgresql+psycopg2://', 1)
+        except ImportError:
+            try:
+                import psycopg
+                raw_url = raw_url.replace('postgresql://', 'postgresql+psycopg://', 1)
+            except ImportError:
+                pass
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = raw_url
+
 
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 

@@ -10,6 +10,7 @@ python-dotenv
 requests
 pytz
 psycopg2-binary
+psycopg[binary]
 Pillow
 gunicorn
 
