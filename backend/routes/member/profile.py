@@ -62,6 +62,14 @@ def update_profile(student):
     student.phone = phone or None
     db.session.commit()
 
+    from models import StudentActivityLog
+    StudentActivityLog.log(
+        student_id=student.id,
+        action='update_profile',
+        description='Atualizou dados do perfil',
+        debounce_seconds=60
+    )
+
     return jsonify({'success': True, 'message': 'Perfil atualizado com sucesso!'})
 
 
@@ -77,5 +85,13 @@ def update_password(student):
 
     student.password = generate_password_hash(new_password)
     db.session.commit()
+
+    from models import StudentActivityLog
+    StudentActivityLog.log(
+        student_id=student.id,
+        action='change_password',
+        description='Alterou a senha de acesso',
+        debounce_seconds=30
+    )
 
     return jsonify({'success': True, 'message': 'Senha atualizada com sucesso!'})

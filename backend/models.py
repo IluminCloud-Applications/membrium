@@ -318,6 +318,109 @@ class LessonTranscript(db.Model):
     def __repr__(self):
         return f"<LessonTranscript: {self.lesson_title}>"
 
+
+class StudentActivityLog(db.Model):
+    """Logs de atividades e acessos dos alunos (login, aulas, cursos, progresso)."""
+    __tablename__ = 'student_activity_log'
+
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('student.id', ondelete='CASCADE'), nullable=False, index=True)
+    action = db.Column(db.String(50), nullable=False, index=True)
+    description = db.Column(db.String(255), nullable=False)
+    module_name = db.Column(db.String(150), nullable=True)
+    item_name = db.Column(db.String(150), nullable=True)
+    ip_address = db.Column(db.String(45), nullable=True)
+    user_agent = db.Column(db.String(255), nullable=True)
+    details = db.Column(db.JSON, default=dict)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    student = db.relationship('Student', backref=db.backref('activity_logs', lazy=True, cascade="all, delete-orphan"))
+
+    @classmethod
+    def log(
+        cls,
+        student_id: int,
+        action: str,
+        description: str,
+        module_name: str | None = None,
+        item_name: str | None = None,
+        details: dict | None = None,
+        debounce_seconds: int = 120,
+    ):
+        """Registra uma atividade para o aluno com proteção contra flood/repetições seguidas."""
+        from flask import request
+        from datetime import datetime, timedelta
+
+        try:
+            now = datetime.utcnow()
+
+            # Debounce: evita duplicar a mesma ação repetida em curto intervalo (ex: F5, cliques múltiplos)
+            if debounce_seconds > 0:
+                cutoff = now - timedelta(seconds=debounce_seconds)
+                recent = cls.query.filter(
+                    cls.student_id == student_id,
+                    cls.action == action,
+                    cls.item_name == item_name,
+                    cls.created_at >= cutoff
+                ).first()
+                if recent:
+                    return recent
+
+            # Extração de IP
+            ip = None
+            ua_str = None
+            try:
+                if request:
+                    xfwd = request.headers.get('X-Forwarded-For')
+                    if xfwd:
+                        ip = xfwd.split(',')[0].strip()
+                    else:
+                        ip = request.remote_addr
+
+                    ua_raw = request.headers.get('User-Agent', '')[:255]
+                    ua_lower = ua_raw.lower()
+                    dev = "Computador"
+                    if "iphone" in ua_lower or "android" in ua_lower and "mobile" in ua_lower:
+                        dev = "Celular"
+                    elif "ipad" in ua_lower or "tablet" in ua_lower:
+                        dev = "Tablet"
+
+                    browser = "Navegador"
+                    if "chrome" in ua_lower and "edg" not in ua_lower:
+                        browser = "Chrome"
+                    elif "safari" in ua_lower and "chrome" not in ua_lower:
+                        browser = "Safari"
+                    elif "firefox" in ua_lower:
+                        browser = "Firefox"
+                    elif "edg" in ua_lower:
+                        browser = "Edge"
+
+                    ua_str = f"{browser} ({dev})"
+            except Exception:
+                pass
+
+            log_entry = cls(
+                student_id=student_id,
+                action=action,
+                description=description,
+                module_name=module_name,
+                item_name=item_name,
+                ip_address=ip,
+                user_agent=ua_str,
+                details=details or {},
+                created_at=now,
+            )
+            db.session.add(log_entry)
+            db.session.commit()
+            return log_entry
+        except Exception:
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
+            return None
+
+
 def init_db(app):
     db.init_app(app)
     with app.app_context():

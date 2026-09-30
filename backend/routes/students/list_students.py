@@ -173,6 +173,57 @@ def get_student_access(student_id):
     })
 
 
+@list_students_bp.route('/<int:student_id>/activities', methods=['GET'])
+@admin_required
+def get_student_activities(student_id):
+    """Return recent activity logs for a specific student."""
+    student = Student.query.get_or_404(student_id)
+    from models import StudentActivityLog
+
+    limit = request.args.get('limit', 50, type=int)
+    logs = StudentActivityLog.query.filter_by(student_id=student.id)\
+        .order_by(StudentActivityLog.created_at.desc())\
+        .limit(min(limit, 100))\
+        .all()
+
+    ACTION_META = {
+        'login': {'icon': 'ri-login-box-line', 'color': 'text-blue-500 bg-blue-500/10 border-blue-500/20'},
+        'quick_access': {'icon': 'ri-flashlight-line', 'color': 'text-amber-500 bg-amber-500/10 border-amber-500/20'},
+        'view_courses': {'icon': 'ri-book-open-line', 'color': 'text-purple-500 bg-purple-500/10 border-purple-500/20'},
+        'view_course': {'icon': 'ri-folder-open-line', 'color': 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20'},
+        'view_module': {'icon': 'ri-archive-line', 'color': 'text-sky-500 bg-sky-500/10 border-sky-500/20'},
+        'view_lesson': {'icon': 'ri-play-circle-line', 'color': 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20'},
+        'complete_lesson': {'icon': 'ri-checkbox-circle-line', 'color': 'text-green-600 bg-green-500/10 border-green-500/20'},
+        'uncomplete_lesson': {'icon': 'ri-close-circle-line', 'color': 'text-zinc-500 bg-zinc-500/10 border-zinc-500/20'},
+        'update_profile': {'icon': 'ri-user-settings-line', 'color': 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20'},
+        'change_password': {'icon': 'ri-key-line', 'color': 'text-orange-500 bg-orange-500/10 border-orange-500/20'},
+    }
+
+    activities = []
+    for l in logs:
+        meta = ACTION_META.get(l.action, {'icon': 'ri-time-line', 'color': 'text-muted-foreground bg-muted border-border'})
+        activities.append({
+            'id': l.id,
+            'action': l.action,
+            'description': l.description,
+            'module_name': l.module_name,
+            'item_name': l.item_name,
+            'ip_address': l.ip_address,
+            'user_agent': l.user_agent,
+            'created_at': l.created_at.isoformat() if l.created_at else None,
+            'icon': meta['icon'],
+            'color': meta['color'],
+        })
+
+    return jsonify({
+        'student_id': student.id,
+        'name': student.name,
+        'email': student.email,
+        'total': len(activities),
+        'activities': activities,
+    })
+
+
 
 @list_students_bp.route('/courses', methods=['GET'])
 @admin_required

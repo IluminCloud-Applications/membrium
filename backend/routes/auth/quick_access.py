@@ -33,6 +33,15 @@ def api_quick_access(uuid):
     session['user_id'] = student.id
     session['user_type'] = 'student'
     student.record_access(force=True)
+
+    from models import StudentActivityLog
+    StudentActivityLog.log(
+        student_id=student.id,
+        action='quick_access',
+        description='Acessou a plataforma pelo link de acesso rápido (e-mail / WhatsApp)',
+        debounce_seconds=60
+    )
+
     return jsonify({
         'success': True,
         'message': 'Acesso rápido realizado com sucesso!',

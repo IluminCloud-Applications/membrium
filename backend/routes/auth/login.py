@@ -45,6 +45,15 @@ def api_login():
         session['user_id'] = student.id
         session['user_type'] = 'student'
         student.record_access(force=True)
+
+        from models import StudentActivityLog
+        StudentActivityLog.log(
+            student_id=student.id,
+            action='login',
+            description='Fez login na plataforma com e-mail e senha',
+            debounce_seconds=60
+        )
+
         return jsonify({
             'success': True,
             'message': 'Login realizado com sucesso!',

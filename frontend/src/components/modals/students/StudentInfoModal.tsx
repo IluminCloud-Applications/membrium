@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import {
     Dialog,
@@ -10,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import type { Student } from "@/types/student";
 import { formatBrazilianDate, formatBrazilianDateTime } from "@/utils/formatDate";
 import { statusColors, statusLabels } from "@/types/student";
+import { studentsService, type StudentActivity } from "@/services/students";
 
 interface StudentInfoModalProps {
     open: boolean;
@@ -19,6 +21,37 @@ interface StudentInfoModalProps {
 
 export function StudentInfoModal({ open, onOpenChange, student }: StudentInfoModalProps) {
     if (!student) return null;
+
+    const [activities, setActivities] = useState<StudentActivity[]>([]);
+    const [loadingActivities, setLoadingActivities] = useState(false);
+
+    useEffect(() => {
+        if (!open || !student?.id) {
+            setActivities([]);
+            return;
+        }
+
+        let isMounted = true;
+        setLoadingActivities(true);
+
+        studentsService.getActivities(student.id, 50)
+            .then(res => {
+                if (isMounted) {
+                    setActivities(res.activities || []);
+                }
+            })
+            .catch(err => {
+                console.error("Erro ao buscar atividades do aluno:", err);
+                if (isMounted) setActivities([]);
+            })
+            .finally(() => {
+                if (isMounted) setLoadingActivities(false);
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, [open, student?.id]);
 
     const extra = student.extra_data || {};
     const source = extra.source || "Não identificado";
@@ -44,7 +77,7 @@ export function StudentInfoModal({ open, onOpenChange, student }: StudentInfoMod
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto p-4 gap-3">
+            <DialogContent className="sm:max-w-md w-full max-h-[85vh] overflow-y-auto overflow-x-hidden p-4 gap-3">
                 <DialogHeader className="pb-2 border-b">
                     <DialogTitle className="flex items-center gap-1.5 text-base font-bold">
                         <i className="ri-information-line text-primary text-lg" />
@@ -52,7 +85,7 @@ export function StudentInfoModal({ open, onOpenChange, student }: StudentInfoMod
                     </DialogTitle>
                 </DialogHeader>
 
-                <div className="space-y-4 text-xs">
+                <div className="space-y-4 text-xs min-w-0 w-full">
                     {/* Aluno Header */}
                     <div className="flex items-center justify-between bg-muted/30 p-2.5 rounded-lg border">
                         <div className="min-w-0">
@@ -142,6 +175,86 @@ export function StudentInfoModal({ open, onOpenChange, student }: StudentInfoMod
                         </div>
                     </div>
 
+                    {/* Histórico de Acessos & Aulas */}
+                    <div className="space-y-1.5 min-w-0 w-full">
+                        <div className="flex items-center justify-between">
+                            <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                <i className="ri-history-line text-xs text-primary" />
+                                Histórico de Acessos & Aulas
+                                {activities.length > 0 && (
+                                    <span className="bg-primary/10 text-primary text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+                                        {activities.length}
+                                    </span>
+                                )}
+                            </h4>
+                            {activities.length > 0 && (
+                                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                                    <i className="ri-checkbox-circle-fill text-[11px]" />
+                                    Acessos Comprovados
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="bg-muted/10 p-2.5 rounded-lg border max-h-[190px] overflow-y-auto space-y-2">
+                            {loadingActivities ? (
+                                <div className="py-4 text-center text-muted-foreground text-xs flex items-center justify-center gap-2">
+                                    <i className="ri-loader-4-line animate-spin text-sm" />
+                                    Carregando histórico de acessos...
+                                </div>
+                            ) : activities.length === 0 ? (
+                                <div className="py-4 text-center text-muted-foreground text-xs space-y-1">
+                                    <i className="ri-file-search-line text-lg opacity-40 block mx-auto" />
+                                    <p className="font-semibold text-foreground/80">Nenhuma atividade registrada ainda</p>
+                                    <p className="text-[10px] opacity-70">O aluno ainda não realizou login ou visualizou aulas.</p>
+                                </div>
+                            ) : (
+                                <div className="relative pl-3 space-y-2.5 before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-[1.5px] before:bg-border/60">
+                                    {activities.map((act) => (
+                                        <div key={act.id} className="relative flex items-start gap-2 min-w-0">
+                                            {/* Dot / Icon */}
+                                            <div className={`-ml-[17px] shrink-0 w-5 h-5 rounded-full flex items-center justify-center border text-[11px] shadow-xs ${act.color || 'bg-background text-foreground'}`}>
+                                                <i className={act.icon || 'ri-circle-fill'} />
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="min-w-0 flex-1 bg-background/70 p-2 rounded-md border text-[11px] space-y-1">
+                                                <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                                                    <span className="font-semibold text-foreground truncate">
+                                                        {act.description}
+                                                    </span>
+                                                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                                        {formatBrazilianDateTime(act.created_at)}
+                                                    </span>
+                                                </div>
+
+                                                {(act.module_name || act.user_agent || act.ip_address) && (
+                                                    <div className="flex items-center gap-1.5 flex-wrap text-[10px] text-muted-foreground pt-1 border-t border-dashed border-border/50">
+                                                        {act.module_name && (
+                                                            <span className="bg-muted px-1.5 py-0.5 rounded text-[9px] font-medium text-foreground/80 truncate max-w-[150px]" title={act.module_name}>
+                                                                Módulo: {act.module_name}
+                                                            </span>
+                                                        )}
+                                                        {act.user_agent && (
+                                                            <span className="inline-flex items-center gap-0.5 text-muted-foreground">
+                                                                <i className="ri-device-line text-[9px]" />
+                                                                {act.user_agent}
+                                                            </span>
+                                                        )}
+                                                        {act.ip_address && (
+                                                            <span className="inline-flex items-center gap-0.5 text-muted-foreground font-mono text-[9px]">
+                                                                IP: {act.ip_address}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
 
                     {/* Dados de Venda / Checkout */}
                     {(transactionId || customerCode || sellerId || paymentMethod || customerUrl) && (
@@ -170,15 +283,15 @@ export function StudentInfoModal({ open, onOpenChange, student }: StudentInfoMod
 
                     {/* UTMs */}
                     {Object.values(utms).some(val => val) && (
-                        <div className="space-y-1.5">
+                        <div className="space-y-1.5 min-w-0 w-full">
                             <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Parâmetros de Campanha (UTM)</h4>
-                            <div className="grid grid-cols-2 gap-1 bg-muted/10 p-2 rounded-lg border">
+                            <div className="grid grid-cols-2 gap-1 bg-muted/10 p-2 rounded-lg border min-w-0">
                                 {Object.entries(utms).map(([key, val]) => {
                                     if (!val) return null;
                                     return (
-                                        <div key={key} className="flex justify-between items-center py-0.5 border-b border-dashed border-muted last:border-0">
-                                            <span className="text-muted-foreground text-[10px] uppercase font-mono">{key}:</span>
-                                            <span className="font-semibold text-foreground truncate max-w-[120px]" title={String(val)}>
+                                        <div key={key} className="flex justify-between items-center py-0.5 border-b border-dashed border-muted last:border-0 min-w-0 gap-1.5">
+                                            <span className="text-muted-foreground text-[10px] uppercase font-mono shrink-0">{key}:</span>
+                                            <span className="font-semibold text-foreground truncate min-w-0 text-right" title={String(val)}>
                                                 {renderValue(val)}
                                             </span>
                                         </div>
@@ -190,9 +303,9 @@ export function StudentInfoModal({ open, onOpenChange, student }: StudentInfoMod
 
                     {/* Integrações */}
                     {(chatwootContact || chatwootConv) && (
-                        <div className="space-y-1.5">
+                        <div className="space-y-1.5 min-w-0 w-full">
                             <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Integrações de Chat</h4>
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 bg-muted/10 p-2.5 rounded-lg border">
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 bg-muted/10 p-2.5 rounded-lg border min-w-0">
                                 {chatwootContact && <DataRow label="Chatwoot Contato" value={chatwootContact} isMono />}
                                 {chatwootConv && <DataRow label="Chatwoot Conversa" value={chatwootConv} isMono />}
                             </div>
@@ -201,9 +314,9 @@ export function StudentInfoModal({ open, onOpenChange, student }: StudentInfoMod
 
                     {/* Dados Adicionais Raw JSON */}
                     {otherKeys.length > 0 && (
-                        <div className="space-y-1">
+                        <div className="space-y-1 min-w-0 w-full">
                             <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Outros Metadados</h4>
-                            <pre className="text-[10px] font-mono bg-muted/40 p-2 rounded border overflow-x-auto max-h-[100px] leading-tight">
+                            <pre className="text-[10px] font-mono bg-muted/40 p-2.5 rounded-lg border overflow-x-auto overflow-y-auto max-h-[140px] max-w-full leading-relaxed whitespace-pre-wrap break-all select-text">
                                 {JSON.stringify(
                                     otherKeys.reduce((acc, key) => ({ ...acc, [key]: extra[key] }), {}),
                                     null,
@@ -251,9 +364,9 @@ interface DataRowProps {
 
 function DataRow({ label, value, isMono = false, className = "" }: DataRowProps) {
     return (
-        <div className="flex justify-between items-center py-0.5 border-b border-dashed border-muted last:border-0 min-w-0">
-            <span className="text-muted-foreground shrink-0 pr-2">{label}:</span>
-            <span className={`font-medium text-foreground truncate max-w-[200px] ${isMono ? "font-mono text-[11px]" : ""} ${className}`} title={typeof value === 'string' ? value : undefined}>
+        <div className="flex justify-between items-center py-0.5 border-b border-dashed border-muted last:border-0 min-w-0 gap-2">
+            <span className="text-muted-foreground shrink-0">{label}:</span>
+            <span className={`font-medium text-foreground truncate min-w-0 text-right ${isMono ? "font-mono text-[11px]" : ""} ${className}`} title={typeof value === 'string' ? value : undefined}>
                 {renderValue(value)}
             </span>
         </div>

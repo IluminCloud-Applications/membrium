@@ -116,6 +116,14 @@ def get_student_courses(student):
 
     # 2. Auto-provision bonus courses for real students with access to principal course
     if student is not None:
+        from models import StudentActivityLog
+        StudentActivityLog.log(
+            student_id=student.id,
+            action='view_courses',
+            description='Acessou a área de membros (meus cursos)',
+            debounce_seconds=300
+        )
+
         has_principal = any((c.category or 'principal') == 'principal' for c in student.courses)
         if has_principal:
             bonus_ids = [c['id'] for c in courses_structure if c['category'] == 'bonus']
@@ -228,6 +236,17 @@ def get_course_detail(student, course_id):
 
     if student is not None and course_check not in student.courses:
         return jsonify({'error': 'Sem acesso a este curso'}), 403
+
+    if student is not None:
+        from models import StudentActivityLog
+        StudentActivityLog.log(
+            student_id=student.id,
+            action='view_course',
+            description=f"Acessou o curso '{course_check.name}'",
+            item_name=course_check.name,
+            details={'course_id': course_check.id},
+            debounce_seconds=180
+        )
 
     # Load static structure from cache
     cache_key = f'course:{course_id}:detail'

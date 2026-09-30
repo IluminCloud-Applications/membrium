@@ -41,6 +41,18 @@ def mark_lesson_complete(student, lesson_id):
         student.completed_lessons.append(lesson)
         db.session.commit()
 
+        from models import StudentActivityLog
+        module_name = lesson.module.title if lesson.module else None
+        StudentActivityLog.log(
+            student_id=student.id,
+            action='complete_lesson',
+            description=f"Concluiu a aula '{lesson.title}'",
+            module_name=module_name,
+            item_name=lesson.title,
+            details={'lesson_id': lesson.id, 'module_id': lesson.module_id},
+            debounce_seconds=30
+        )
+
     return jsonify({'success': True, 'message': 'Aula concluída!'})
 
 
@@ -56,6 +68,18 @@ def unmark_lesson_complete(student, lesson_id):
     if lesson in student.completed_lessons:
         student.completed_lessons.remove(lesson)
         db.session.commit()
+
+        from models import StudentActivityLog
+        module_name = lesson.module.title if lesson.module else None
+        StudentActivityLog.log(
+            student_id=student.id,
+            action='uncomplete_lesson',
+            description=f"Desmarcou a conclusão da aula '{lesson.title}'",
+            module_name=module_name,
+            item_name=lesson.title,
+            details={'lesson_id': lesson.id, 'module_id': lesson.module_id},
+            debounce_seconds=30
+        )
 
     return jsonify({'success': True, 'message': 'Marcação removida!'})
 

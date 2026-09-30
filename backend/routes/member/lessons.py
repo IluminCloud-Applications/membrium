@@ -102,6 +102,19 @@ def get_module_lessons(student, course_id, module_id):
     lessons = [{**l, 'completed': l['id'] in completed_ids} for l in content['lessons']]
     completed_count = sum(1 for l in lessons if l['completed'])
 
+    if student is not None:
+        from models import StudentActivityLog
+        mod_title = content['module'].get('title') if isinstance(content.get('module'), dict) else None
+        StudentActivityLog.log(
+            student_id=student.id,
+            action='view_module',
+            description=f"Acessou o módulo '{mod_title or 'Módulo'}'",
+            module_name=mod_title,
+            item_name=content.get('courseName'),
+            details={'course_id': course_id, 'module_id': module_id},
+            debounce_seconds=180
+        )
+
     return jsonify({
         'course': {
             'id': content['courseId'],
@@ -113,3 +126,31 @@ def get_module_lessons(student, course_id, module_id):
         'totalLessons': content['totalLessons'],
         'completedLessons': completed_count,
     })
+
+
+@member_lessons_bp.route('/lessons/<int:lesson_id>/view', methods=['POST'])
+@member_or_preview
+def record_lesson_view(student, lesson_id):
+    """Registra que o aluno abriu/está assistindo a uma aula específica."""
+    if student is None:
+        return jsonify({'success': True, 'message': 'Preview mode'}), 200
+
+    from models import Lesson, StudentActivityLog
+    lesson = Lesson.query.get_or_404(lesson_id)
+    module_title = lesson.module.title if lesson.module else None
+
+    StudentActivityLog.log(
+        student_id=student.id,
+        action='view_lesson',
+        description=f"Assistiu à aula '{lesson.title}'",
+        module_name=module_title,
+        item_name=lesson.title,
+        details={
+            'lesson_id': lesson.id,
+            'module_id': lesson.module_id,
+            'course_id': lesson.module.course_id if lesson.module else None
+        },
+        debounce_seconds=120
+    )
+
+    return jsonify({'success': True, 'message': 'Visualização registrada'}), 200

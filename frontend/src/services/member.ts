@@ -68,6 +68,10 @@ export const memberService = {
     uncompleteLesson: (lessonId: number, preview?: boolean) =>
         apiClient.post<ApiResponse>(withPreview(`/member/lessons/${lessonId}/uncomplete`, preview), {}),
 
+    /** Record lesson view telemetry */
+    recordLessonView: (lessonId: number, preview?: boolean) =>
+        apiClient.post<ApiResponse>(withPreview(`/member/lessons/${lessonId}/view`, preview), {}),
+
     /** Search content */
     search: (query: string, preview?: boolean) =>
         apiClient.get<SearchResult[]>(withPreview(`/member/search?q=${encodeURIComponent(query)}`, preview)),

@@ -118,6 +118,13 @@ export function useLessonPage(): UseLessonPageReturn {
 
     const currentLesson = data?.lessons.find((l) => l.id === currentLessonId) ?? null;
 
+    // Dispara telemetria de visualização da aula no backend para registro nos logs
+    useEffect(() => {
+        if (currentLessonId && !isPreview) {
+            memberService.recordLessonView(currentLessonId, isPreview).catch(() => {});
+        }
+    }, [currentLessonId, isPreview]);
+
     const selectLesson = useCallback((lessonId: number) => {
         setCurrentLessonId(lessonId);
         setCTAVisible(false);

@@ -58,6 +58,27 @@ interface MutationResponse {
     courses?: { id: number; name: string }[];
 }
 
+export interface StudentActivity {
+    id: number;
+    action: string;
+    description: string;
+    module_name?: string | null;
+    item_name?: string | null;
+    ip_address?: string | null;
+    user_agent?: string | null;
+    created_at: string | null;
+    icon: string;
+    color: string;
+}
+
+export interface StudentActivitiesResponse {
+    student_id: number;
+    name: string;
+    email: string;
+    total: number;
+    activities: StudentActivity[];
+}
+
 export interface ImportStudentsPayload {
     students: { name: string; email: string; phone?: string }[];
     courseIds: number[];
@@ -146,6 +167,12 @@ export const studentsService = {
         apiClient.post<MutationResponse>(
             `/students/${studentId}/resend-access`,
             {}
+        ),
+
+    /** Get recent activity logs for a student */
+    getActivities: (studentId: number, limit = 50) =>
+        apiClient.get<StudentActivitiesResponse>(
+            `/students/${studentId}/activities?limit=${limit}`
         ),
 
     /**
