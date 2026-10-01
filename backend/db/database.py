@@ -81,13 +81,90 @@ def create_all_tables(app):
             )
 
 
+def _split_sql_statements(sql_content):
+    """Split SQL into individual statements, honoring DO $$ ... $$ dollar-quoted blocks."""
+    statements = []
+    current_lines = []
+    in_dollar_quote = False
+
+    for line in sql_content.splitlines():
+        trimmed = line.strip()
+        if not in_dollar_quote and trimmed.startswith('--'):
+            continue
+
+        # Count occurrences of '$$' on this line to track entering/leaving dollar quotes
+        dollar_count = line.count('$$')
+        if dollar_count % 2 != 0:
+            in_dollar_quote = not in_dollar_quote
+
+        if not in_dollar_quote and ';' in line:
+            parts = line.split(';')
+            for i, part in enumerate(parts):
+                current_lines.append(part)
+                if i < len(parts) - 1:
+                    stmt = '\n'.join(current_lines).strip()
+                    if stmt:
+                        statements.append(stmt)
+                    current_lines = []
+        else:
+            current_lines.append(line)
+
+    remainder = '\n'.join(current_lines).strip()
+    if remainder:
+        statements.append(remainder)
+
+    return statements
+
+
+def _ensure_core_primary_keys(cursor, conn):
+    """Garante que as tabelas base (student, course, admin, etc.) possuam Primary Key.
+
+    Em instalações antigas ou restaurações de backup, tabelas como 'student'
+    e 'course' podem perder constraints de PRIMARY KEY, o que impede a criação de
+    tabelas filhas com FOREIGN KEYs.
+    """
+    try:
+        # Limpar duplicatas em student_courses caso existam, para poder criar PK
+        cursor.execute("""
+            DO $$
+            BEGIN
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'student_courses') THEN
+                    DELETE FROM student_courses a USING student_courses b 
+                    WHERE a.ctid < b.ctid AND a.student_id = b.student_id AND a.course_id = b.course_id;
+                    
+                    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'student_courses_pkey') THEN
+                        ALTER TABLE student_courses ADD PRIMARY KEY (student_id, course_id);
+                    END IF;
+                END IF;
+            END $$;
+        """)
+        conn.commit()
+
+        # Adicionar Primary Key às tabelas essenciais se ausente
+        core_tables = ['student', 'course', 'admin', 'document', 'module', 'promotion', 'integration_config', 'customization']
+        for table in core_tables:
+            cursor.execute(f"""
+                DO $$
+                BEGIN
+                    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '{table}') THEN
+                        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '{table}_pkey') THEN
+                            ALTER TABLE {table} ADD PRIMARY KEY (id);
+                        END IF;
+                    END IF;
+                END $$;
+            """)
+            conn.commit()
+    except Exception as e:
+        conn.rollback()
+        logger.warning(f"[migration] _ensure_core_primary_keys warning: {e}")
+
+
 def run_migrations(app):
     """Auto-run all .sql migration files from db/migrations/ in alphabetical order.
 
-    Each file has comment lines stripped first, then is split on semicolons and
-    executed statement by statement. Statements that fail (e.g. column already
-    exists) are caught and logged as warnings so they never crash the app on
-    subsequent boots.
+    Each file is split on semicolons (preserving DO $$ blocks) and executed
+    statement by statement. Statements that fail (e.g. column already exists)
+    are caught and logged as warnings so they never crash the app on subsequent boots.
     """
     migrations_dir = os.path.join(os.path.dirname(__file__), 'migrations')
     if not os.path.isdir(migrations_dir):
@@ -104,49 +181,40 @@ def run_migrations(app):
 
     logger.info(f"[migration] Running {len(sql_files)} migration file(s): {sql_files}")
 
-    try:
-        conn = db.engine.raw_connection()
+    with app.app_context():
         try:
-            cursor = conn.cursor()
-            for filename in sql_files:
-                filepath = os.path.join(migrations_dir, filename)
-                with open(filepath, 'r', encoding='utf-8') as f:
-                    sql_content = f.read()
+            conn = db.engine.raw_connection()
+            try:
+                cursor = conn.cursor()
+                _ensure_core_primary_keys(cursor, conn)
 
-                # Strip comment-only lines first, THEN split on semicolons.
-                # Filtering after split would incorrectly discard blocks that start
-                # with comments but contain real SQL before the semicolon.
-                clean_lines = [
-                    line for line in sql_content.splitlines()
-                    if not line.strip().startswith('--')
-                ]
-                clean_sql = '\n'.join(clean_lines)
+                for filename in sql_files:
+                    filepath = os.path.join(migrations_dir, filename)
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        sql_content = f.read()
 
-                statements = [
-                    stmt.strip()
-                    for stmt in clean_sql.split(';')
-                    if stmt.strip()
-                ]
+                    statements = _split_sql_statements(sql_content)
 
-                applied = 0
-                for stmt in statements:
-                    try:
-                        cursor.execute(stmt)
-                        conn.commit()
-                        applied += 1
-                    except Exception as e:
-                        conn.rollback()
-                        logger.warning(
-                            f"[migration] {filename}: skipped statement "
-                            f"({type(e).__name__}: {e})"
-                        )
+                    applied = 0
+                    for stmt in statements:
+                        try:
+                            cursor.execute(stmt)
+                            conn.commit()
+                            applied += 1
+                        except Exception as e:
+                            conn.rollback()
+                            logger.warning(
+                                f"[migration] {filename}: skipped statement "
+                                f"({type(e).__name__}: {e})"
+                            )
 
-                logger.info(
-                    f"[migration] {filename}: {applied}/{len(statements)} statement(s) applied."
-                )
-            cursor.close()
-        finally:
-            conn.close()
-    except Exception as e:
-        logger.error(f"[migration] Fatal error in run_migrations: {e}", exc_info=True)
+                    logger.info(
+                        f"[migration] {filename}: {applied}/{len(statements)} statement(s) applied."
+                    )
+                cursor.close()
+            finally:
+                conn.close()
+        except Exception as e:
+            logger.error(f"[migration] Fatal error in run_migrations: {e}", exc_info=True)
+
 

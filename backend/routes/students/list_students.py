@@ -80,35 +80,47 @@ def list_students():
     })
 
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 def _get_trackers_for_students(students_list):
     """Retorna um dicionário mapeando student_id e email para o tracker mais recente."""
     if not students_list:
         return {}
 
-    from models import StudentEmailAccessTracker
-    student_ids = [s.id for s in students_list if s.id]
-    student_emails = [s.email.lower() for s in students_list if s.email]
+    try:
+        from models import StudentEmailAccessTracker
+        student_ids = [s.id for s in students_list if s.id]
+        student_emails = [s.email.lower() for s in students_list if s.email]
 
-    conditions = []
-    if student_ids:
-        conditions.append(StudentEmailAccessTracker.student_id.in_(student_ids))
-    if student_emails:
-        conditions.append(StudentEmailAccessTracker.email.in_(student_emails))
+        conditions = []
+        if student_ids:
+            conditions.append(StudentEmailAccessTracker.student_id.in_(student_ids))
+        if student_emails:
+            conditions.append(StudentEmailAccessTracker.email.in_(student_emails))
 
-    if not conditions:
+        if not conditions:
+            return {}
+
+        trackers = StudentEmailAccessTracker.query.filter(
+            or_(*conditions)
+        ).order_by(StudentEmailAccessTracker.id.asc()).all()
+
+        tracker_map = {}
+        for t in trackers:
+            if t.student_id:
+                tracker_map[t.student_id] = t
+            if t.email:
+                tracker_map[t.email.lower()] = t
+        return tracker_map
+    except Exception as e:
+        logger.warning(f"Erro ao carregar trackers de e-mail dos alunos: {e}")
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
         return {}
-
-    trackers = StudentEmailAccessTracker.query.filter(
-        or_(*conditions)
-    ).order_by(StudentEmailAccessTracker.id.asc()).all()
-
-    tracker_map = {}
-    for t in trackers:
-        if t.student_id:
-            tracker_map[t.student_id] = t
-        if t.email:
-            tracker_map[t.email.lower()] = t
-    return tracker_map
 
 
 def _serialize(s: Student, tracker=None) -> dict:
@@ -152,13 +164,21 @@ def get_student_access(student_id):
     extra = student.extra_data or {}
     last_access = extra.get('last_access_at')
 
-    from models import StudentEmailAccessTracker
-    tracker = StudentEmailAccessTracker.query.filter(
-        or_(
-            StudentEmailAccessTracker.student_id == student.id,
-            StudentEmailAccessTracker.email == student.email.lower()
-        )
-    ).order_by(StudentEmailAccessTracker.id.desc()).first()
+    tracker = None
+    try:
+        from models import StudentEmailAccessTracker
+        tracker = StudentEmailAccessTracker.query.filter(
+            or_(
+                StudentEmailAccessTracker.student_id == student.id,
+                StudentEmailAccessTracker.email == student.email.lower()
+            )
+        ).order_by(StudentEmailAccessTracker.id.desc()).first()
+    except Exception as e:
+        logger.warning(f"Erro ao carregar tracker para aluno {student_id}: {e}")
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
 
     return jsonify({
         'student_id': student.id,
@@ -178,13 +198,20 @@ def get_student_access(student_id):
 def get_student_activities(student_id):
     """Return recent activity logs for a specific student."""
     student = Student.query.get_or_404(student_id)
-    from models import StudentActivityLog
-
-    limit = request.args.get('limit', 50, type=int)
-    logs = StudentActivityLog.query.filter_by(student_id=student.id)\
-        .order_by(StudentActivityLog.created_at.desc())\
-        .limit(min(limit, 100))\
-        .all()
+    logs = []
+    try:
+        from models import StudentActivityLog
+        limit = request.args.get('limit', 50, type=int)
+        logs = StudentActivityLog.query.filter_by(student_id=student.id)\
+            .order_by(StudentActivityLog.created_at.desc())\
+            .limit(min(limit, 100))\
+            .all()
+    except Exception as e:
+        logger.warning(f"Erro ao carregar logs de atividade para aluno {student_id}: {e}")
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
 
     ACTION_META = {
         'login': {'icon': 'ri-login-box-line', 'color': 'text-blue-500 bg-blue-500/10 border-blue-500/20'},
