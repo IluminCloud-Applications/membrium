@@ -97,7 +97,11 @@ export function useLessonPage(): UseLessonPageReturn {
 
             if (lessonIdFromParam && moduleData.lessons.some((l) => l.id === lessonIdFromParam)) {
                 setCurrentLessonId(lessonIdFromParam);
-                setSearchParams({}, { replace: true });
+                setSearchParams((prev) => {
+                    const next = new URLSearchParams(prev);
+                    next.delete("lesson");
+                    return next;
+                }, { replace: true });
             } else {
                 // Try to restore from "continue watching"
                 const saved = getContinueWatching(courseId, moduleId);

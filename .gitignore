@@ -20,11 +20,12 @@ Thumbs.db
 frontend/.env.local
 backend/.env
 
-# Docs locais
+# Docs e arquivos locais
 GEMINI.md
 GEMINI-backend.md
 git.md
 docs/
+test/
 bugs.md
 
 # Pastas Ocultas

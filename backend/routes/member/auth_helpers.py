@@ -33,8 +33,8 @@ def member_or_preview(f):
         user_type = session.get('user_type')
         is_preview = request.args.get('preview') == 'true'
 
-        # Admin in preview mode
-        if user_type == 'admin' and is_preview:
+        # Admin in preview mode or direct admin access
+        if user_type == 'admin':
             admin = Admin.query.get(session['user_id'])
             if not admin:
                 return jsonify({'error': 'Admin não encontrado'}), 401

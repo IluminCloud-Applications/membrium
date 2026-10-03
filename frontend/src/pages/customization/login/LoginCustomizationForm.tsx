@@ -11,6 +11,7 @@ import {
 } from "@/services/customization";
 import { ImageUploadField } from "./ImageUploadField";
 import { AdvancedCssAccordion } from "./AdvancedCssAccordion";
+import { LoginAiPrompt } from "./LoginAiPrompt";
 import { ColorPickerField } from "./ColorPickerField";
 import { HtmlModeEditor } from "./HtmlModeEditor";
 
@@ -141,10 +142,13 @@ export function LoginCustomizationForm({
 
                     {/* ── Advanced CSS (global) ──────────────────── */}
 
-                    <AdvancedCssAccordion
-                        value={config.custom_css || ""}
-                        onChange={(css: string) => updateGlobal("custom_css", css || null)}
-                    />
+                    <div className="space-y-3">
+                        <AdvancedCssAccordion
+                            value={config.custom_css || ""}
+                            onChange={(css: string) => updateGlobal("custom_css", css || null)}
+                        />
+                        <LoginAiPrompt css={config.custom_css || ""} />
+                    </div>
                 </>
             )}
 

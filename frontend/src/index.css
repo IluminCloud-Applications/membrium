@@ -2876,6 +2876,15 @@
 
 .lesson-video-custom {
   aspect-ratio: auto;
+  min-height: 200px;
+}
+
+.lesson-video-custom iframe {
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  display: block;
 }
 
 .lesson-media-player {

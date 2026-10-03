@@ -1,4 +1,4 @@
-import { Navigate, useSearchParams } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAuth, type UserType } from "@/hooks/useAuth";
 
 interface ProtectedRouteProps {
@@ -12,12 +12,10 @@ interface ProtectedRouteProps {
  * Redirects to /login if not authenticated.
  * Optionally enforces a specific user type (admin or student).
  *
- * Special case: admins can access student routes with ?preview=true
+ * Special case: admins can access student routes with ?preview=true or directly.
  */
 export function ProtectedRoute({ allowedType, children }: ProtectedRouteProps) {
     const { authState, userType } = useAuth();
-    const [searchParams] = useSearchParams();
-    const isPreview = searchParams.get("preview") === "true";
 
     if (authState === "loading") {
         return <LoadingSpinner />;
@@ -28,7 +26,7 @@ export function ProtectedRoute({ allowedType, children }: ProtectedRouteProps) {
     }
 
     // Allow admin preview of student area
-    if (allowedType === "student" && userType === "admin" && isPreview) {
+    if (allowedType === "student" && userType === "admin") {
         return <>{children}</>;
     }
 

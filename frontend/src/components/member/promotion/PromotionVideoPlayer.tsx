@@ -14,6 +14,7 @@ import {
 } from "@vidstack/react";
 import "@vidstack/react/player/styles/base.css";
 import { VTurbPlayer } from "../lesson/VTurbPlayer";
+import { CustomEmbedPlayer, isEmbedCode } from "../lesson/CustomEmbedPlayer";
 
 
 interface PromotionVideoPlayerProps {
@@ -36,13 +37,9 @@ export function PromotionVideoPlayer({
         });
     }, [onTimeUpdate]);
 
-    // Custom embed (VTurb, Panda, etc.) — render as raw HTML
-    if (videoSource === "custom") {
-        return (
-            <div className="promo-video-container promo-video-custom">
-                <div dangerouslySetInnerHTML={{ __html: src }} />
-            </div>
-        );
+    // Custom embed (Playrate, VTurb snippet, Panda, iframe, etc.)
+    if (videoSource === "custom" || videoSource === "embed" || isEmbedCode(src)) {
+        return <CustomEmbedPlayer embedCode={src} className="promo-video-custom" />;
     }
 
     if (videoSource === "vturb") {

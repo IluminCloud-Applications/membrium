@@ -93,7 +93,7 @@ export function CoursesPage() {
                         Cursos & Combos
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        Gerencie cursos individuais ou crie combos de ofertas para liberar múltiplos cursos de uma só vez
+                        Gerencie seus cursos e combos de ofertas
                     </p>
                 </div>
 

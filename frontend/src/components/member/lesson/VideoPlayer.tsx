@@ -19,6 +19,7 @@ import { useCallback } from "react";
 import "@vidstack/react/player/styles/base.css";
 import { VTurbPlayer } from "./VTurbPlayer";
 import { NextLessonBanner } from "./NextLessonBanner";
+import { CustomEmbedPlayer, isEmbedCode } from "./CustomEmbedPlayer";
 
 interface VideoPlayerProps {
     title: string;
@@ -43,6 +44,12 @@ export function VideoPlayer({
     onNextLesson,
     onTimeUpdate,
 }: VideoPlayerProps) {
+    // External / Custom embed player (Playrate, VTurb embed code, iframe, Panda, etc.)
+    if (videoType === "custom" || videoType === "embed" || isEmbedCode(src)) {
+        return <CustomEmbedPlayer key={`embed-${lessonId ?? 0}`} embedCode={src} />;
+    }
+
+    // VTurb integration by ID (e.g. 6aaf1ac980488426911e2dea)
     if (videoType === "vturb") {
         return <VTurbEmbedLoader videoId={src} />;
     }
