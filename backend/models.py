@@ -27,6 +27,7 @@ class Admin(db.Model):
     platform_name = db.Column(db.String(120), nullable=False)
     is_installed = db.Column(db.Boolean, default=False)
     role = db.Column(db.String(20), nullable=False, default='admin')  # 'admin' or 'support'
+    api_key = db.Column(db.String(255), unique=True, nullable=True, index=True)
 
     def set_password(self, password):
         self.password = generate_password_hash(password)

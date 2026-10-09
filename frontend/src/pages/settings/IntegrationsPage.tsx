@@ -8,6 +8,7 @@ import { CloudflareR2Tab } from "@/components/settings/integrations/CloudflareR2
 import { ProxyTab } from "@/components/settings/integrations/ProxyTab";
 import { ChatwootTab } from "@/components/settings/integrations/ChatwootTab";
 import { AssemblyAITab } from "@/components/settings/integrations/AssemblyAITab";
+import { DeveloperApiTab } from "@/components/settings/integrations/DeveloperApiTab";
 import { AIIntegrationSection } from "@/components/settings/ai/AIIntegrationSection";
 
 export function IntegrationsPage() {
@@ -42,6 +43,10 @@ export function IntegrationsPage() {
                         <i className="ri-sparkling-line" />
                         Inteligência Artificial
                     </TabsTrigger>
+                    <TabsTrigger value="api" className="text-sm px-4 h-8 gap-1.5">
+                        <i className="ri-code-s-slash-line" />
+                        API
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="messaging" className="mt-4 space-y-3">
@@ -67,6 +72,10 @@ export function IntegrationsPage() {
                 {/* Shared with AI Settings page — same routes & state */}
                 <TabsContent value="ai" className="mt-4">
                     <AIIntegrationSection />
+                </TabsContent>
+
+                <TabsContent value="api" className="mt-4">
+                    <DeveloperApiTab />
                 </TabsContent>
             </Tabs>
         </div>

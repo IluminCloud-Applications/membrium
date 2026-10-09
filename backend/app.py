@@ -27,6 +27,7 @@ from routes.customization import customization_bp
 from routes.admin_users import admin_users_root_bp
 from routes.combos import combos_bp
 from routes.tracking import tracking_bp
+from routes.external_api import external_api_bp
 
 
 def create_app():
@@ -64,6 +65,7 @@ def create_app():
     app.register_blueprint(admin_users_root_bp)
     app.register_blueprint(combos_bp)
     app.register_blueprint(tracking_bp)
+    app.register_blueprint(external_api_bp)
 
 
     # Ensure upload directory exists

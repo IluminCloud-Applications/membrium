@@ -2,6 +2,7 @@ from flask import Blueprint
 from .general import general_bp
 from .integrations import integrations_bp
 from .ai import ai_bp
+from .developer_api import developer_api_bp
 
 settings_bp = Blueprint('settings', __name__)
 
@@ -9,3 +10,4 @@ settings_bp = Blueprint('settings', __name__)
 settings_bp.register_blueprint(general_bp)
 settings_bp.register_blueprint(integrations_bp)
 settings_bp.register_blueprint(ai_bp)
+settings_bp.register_blueprint(developer_api_bp)
