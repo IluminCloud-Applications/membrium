@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request, session
+from auth_decorators import admin_required
 from functools import wraps
 from datetime import datetime
 import os
@@ -8,17 +9,6 @@ from models import Admin, Promotion, PromotionAnalytics
 from sqlalchemy import func
 
 crud_bp = Blueprint('promote_crud', __name__)
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 401
-        if not Admin.query.get(session['user_id']):
-            return jsonify({'error': 'Unauthorized'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 
 def get_promotion_status(promotion):

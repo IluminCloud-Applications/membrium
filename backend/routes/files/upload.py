@@ -2,6 +2,7 @@
 Upload endpoints – cover images for courses.
 """
 from flask import Blueprint, request, jsonify, session
+from auth_decorators import admin_required
 from functools import wraps
 from werkzeug.utils import secure_filename
 import os
@@ -11,17 +12,6 @@ from db.utils import ensure_upload_directory
 from models import Admin
 
 upload_bp = Blueprint('files_upload', __name__)
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 401
-        if not Admin.query.get(session['user_id']):
-            return jsonify({'error': 'Unauthorized'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 
 @upload_bp.route('/upload_cover', methods=['POST'])

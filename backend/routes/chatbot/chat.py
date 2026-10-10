@@ -10,6 +10,7 @@ Endpoints:
 
 import logging
 from flask import Blueprint, request, jsonify, session
+from auth_decorators import admin_required
 from functools import wraps
 from sqlalchemy import text
 
@@ -94,17 +95,6 @@ def clear_chat_history():
 
 
 # ─── Admin Test Endpoints ─────────────────────────────────────────
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'admin':
-            return jsonify({"error": "Acesso não autorizado."}), 403
-        if not Admin.query.get(session['user_id']):
-            return jsonify({"error": "Acesso não autorizado."}), 403
-        return f(*args, **kwargs)
-    return decorated_function
-
 
 @chat_bp.route('/test', methods=['POST'])
 @admin_required

@@ -8,6 +8,7 @@ Endpoints:
 - POST /api/youtube/disconnect   → Disconnect YouTube channel
 """
 from flask import Blueprint, request, jsonify, session
+from auth_decorators import admin_required
 from functools import wraps
 from models import Admin
 from db.integration_helpers import get_integration, set_integration
@@ -16,17 +17,6 @@ import logging
 logger = logging.getLogger("routes.youtube.oauth")
 
 youtube_oauth_bp = Blueprint('youtube_oauth', __name__)
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 401
-        if not Admin.query.get(session['user_id']):
-            return jsonify({'error': 'Unauthorized'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 
 @youtube_oauth_bp.route('/auth-url', methods=['POST'])

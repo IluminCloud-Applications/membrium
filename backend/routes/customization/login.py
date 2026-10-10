@@ -3,6 +3,7 @@ Login customization routes — public GET + admin PUT/upload.
 Structured as global fields + per-device (desktop/mobile) configs.
 """
 from flask import Blueprint, request, jsonify, session
+from auth_decorators import admin_required
 from functools import wraps
 from werkzeug.utils import secure_filename
 import os
@@ -49,17 +50,6 @@ DEVICE_ALLOWED = set(DEFAULT_DEVICE_CONFIG.keys())
 
 
 # ─── Helpers ─────────────────────────────────────────────────
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 401
-        if not Admin.query.get(session['user_id']):
-            return jsonify({'error': 'Unauthorized'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
-
 
 def merge_with_defaults(stored):
     """Merge stored login_page with full defaults."""

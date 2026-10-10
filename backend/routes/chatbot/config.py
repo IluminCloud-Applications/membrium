@@ -10,23 +10,13 @@ Endpoints:
 
 import os
 from flask import Blueprint, request, jsonify, session, current_app
+from auth_decorators import admin_required
 from functools import wraps
 from models import Admin
 from db.database import db
 from db.integration_helpers import get_integration, set_integration
 
 config_bp = Blueprint('chatbot_config', __name__)
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'admin':
-            return jsonify({"error": "Acesso não autorizado."}), 403
-        if not Admin.query.get(session['user_id']):
-            return jsonify({"error": "Acesso não autorizado."}), 403
-        return f(*args, **kwargs)
-    return decorated_function
 
 
 def student_required(f):

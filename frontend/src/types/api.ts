@@ -37,11 +37,6 @@ export interface CheckInstallResponse {
     platform_name?: string;
 }
 
-export interface ResetPasswordRequest {
-    email: string;
-    newPassword: string;
-}
-
 export interface ChangePasswordRequest {
     uuid: string;
     newPassword: string;

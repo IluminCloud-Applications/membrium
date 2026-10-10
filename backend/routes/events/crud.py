@@ -1,4 +1,5 @@
 from flask import jsonify, request, session
+from auth_decorators import admin_required
 from functools import wraps
 from datetime import datetime
 import os
@@ -7,16 +8,6 @@ from db.database import db
 from models import Admin, Event, EventAnalytics
 from sqlalchemy import func
 from . import events_bp
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 401
-        if not Admin.query.get(session['user_id']):
-            return jsonify({'error': 'Unauthorized'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 def get_event_status(event):
     now = datetime.utcnow()

@@ -13,6 +13,7 @@ psycopg2-binary
 psycopg[binary]
 Pillow
 gunicorn
+Flask-Limiter>=3.5
 
 # AI — Langchain
 langchain

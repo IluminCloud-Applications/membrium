@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, session, request
+from auth_decorators import admin_required
 from functools import wraps
 from sqlalchemy import func, or_
 from db.database import db
@@ -7,17 +8,6 @@ from models import Admin, Student, Course, student_courses
 list_students_bp = Blueprint('list_students', __name__)
 
 DEFAULT_PER_PAGE = 10
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 401
-        if not Admin.query.get(session['user_id']):
-            return jsonify({'error': 'Unauthorized'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 
 @list_students_bp.route('/', methods=['GET'])

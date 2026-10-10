@@ -3,14 +3,30 @@ Lógica central de processamento de estudantes via webhook.
 Responsável por adicionar/remover alunos do curso e disparar notificações.
 """
 from flask import request, jsonify
+from sqlalchemy import func
 from models import db, Course, Student
 from werkzeug.security import generate_password_hash
 from sqlalchemy.exc import IntegrityError
 from integrations import dispatch_notifications
 from db.integration_helpers import get_integration
 import logging
+import secrets
 
 logger = logging.getLogger(__name__)
+
+
+EXISTING_STUDENT_PASSWORD_HINT = 'a mesma senha que você já utiliza (ou use "Esqueci minha senha" na tela de login)'
+
+
+def generate_student_password():
+    """Senha aleatória e forte para aluno novo (nunca uma senha fixa conhecida)."""
+    return secrets.token_urlsafe(9)
+
+
+def get_new_student_password():
+    """Senha definida nas configurações ou, se vazia, uma aleatória."""
+    _, signup_config = get_integration('student_signup')
+    return (signup_config.get('new_student_password', '') or '').strip() or generate_student_password()
 
 
 def get_settings_dict():
@@ -53,18 +69,17 @@ def process_student(nome, email, course_id, add=True, password=None, phone=None,
         phone: Telefone (opcional)
         extra_data: Dados extras da plataforma (opcional)
     """
+    email = (email or '').strip().lower()
     logger.info(f"Processando estudante: {nome} ({email}), Ação: {'Adicionar' if add else 'Remover'}")
 
     course = Course.query.get(course_id)
     if not course:
         return jsonify({'error': 'Curso não encontrado'}), 404
 
-    student = Student.query.filter_by(email=email).first()
+    student = Student.query.filter(func.lower(Student.email) == email).first()
 
     if not student and add:
-        _, signup_config = get_integration('student_signup')
-        default_pw = signup_config.get('new_student_password', '').strip() or 'senha123'
-        password = password or default_pw
+        password = password or get_new_student_password()
         student = Student(
             email=email,
             password=generate_password_hash(password),
@@ -178,14 +193,11 @@ def _trigger_notifications(student, course, password, phone=None):
     settings_dict = get_settings_dict()
     base_url = _get_base_url()
 
-    _, signup_config = get_integration('student_signup')
-    default_pw = signup_config.get('new_student_password', '').strip() or 'senha123'
-
     student_data = {
         'name': student.name,
         'first_name': student.name.split()[0] if student.name else student.name,
         'email': student.email,
-        'password': password or default_pw,
+        'password': password or EXISTING_STUDENT_PASSWORD_HINT,
         'link': f"{base_url}/login",
         'fast_link': f"{base_url}/access/{student.uuid}",
         'curso': course.name,

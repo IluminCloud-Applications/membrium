@@ -1,4 +1,5 @@
 from flask import Blueprint, Response, jsonify, session, request, current_app
+from auth_decorators import admin_required
 from functools import wraps
 from werkzeug.security import generate_password_hash
 from sqlalchemy import func
@@ -12,18 +13,9 @@ import time
 
 logger = logging.getLogger(__name__)
 
+from webhook.core import generate_student_password
+
 import_students_bp = Blueprint('import_students', __name__)
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 401
-        if not Admin.query.get(session['user_id']):
-            return jsonify({'error': 'Unauthorized'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 
 def start_background_notifications(app, settings_dict, students_list, default_password, base_url, send_email, send_wa, courses_names):
@@ -47,7 +39,7 @@ def start_background_notifications(app, settings_dict, students_list, default_pa
                     'name': student['name'],
                     'first_name': student['name'].split()[0] if student['name'] else student['name'],
                     'email': student['email'],
-                    'password': default_password,
+                    'password': student.get('password', default_password),
                     'link': f"{base_url}/login",
                     'fast_link': f"{base_url}/access/{student['uuid']}",
                     'curso': courses_names,
@@ -86,7 +78,7 @@ def import_students():
         courseIds: [int]
         sendEmail: bool
         sendWhatsapp: bool
-        defaultPassword: str  (optional, defaults to 'senha123')
+        defaultPassword: str  (optional; sem ela nem senha nas configurações, cada aluno recebe uma senha aleatória)
     """
     data = request.get_json()
     if not data:
@@ -99,14 +91,15 @@ def import_students():
 
     from db.integration_helpers import get_integration
     _, signup_config = get_integration('student_signup')
-    default_pw_from_settings = signup_config.get('new_student_password', '').strip() or 'senha123'
+    default_pw_from_settings = signup_config.get('new_student_password', '').strip()
     default_password = data.get('defaultPassword', '').strip() or default_pw_from_settings
+    random_per_student = not default_password
 
     if not student_list:
         return jsonify({'success': False, 'message': 'Nenhum aluno para importar'}), 400
 
     # 1. Hashing da senha UMA ÚNICA VEZ fora de qualquer loop (economiza 99.9% de CPU)
-    hashed_password = generate_password_hash(default_password)
+    hashed_password = generate_password_hash(default_password) if default_password else None
 
     # Carregar configurações e base_url sob o request context ATIVO da rota HTTP
     from routes.students.resend_access import _get_settings_dict, _get_base_url
@@ -199,9 +192,15 @@ def import_students():
                         skipped += 1
                     else:
                         student_uuid = str(uuid4())
+                        if random_per_student:
+                            student_password = generate_student_password()
+                            student_hash = generate_password_hash(student_password)
+                        else:
+                            student_password = default_password
+                            student_hash = hashed_password
                         new_student = Student(
                             email=email,
-                            password=hashed_password,
+                            password=student_hash,
                             name=name,
                             phone=phone,
                             uuid=student_uuid,
@@ -218,6 +217,7 @@ def import_students():
                                 'email': email,
                                 'phone': phone,
                                 'uuid': student_uuid,
+                                'password': student_password,
                             })
 
                     # Envia progresso para o cliente se atingiu o intervalo

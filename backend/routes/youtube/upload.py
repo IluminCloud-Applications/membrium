@@ -17,6 +17,7 @@ Endpoints:
 import logging
 import requests as http_requests
 from flask import Blueprint, request, jsonify, session as flask_session
+from auth_decorators import admin_required
 from functools import wraps
 from db.database import db
 from models import Admin, Lesson, Module
@@ -25,17 +26,6 @@ from db.integration_helpers import get_integration
 logger = logging.getLogger("routes.youtube.upload")
 
 youtube_upload_bp = Blueprint('youtube_upload', __name__)
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in flask_session or flask_session.get('user_type') != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 401
-        if not Admin.query.get(flask_session['user_id']):
-            return jsonify({'error': 'Unauthorized'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 
 def _get_youtube_credentials():

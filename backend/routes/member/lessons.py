@@ -3,6 +3,7 @@ from flask import Blueprint, jsonify
 from db.database import db
 from models import Course, Module, Document, FAQ, student_lessons
 from .auth_helpers import member_or_preview
+from .drip import module_access_error, lesson_access_error
 from cache import cache_get, cache_set
 
 member_lessons_bp = Blueprint('member_lessons', __name__)
@@ -72,7 +73,10 @@ def get_module_lessons(student, course_id, module_id):
         return jsonify({'error': 'Sem acesso a este curso'}), 403
 
     # Validate module belongs to course (404 if not)
-    Module.query.filter_by(id=module_id, course_id=course_id).first_or_404()
+    module_obj = Module.query.filter_by(id=module_id, course_id=course_id).first_or_404()
+    denied = module_access_error(student, module_obj)
+    if denied:
+        return denied
 
     # Load static content from cache
     cache_key = f'module:{module_id}:content'
@@ -104,7 +108,7 @@ def get_module_lessons(student, course_id, module_id):
 
     if student is not None:
         from models import StudentActivityLog
-        mod_title = content['module'].get('title') if isinstance(content.get('module'), dict) else None
+        mod_title = content['module'].get('name') if isinstance(content.get('module'), dict) else None
         StudentActivityLog.log(
             student_id=student.id,
             action='view_module',
@@ -137,7 +141,10 @@ def record_lesson_view(student, lesson_id):
 
     from models import Lesson, StudentActivityLog
     lesson = Lesson.query.get_or_404(lesson_id)
-    module_title = lesson.module.title if lesson.module else None
+    denied = lesson_access_error(student, lesson)
+    if denied:
+        return denied
+    module_title = lesson.module.name if lesson.module else None
 
     StudentActivityLog.log(
         student_id=student.id,

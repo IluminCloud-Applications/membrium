@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { sanitizeHtml } from "@/lib/sanitize";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -149,7 +150,7 @@ export function TemplateEditor({
                         {templateMode === "html" ? (
                             <div
                                 className="text-sm prose prose-sm max-w-none dark:prose-invert"
-                                dangerouslySetInnerHTML={{ __html: replaceVariablesForHtmlPreview(body) }}
+                                dangerouslySetInnerHTML={{ __html: sanitizeHtml(replaceVariablesForHtmlPreview(body)) }}
                             />
                         ) : (
                             <TemplatePreview text={previewText} format={format} />

@@ -1,6 +1,7 @@
 """CRUD de Combos de Cursos (API REST)."""
 from functools import wraps
 from flask import Blueprint, jsonify, request, session
+from auth_decorators import admin_required
 from db.database import db
 from models import Admin, Course, CourseCombo
 import logging
@@ -8,17 +9,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 combos_bp = Blueprint('combos', __name__, url_prefix='/api/combos')
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 401
-        if not Admin.query.get(session['user_id']):
-            return jsonify({'error': 'Unauthorized'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 
 @combos_bp.route('', methods=['GET'])

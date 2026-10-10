@@ -15,6 +15,7 @@ from .platforms.kirvano import parse_kirvano
 from .platforms.lastlink import parse_lastlink
 from .platforms.activecampaign import parse_activecampaign
 from .platforms.hubla import parse_hubla
+from .security import verify_webhook
 from .core import process_student
 from .combo import process_combo_student
 import logging
@@ -78,6 +79,10 @@ def receive_webhook(platform, uuid):
 
     if not course and not combo:
         return jsonify({'error': 'Curso ou Combo não encontrado'}), 404
+
+    ok, reason = verify_webhook(platform)
+    if not ok:
+        return jsonify({'error': reason}), 401
 
     # ActiveCampaign tem tratamento especial (form data + query param)
     if platform == 'activecampaign':

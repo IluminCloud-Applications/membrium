@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request, session, url_for
+from auth_decorators import admin_required
 from functools import wraps
 from datetime import datetime
 from db.database import db
@@ -8,17 +9,6 @@ import os
 from cache import invalidate_module, invalidate_course
 
 modules_bp = Blueprint('course_mod_modules', __name__)
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 401
-        if not Admin.query.get(session['user_id']):
-            return jsonify({'error': 'Unauthorized'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 
 @modules_bp.route('/<int:course_id>/modules', methods=['POST'])
