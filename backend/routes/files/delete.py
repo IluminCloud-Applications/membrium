@@ -2,6 +2,7 @@
 Delete file endpoint(s) – single file and bulk clean unused.
 """
 from flask import Blueprint, request, jsonify, session
+from auth_decorators import admin_required
 from functools import wraps
 import os
 
@@ -10,17 +11,6 @@ from db.database import db
 from models import Admin, Document
 
 delete_bp = Blueprint('files_delete', __name__)
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 401
-        if not Admin.query.get(session['user_id']):
-            return jsonify({'error': 'Unauthorized'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 
 @delete_bp.route('/<path:file_id>', methods=['DELETE'])

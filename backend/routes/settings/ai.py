@@ -1,19 +1,11 @@
 from flask import Blueprint, request, jsonify, session
+from auth_decorators import admin_required
 from functools import wraps
 from models import Admin
 from db.integration_helpers import get_integration, set_integration
 import requests as http_requests
 
 ai_bp = Blueprint('settings_ai', __name__)
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or not Admin.query.get(session['user_id']):
-            return jsonify({'success': False, 'message': 'Não autorizado'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 
 # ─── GET AI settings ──────────────────────────────────────────────

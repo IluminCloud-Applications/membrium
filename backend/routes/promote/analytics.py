@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, session
+from auth_decorators import admin_required
 from functools import wraps
 from datetime import datetime
 from sqlalchemy import func
@@ -9,17 +10,6 @@ from pytz import timezone
 analytics_bp = Blueprint('promote_analytics', __name__)
 
 SP_TZ = timezone('America/Sao_Paulo')
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 401
-        if not Admin.query.get(session['user_id']):
-            return jsonify({'error': 'Unauthorized'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 
 @analytics_bp.route('/<int:promotion_id>/analytics/view', methods=['POST'])

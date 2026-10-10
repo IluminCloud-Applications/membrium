@@ -1,5 +1,6 @@
 """CRUD routes for managing admin users (multi-admin support)."""
 from flask import Blueprint, request, session, jsonify
+from sqlalchemy import func
 from functools import wraps
 from werkzeug.security import generate_password_hash
 from db.database import db
@@ -71,9 +72,9 @@ def create_admin():
         return jsonify({'error': 'Role inválida. Use "admin" ou "support".'}), 400
 
     # Check email uniqueness across admins and students
-    if Admin.query.filter_by(email=email).first():
+    if Admin.query.filter(func.lower(Admin.email) == email).first():
         return jsonify({'error': 'Já existe um administrador com este e-mail.'}), 409
-    if Student.query.filter_by(email=email).first():
+    if Student.query.filter(func.lower(Student.email) == email).first():
         return jsonify({'error': 'Já existe um aluno com este e-mail.'}), 409
 
     # Get platform_name from the primary admin

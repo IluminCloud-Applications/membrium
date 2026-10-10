@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { sanitizeHtml } from "@/lib/sanitize";
 import type { MemberLessonDetail, MemberLessonDocument, MemberLessonFAQ } from "@/types/member";
 
 interface LessonContentProps {
@@ -21,7 +22,7 @@ export function LessonContent({ lesson, onViewDocument }: LessonContentProps) {
                 <div className="lesson-section">
                     <div
                         className="lesson-description-body"
-                        dangerouslySetInnerHTML={{ __html: lesson.description }}
+                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.description) }}
                     />
                 </div>
             )}

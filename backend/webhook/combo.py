@@ -3,12 +3,13 @@ Processamento de webhooks para Combos de Cursos.
 Adiciona ou remove o aluno de todos os cursos que compõem a oferta.
 """
 from flask import jsonify
+from sqlalchemy import func
 from models import db, Course, Student, CourseCombo
 from werkzeug.security import generate_password_hash
 from sqlalchemy.exc import IntegrityError
 from integrations import dispatch_notifications
 from db.integration_helpers import get_integration
-from .core import get_settings_dict, _get_base_url
+from .core import get_settings_dict, _get_base_url, get_new_student_password, EXISTING_STUDENT_PASSWORD_HINT
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,12 +21,11 @@ def process_combo_student(nome, email, combo, add=True, password=None, phone=Non
     """
     logger.info(f"Processando estudante em combo '{combo.name}': {nome} ({email}), Ação: {'Adicionar' if add else 'Remover'}")
 
-    student = Student.query.filter_by(email=email).first()
+    email = (email or '').strip().lower()
+    student = Student.query.filter(func.lower(Student.email) == email).first()
 
     if not student and add:
-        _, signup_config = get_integration('student_signup')
-        default_pw = signup_config.get('new_student_password', '').strip() or 'senha123'
-        password = password or default_pw
+        password = password or get_new_student_password()
         student = Student(
             email=email,
             password=generate_password_hash(password),
@@ -143,14 +143,11 @@ def _trigger_combo_notifications(student, combo, password, phone=None):
     settings_dict = get_settings_dict()
     base_url = _get_base_url()
 
-    _, signup_config = get_integration('student_signup')
-    default_pw = signup_config.get('new_student_password', '').strip() or 'senha123'
-
     student_data = {
         'name': student.name,
         'first_name': student.name.split()[0] if student.name else student.name,
         'email': student.email,
-        'password': password or default_pw,
+        'password': password or EXISTING_STUDENT_PASSWORD_HINT,
         'link': f"{base_url}/login",
         'fast_link': f"{base_url}/access/{student.uuid}",
         'curso': combo.name,

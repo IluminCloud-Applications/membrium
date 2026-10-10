@@ -2,6 +2,7 @@
 List files endpoint – returns paginated file list with usage info.
 """
 from flask import Blueprint, request, jsonify, session
+from auth_decorators import admin_required
 from functools import wraps
 from datetime import datetime
 import os
@@ -12,17 +13,6 @@ from services.image_compress import is_compressed as _is_compressed, is_image as
 from models import Admin
 
 list_bp = Blueprint('files_list', __name__)
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 401
-        if not Admin.query.get(session['user_id']):
-            return jsonify({'error': 'Unauthorized'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 
 @list_bp.route('', methods=['GET'], strict_slashes=False)

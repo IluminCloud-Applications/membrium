@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify
 from models import Student, Course, Module
 from .auth_helpers import member_or_preview
+from .drip import module_days_remaining
 from db.integration_helpers import get_integration
 from db.database import db
 from cache import cache_get, cache_set
@@ -267,8 +268,15 @@ def get_course_detail(student, course_id):
     _, menu_config = get_integration('menu')
     global_menu = menu_config.get('items', [])
 
+    # Drip no back-end: módulos ainda bloqueados não devolvem aulas nem URLs de vídeo
+    days_remaining = {mod.id: module_days_remaining(student, mod) for mod in course_check.modules}
+
     modules = []
     for m in structure['modules']:
+        remaining = days_remaining.get(m['id'], 0)
+        if remaining > 0:
+            modules.append({**m, 'lessons': [], 'isLocked': True, 'unlockDaysRemaining': remaining})
+            continue
         lessons = [{**l, 'completed': l['id'] in completed_ids} for l in m['lessons']]
         modules.append({**m, 'lessons': lessons})
 

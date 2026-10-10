@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, session
+from auth_decorators import admin_required
 from functools import wraps
 from db.database import db
 from models import Admin
@@ -6,15 +7,6 @@ from db.integration_helpers import get_integration, set_integration
 from integrations.whatsapp.evolutionapi import resolve_docker_url
 
 integrations_bp = Blueprint('settings_integrations', __name__)
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or not Admin.query.get(session['user_id']):
-            return jsonify({'success': False, 'message': 'Não autorizado'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 
 # ─── GET integrations ─────────────────────────────────────────────
@@ -31,8 +23,13 @@ def get_integrations():
     assemblyai_enabled, assemblyai = get_integration('assemblyai')
     r2_enabled, r2 = get_integration('cloudflare_r2')
     _, support = get_integration('support')
+    _, webhook_security = get_integration('webhook_security')
 
     return jsonify({
+        'webhook_security': {
+            'hotmart_hottok': webhook_security.get('hotmart_hottok', ''),
+            'kiwify_token': webhook_security.get('kiwify_token', ''),
+        },
         'brevo': {
             'enabled': brevo_enabled,
             'api_key': brevo.get('api_key', ''),
@@ -94,6 +91,21 @@ def get_integrations():
             'api_token': r2.get('api_token', ''),
         },
     })
+
+
+# ─── Segurança dos webhooks ───────────────────────────────────────
+
+@integrations_bp.route('/api/settings/webhook-security', methods=['POST'])
+@admin_required
+def update_webhook_security():
+    """Salva os segredos usados para validar webhooks (Hotmart hottok, Kiwify token)."""
+    data = request.json or {}
+    _, config = get_integration('webhook_security')
+    for key in ('hotmart_hottok', 'kiwify_token'):
+        if key in data:
+            config[key] = (data.get(key) or '').strip()
+    set_integration('webhook_security', True, config)
+    return jsonify({'success': True, 'message': 'Segurança dos webhooks atualizada'})
 
 
 # ─── Brevo ─────────────────────────────────────────────────────────

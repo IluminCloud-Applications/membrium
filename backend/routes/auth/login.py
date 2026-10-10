@@ -1,26 +1,30 @@
 """Login and logout routes."""
 from flask import Blueprint, request, session, jsonify
+from sqlalchemy import func
 from werkzeug.security import check_password_hash
 from models import Admin, Student
+from extensions import limiter, email_key
 
 login_bp = Blueprint('login', __name__)
 
 
 @login_bp.route('/api/auth/login', methods=['POST'])
+@limiter.limit('10 per 15 minutes', key_func=email_key)
+@limiter.limit('30 per 15 minutes')
 def api_login():
     """Login as admin or student (JSON API)."""
     data = request.json
     if not data:
         return jsonify({'success': False, 'message': 'Dados inválidos'}), 400
 
-    email = data.get('email', '').strip()
+    email = data.get('email', '').strip().lower()
     password = data.get('password', '')
 
     if not email or not password:
         return jsonify({'success': False, 'message': 'E-mail e senha são obrigatórios'}), 400
 
     # Try admin
-    admin = Admin.query.filter_by(email=email).first()
+    admin = Admin.query.filter(func.lower(Admin.email) == email).first()
     if admin and check_password_hash(admin.password, password):
         session.permanent = True
         session['user_id'] = admin.id
@@ -39,7 +43,7 @@ def api_login():
         })
 
     # Try student
-    student = Student.query.filter_by(email=email).first()
+    student = Student.query.filter(func.lower(Student.email) == email).first()
     if student and check_password_hash(student.password, password):
         session.permanent = True
         session['user_id'] = student.id

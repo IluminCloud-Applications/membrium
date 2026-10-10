@@ -1,6 +1,8 @@
 """Quick access — authenticate student via UUID link."""
 from flask import Blueprint, session, jsonify, redirect, request
+from sqlalchemy import func
 from models import Student, Admin
+from extensions import limiter, email_key
 
 quick_access_bp = Blueprint('quick_access', __name__)
 
@@ -23,6 +25,7 @@ def api_quick_access_status():
 
 
 @quick_access_bp.route('/api/auth/quick-access/<uuid>', methods=['POST'])
+@limiter.limit('30 per 15 minutes')
 def api_quick_access(uuid):
     """Quick access — authenticate student by UUID token (JSON API)."""
     student = Student.query.filter_by(uuid=uuid).first()
@@ -55,6 +58,7 @@ def api_quick_access(uuid):
 
 
 @quick_access_bp.route('/api/auth/quick-access/check', methods=['POST'])
+@limiter.limit('20 per 15 minutes')
 def api_quick_access_check():
     """Verify if a student exists by email and has enabled integrations."""
     data = request.json or {}
@@ -68,9 +72,9 @@ def api_quick_access_check():
     has_email = bool(settings.get('brevo_enabled') and settings.get('brevo_api_key'))
     has_wa_configured = bool(settings.get('evolution_enabled') and settings.get('evolution_api_key'))
 
-    student = Student.query.filter_by(email=email).first()
+    student = Student.query.filter(func.lower(Student.email) == email).first()
     if not student:
-        admin = Admin.query.filter_by(email=email).first()
+        admin = Admin.query.filter(func.lower(Admin.email) == email).first()
         if admin:
             # Admins bypass quick access and go straight to password login
             return jsonify({
@@ -103,6 +107,8 @@ def api_quick_access_check():
 
 
 @quick_access_bp.route('/api/auth/quick-access/send', methods=['POST'])
+@limiter.limit('3 per 15 minutes', key_func=email_key)
+@limiter.limit('20 per hour')
 def api_quick_access_send():
     """Send quick access link via Brevo and/or Evolution API."""
     data = request.json or {}
@@ -110,7 +116,7 @@ def api_quick_access_send():
     if not email:
         return jsonify({'success': False, 'message': 'E-mail obrigatório'}), 400
 
-    student = Student.query.filter_by(email=email).first()
+    student = Student.query.filter(func.lower(Student.email) == email).first()
     if not student:
         return jsonify({'success': False, 'message': 'E-mail não cadastrado'}), 404
 

@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, session, request
 from db.database import db
 from models import Student, Lesson, Module, Course, student_lessons
 from .auth_helpers import student_required, member_or_preview
+from .drip import lesson_access_error
 
 member_progress_bp = Blueprint('member_progress', __name__)
 
@@ -36,13 +37,16 @@ def mark_lesson_complete(student, lesson_id):
         return jsonify({'success': True, 'message': 'Preview mode — sem alteração'})
 
     lesson = Lesson.query.get_or_404(lesson_id)
+    denied = lesson_access_error(student, lesson)
+    if denied:
+        return denied
 
     if lesson not in student.completed_lessons:
         student.completed_lessons.append(lesson)
         db.session.commit()
 
         from models import StudentActivityLog
-        module_name = lesson.module.title if lesson.module else None
+        module_name = lesson.module.name if lesson.module else None
         StudentActivityLog.log(
             student_id=student.id,
             action='complete_lesson',
@@ -64,13 +68,16 @@ def unmark_lesson_complete(student, lesson_id):
         return jsonify({'success': True, 'message': 'Preview mode — sem alteração'})
 
     lesson = Lesson.query.get_or_404(lesson_id)
+    denied = lesson_access_error(student, lesson)
+    if denied:
+        return denied
 
     if lesson in student.completed_lessons:
         student.completed_lessons.remove(lesson)
         db.session.commit()
 
         from models import StudentActivityLog
-        module_name = lesson.module.title if lesson.module else None
+        module_name = lesson.module.name if lesson.module else None
         StudentActivityLog.log(
             student_id=student.id,
             action='uncomplete_lesson',

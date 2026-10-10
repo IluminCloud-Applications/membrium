@@ -1,9 +1,11 @@
 import os
-from flask import Flask
+from flask import Flask, jsonify
+from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_cors import CORS
 from db.database import init_db, create_all_tables, run_migrations
 from db.utils import ensure_upload_directory
 from services.event_scheduler import start_scheduler
+from extensions import limiter
 
 # Import blueprints
 from routes.auth import auth_bp
@@ -33,6 +35,20 @@ from routes.external_api import external_api_bp
 def create_app():
     """Application factory pattern"""
     app = Flask(__name__)
+
+    # IP real do cliente atrás de proxies (Nginx do contêiner + Traefik, se houver).
+    # TRUSTED_PROXY_HOPS = quantidade de proxies que confiamos (padrão 1 = só o Nginx).
+    hops = int(os.environ.get('TRUSTED_PROXY_HOPS', '1'))
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=hops)
+
+    limiter.init_app(app)
+
+    @app.errorhandler(429)
+    def too_many_requests(_e):
+        return jsonify({
+            'success': False,
+            'message': 'Muitas tentativas. Aguarde alguns minutos e tente novamente.',
+        }), 429
 
     # CORS — allow frontend dev server
     CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)

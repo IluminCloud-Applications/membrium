@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request, session
+from auth_decorators import admin_required
 from functools import wraps
 from datetime import datetime
 from werkzeug.utils import secure_filename
@@ -14,17 +15,6 @@ from cache import invalidate_lesson
 logger = logging.getLogger("routes.course_modification.lessons")
 
 lessons_bp = Blueprint('course_mod_lessons', __name__)
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 401
-        if not Admin.query.get(session['user_id']):
-            return jsonify({'error': 'Unauthorized'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 
 @lessons_bp.route('/modules/<int:module_id>/lessons', methods=['POST'])

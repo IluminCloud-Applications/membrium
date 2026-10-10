@@ -2,23 +2,12 @@
 import os
 import secrets
 from flask import Blueprint, jsonify, session, request
+from auth_decorators import admin_required
 from functools import wraps
 from db.database import db
 from models import Admin
 
 developer_api_bp = Blueprint('settings_developer_api', __name__)
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'admin':
-            return jsonify({'success': False, 'message': 'Não autorizado'}), 401
-        admin = Admin.query.get(session['user_id'])
-        if not admin:
-            return jsonify({'success': False, 'message': 'Não autorizado'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 
 def _get_base_url():

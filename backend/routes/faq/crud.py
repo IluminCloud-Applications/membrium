@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, session
+from auth_decorators import admin_required
 from functools import wraps
 from db.database import db
 from models import Admin, FAQ, Lesson, Module, Course
@@ -6,17 +7,6 @@ from sqlalchemy import func
 from cache import invalidate_lesson
 
 crud_bp = Blueprint('faq_crud', __name__)
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 401
-        if not Admin.query.get(session['user_id']):
-            return jsonify({'error': 'Unauthorized'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 
 def serialize_faq(faq_item):

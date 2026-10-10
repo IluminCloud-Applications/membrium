@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request, session, send_file
+from auth_decorators import admin_required
 from functools import wraps
 from datetime import datetime
 from db.database import db
@@ -15,17 +16,6 @@ logger = logging.getLogger("routes.course_modification.export_import")
 export_import_bp = Blueprint('course_export_import', __name__)
 
 UPLOAD_DIR = 'static/uploads'
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 401
-        if not Admin.query.get(session['user_id']):
-            return jsonify({'error': 'Unauthorized'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 
 def _serialize_course_for_export(course):

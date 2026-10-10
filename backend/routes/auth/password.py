@@ -1,10 +1,12 @@
 """
-Password routes: reset, forgot password, and change password by UUID.
+Password routes: forgot password, and change password by UUID.
 """
 from flask import Blueprint, request, jsonify
+from sqlalchemy import func
 from werkzeug.security import generate_password_hash
 from db.database import db
 from models import Student
+from extensions import limiter, email_key
 from db.integration_helpers import get_integration
 from integrations.email.brevo import send_brevo_forgot_email
 import logging
@@ -48,31 +50,9 @@ def _get_base_url():
     return request.url_root.rstrip('/')
 
 
-@password_bp.route('/api/auth/reset-password', methods=['POST'])
-def api_reset_password():
-    """Reset student password (from login modal — direct reset)."""
-    data = request.json
-    if not data:
-        return jsonify({'success': False, 'message': 'Dados inválidos'}), 400
-
-    email = data.get('email', '').strip()
-    new_password = data.get('newPassword', '')
-
-    if not email or not new_password:
-        return jsonify({'success': False, 'message': 'E-mail e nova senha são obrigatórios'}), 400
-
-    student = Student.query.filter_by(email=email).first()
-    if not student:
-        return jsonify({'success': False, 'message': 'Email não encontrado'}), 404
-
-    hashed_password = generate_password_hash(new_password)
-    student.password = hashed_password
-    db.session.commit()
-
-    return jsonify({'success': True, 'message': 'Senha redefinida com sucesso!'})
-
-
 @password_bp.route('/api/auth/forgot-password', methods=['POST'])
+@limiter.limit('3 per 15 minutes', key_func=email_key)
+@limiter.limit('20 per hour')
 def api_forgot_password():
     """
     Envia email de recuperação de senha.
@@ -87,7 +67,7 @@ def api_forgot_password():
         return jsonify({'success': False, 'message': 'E-mail é obrigatório'}), 400
 
     # Sempre retorna sucesso para o frontend (segurança)
-    student = Student.query.filter_by(email=email).first()
+    student = Student.query.filter(func.lower(Student.email) == email).first()
     if not student:
         logger.info(f"[ForgotPassword] Email não encontrado: {email}")
         return jsonify({
@@ -125,6 +105,7 @@ def api_forgot_password():
 
 
 @password_bp.route('/api/auth/change-password', methods=['POST'])
+@limiter.limit('10 per 15 minutes')
 def api_change_password():
     """
     Altera a senha do aluno usando o UUID como identificador.

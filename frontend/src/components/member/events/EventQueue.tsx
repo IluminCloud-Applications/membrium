@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { sanitizeHtml } from "@/lib/sanitize";
 import type { MemberActiveEvent } from "@/types/member";
 import { memberService } from "@/services/member";
 import { Button } from "@/components/ui/button";
@@ -105,7 +106,7 @@ function EventModalInner({ event, onDismiss }: EventModalInnerProps) {
                         {event.mediaType === "html" ? (
                             <div
                                 className="w-full h-full p-4 overflow-auto prose prose-invert max-w-none"
-                                dangerouslySetInnerHTML={{ __html: event.htmlContent || "" }}
+                                dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.htmlContent) }}
                             />
                         ) : (
                             <div

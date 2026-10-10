@@ -1,5 +1,6 @@
 """Publish draft lessons for a course — changes all 'draft' lessons to 'published'."""
 from flask import Blueprint, jsonify, session
+from auth_decorators import admin_required
 from functools import wraps
 from db.database import db
 from models import Admin, Course, Lesson, Module
@@ -9,17 +10,6 @@ import logging
 logger = logging.getLogger("routes.course_modification.publish")
 
 publish_bp = Blueprint('course_mod_publish', __name__)
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or session.get('user_type') != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 401
-        if not Admin.query.get(session['user_id']):
-            return jsonify({'error': 'Unauthorized'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 
 @publish_bp.route('/<int:course_id>/lessons/publish', methods=['POST'])

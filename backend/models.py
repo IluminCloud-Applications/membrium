@@ -1,4 +1,5 @@
 from uuid import uuid4
+from sqlalchemy.orm import validates
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from db.database import db
@@ -28,6 +29,10 @@ class Admin(db.Model):
     is_installed = db.Column(db.Boolean, default=False)
     role = db.Column(db.String(20), nullable=False, default='admin')  # 'admin' or 'support'
     api_key = db.Column(db.String(255), unique=True, nullable=True, index=True)
+
+    @validates('email')
+    def _normalize_email(self, _key, value):
+        return (value or '').strip().lower()
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -98,6 +103,10 @@ class Student(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     courses = db.relationship('Course', secondary=student_courses, backref=db.backref('students', lazy='dynamic'))
     completed_lessons = db.relationship('Lesson', secondary=student_lessons, backref=db.backref('completed_by', lazy='dynamic'))
+
+    @validates('email')
+    def _normalize_email(self, _key, value):
+        return (value or '').strip().lower()
 
     def set_password(self, password):
         self.password = generate_password_hash(password)

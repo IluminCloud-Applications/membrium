@@ -1,5 +1,6 @@
 import logging
 from flask import Blueprint, request, jsonify, session
+from auth_decorators import admin_required
 from functools import wraps
 
 from models import Admin
@@ -9,17 +10,6 @@ from ai.models.banner_prompt import BannerPromptAI
 logger = logging.getLogger("routes.course_modification.banner_prompt")
 
 banner_prompt_bp = Blueprint("course_mod_banner_prompt", __name__)
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if "user_id" not in session or session.get("user_type") != "admin":
-            return jsonify({"error": "Unauthorized"}), 401
-        if not Admin.query.get(session["user_id"]):
-            return jsonify({"error": "Unauthorized"}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 
 @banner_prompt_bp.route("/banner-prompt", methods=["POST"])
