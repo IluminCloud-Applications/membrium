@@ -43,9 +43,11 @@ def process_combo_student(nome, email, combo, add=True, password=None, phone=Non
         if phone and not student.phone:
             student.phone = phone
         if extra_data:
-            existing = student.extra_data or {}
+            from sqlalchemy.orm.attributes import flag_modified
+            existing = dict(student.extra_data or {})
             existing.update(extra_data)
             student.extra_data = existing
+            flag_modified(student, 'extra_data')
 
     if not student:
         return jsonify({'error': 'Estudante não encontrado para remoção'}), 404
@@ -81,6 +83,10 @@ def _add_student_to_combo(student, combo, password, phone=None):
             added_courses.append(f"{bonus.name} (Bônus)")
 
     if already_enrolled and not added_courses:
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
         return jsonify({'message': f'Estudante já está matriculado nos cursos do combo {combo.name}'}), 200
 
     try:

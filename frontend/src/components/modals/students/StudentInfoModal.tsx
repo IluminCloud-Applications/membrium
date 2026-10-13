@@ -56,23 +56,23 @@ export function StudentInfoModal({ open, onOpenChange, student }: StudentInfoMod
     const extra = student.extra_data || {};
     const source = extra.source || "Não identificado";
     const paytData = extra.payt || {};
-    const utms = paytData.utms || {};
+    const utms = extra.utms || paytData.utms || extra.lastlink?.utms || extra.hubla?.utms || {};
     
     // Customer details (from direct customer object, payt nested customer, or fallback fields)
     const customer = extra.customer || paytData.customer || {};
-    const customerDoc = customer.doc || extra.doc || customer.cpf || customer.cnpj;
+    const customerDoc = customer.doc || extra.doc || extra.document || customer.Document || customer.cpf || customer.cnpj;
     const customerUrl = customer.url;
-    const customerCode = customer.code || paytData.customer_code || extra.customer_code;
+    const customerCode = customer.code || paytData.customer_code || extra.customer_code || customer.Id;
 
     // Transaction details
     const transactionId = paytData.transaction_id || extra.transaction_id;
     const paymentMethod = paytData.payment_method || extra.payment_method;
-    const sellerId = paytData.seller_id;
+    const sellerId = paytData.seller_id || extra.seller_id;
     const chatwootContact = extra.chatwoot_contact_id;
     const chatwootConv = extra.chatwoot_conversation_id;
 
     // Filter out common keys for the additional data section
-    const knownKeys = ["source", "full_name", "payt", "customer", "chatwoot_contact_id", "chatwoot_conversation_id", "transaction_id", "payment_method", "customer_code", "doc"];
+    const knownKeys = ["source", "full_name", "payt", "customer", "chatwoot_contact_id", "chatwoot_conversation_id", "transaction_id", "payment_method", "customer_code", "doc", "document", "seller_id", "utms", "lastlink", "hubla"];
     const otherKeys = Object.keys(extra).filter(key => !knownKeys.includes(key));
 
     return (

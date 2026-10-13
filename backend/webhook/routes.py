@@ -92,13 +92,19 @@ def receive_webhook(platform, uuid):
     if not data:
         return jsonify({'error': 'Dados da requisição não encontrados'}), 400
 
+    target_name = course.name if course else (combo.name if combo else 'N/A')
+    event_name = data.get('Event') or data.get('event') or data.get('order_status') or data.get('type') or 'N/A'
+    logger.info(f"[Webhook {platform.upper()}] Recebido para '{target_name}' (uuid={uuid}), evento={event_name}")
+
     # Parseia os dados (cada plataforma normaliza para o formato padrão)
     result = parser(data)
 
     if result.get('error'):
+        logger.warning(f"[Webhook {platform.upper()}] Erro no parsing: {result['error']}")
         return jsonify({'error': result['error']}), 400
 
     if result.get('skip'):
+        logger.info(f"[Webhook {platform.upper()}] Evento ignorado: {result.get('message')}")
         return jsonify({'message': result.get('message', 'Evento não processado')}), 200
 
     if combo:
