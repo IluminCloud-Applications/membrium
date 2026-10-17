@@ -49,9 +49,24 @@ def create_student():
         db.session.flush()
 
         # Enroll in multiple courses
+        enrolled_courses = []
         for cid in course_ids:
             course = Course.query.get(cid)
             if course:
+                enrolled_courses.append(course)
+
+        if enrolled_courses:
+            try:
+                from webhook.core import record_student_course_event
+                record_student_course_event(
+                    student=new_student,
+                    courses=enrolled_courses,
+                    add=True,
+                    extra_data={'source': 'manual'},
+                )
+            except Exception:
+                pass
+            for course in enrolled_courses:
                 new_student.courses.append(course)
 
         db.session.commit()

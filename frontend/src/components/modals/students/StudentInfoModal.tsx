@@ -8,9 +8,10 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { Student } from "@/types/student";
+import type { Student, CourseSourceInfo, PurchaseHistoryEntry } from "@/types/student";
 import { formatBrazilianDate, formatBrazilianDateTime } from "@/utils/formatDate";
-import { statusColors, statusLabels } from "@/types/student";
+import { statusColors, statusLabels, getStudentSources } from "@/types/student";
+import { PlatformBadge } from "@/components/students/StudentTable";
 import { studentsService, type StudentActivity } from "@/services/students";
 
 interface StudentInfoModalProps {
@@ -18,6 +19,13 @@ interface StudentInfoModalProps {
     onOpenChange: (open: boolean) => void;
     student: Student | null;
 }
+
+const CATEGORY_LABELS: Record<string, string> = {
+    principal: "Principal",
+    order_bump: "Order Bump",
+    upsell: "Upsell",
+    bonus: "Bônus",
+};
 
 export function StudentInfoModal({ open, onOpenChange, student }: StudentInfoModalProps) {
     if (!student) return null;
@@ -55,6 +63,7 @@ export function StudentInfoModal({ open, onOpenChange, student }: StudentInfoMod
 
     const extra = student.extra_data || {};
     const source = extra.source || "Não identificado";
+    const allSources = getStudentSources(extra);
     const paytData = extra.payt || {};
     const utms = extra.utms || paytData.utms || extra.lastlink?.utms || extra.hubla?.utms || {};
     
@@ -71,13 +80,58 @@ export function StudentInfoModal({ open, onOpenChange, student }: StudentInfoMod
     const chatwootContact = extra.chatwoot_contact_id;
     const chatwootConv = extra.chatwoot_conversation_id;
 
+    // Per-course sources & chronological purchase history (with safe fallback for legacy students in production)
+    const rawCourseSources: Record<string, CourseSourceInfo> =
+        extra.course_sources && typeof extra.course_sources === "object" ? extra.course_sources : {};
+    const rawPurchaseHistory: PurchaseHistoryEntry[] =
+        Array.isArray(extra.purchase_history) ? extra.purchase_history : [];
+
+    // Build unified product list: all active enrolled courses + any removed courses recorded in course_sources
+    const enrolledCourseIds = new Set(student.courses.map(c => c.id));
+    const productItems: (CourseSourceInfo & { isLegacyFallback?: boolean })[] = student.courses.map((c) => {
+        const mapped = rawCourseSources[String(c.id)];
+        if (mapped && typeof mapped === "object") {
+            return {
+                ...mapped,
+                course_id: c.id,
+                course_name: c.name,
+                status: "active",
+            };
+        }
+        return {
+            course_id: c.id,
+            course_name: c.name,
+            source: extra.source || "",
+            status: "active",
+            granted_at: student.createdAt || null,
+            isLegacyFallback: true,
+        };
+    });
+
+    Object.values(rawCourseSources).forEach((cs) => {
+        if (cs && typeof cs === "object" && cs.course_id && !enrolledCourseIds.has(Number(cs.course_id))) {
+            productItems.push({
+                ...cs,
+                status: cs.status || "removed",
+            });
+        }
+    });
+
+    const chronologicalHistory = [...rawPurchaseHistory].reverse();
+
     // Filter out common keys for the additional data section
-    const knownKeys = ["source", "full_name", "payt", "customer", "chatwoot_contact_id", "chatwoot_conversation_id", "transaction_id", "payment_method", "customer_code", "doc", "document", "seller_id", "utms", "lastlink", "hubla"];
+    const knownKeys = [
+        "source", "sources", "first_source", "course_sources", "purchase_history",
+        "last_access_at", "full_name", "payt", "customer", "chatwoot_contact_id",
+        "chatwoot_conversation_id", "transaction_id", "payment_method", "customer_code",
+        "doc", "document", "seller_id", "utms", "lastlink", "hubla", "product_name",
+        "offer_name", "price"
+    ];
     const otherKeys = Object.keys(extra).filter(key => !knownKeys.includes(key));
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-md w-full max-h-[85vh] overflow-y-auto overflow-x-hidden p-4 gap-3">
+            <DialogContent className="sm:max-w-lg w-full max-h-[85vh] overflow-y-auto overflow-x-hidden p-4 gap-3">
                 <DialogHeader className="pb-2 border-b">
                     <DialogTitle className="flex items-center gap-1.5 text-base font-bold">
                         <i className="ri-information-line text-primary text-lg" />
@@ -105,11 +159,19 @@ export function StudentInfoModal({ open, onOpenChange, student }: StudentInfoMod
                             <DataRow label="CPF/CNPJ" value={customerDoc || "Não informado"} />
                             <DataRow label="Cadastro" value={formatBrazilianDate(student.createdAt)} />
                             <DataRow 
-                                label="Origem" 
+                                label={allSources.length > 1 ? "Plataformas" : "Origem"} 
                                 value={
-                                    <span className="capitalize font-semibold text-primary">
-                                        {source}
-                                    </span>
+                                    allSources.length > 0 ? (
+                                        <span className="inline-flex items-center gap-1 flex-wrap justify-end">
+                                            {allSources.map((src) => (
+                                                <PlatformBadge key={src} source={src} compact />
+                                            ))}
+                                        </span>
+                                    ) : (
+                                        <span className="capitalize font-semibold text-primary">
+                                            {source}
+                                        </span>
+                                    )
                                 } 
                             />
                             <div className="col-span-2 pt-1 border-t border-dashed border-border/60">
@@ -172,6 +234,170 @@ export function StudentInfoModal({ open, onOpenChange, student }: StudentInfoMod
                                     } 
                                 />
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Produtos & Origem por Plataforma */}
+                    <div className="space-y-1.5 min-w-0 w-full">
+                        <div className="flex items-center justify-between">
+                            <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                <i className="ri-shopping-bag-3-line text-xs text-primary" />
+                                Produtos & Origem por Plataforma
+                                {productItems.length > 0 && (
+                                    <span className="bg-primary/10 text-primary text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+                                        {productItems.length}
+                                    </span>
+                                )}
+                            </h4>
+                            {allSources.length > 1 && (
+                                <span className="text-[10px] text-primary font-semibold flex items-center gap-1">
+                                    <i className="ri-exchange-box-line text-[11px]" />
+                                    Múltiplas plataformas ({allSources.length})
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="bg-muted/10 p-2.5 rounded-lg border space-y-2">
+                            {productItems.length === 0 ? (
+                                <div className="py-3 text-center text-muted-foreground text-xs">
+                                    Nenhum produto/curso vinculado a este aluno.
+                                </div>
+                            ) : (
+                                <div className="space-y-2 max-h-[210px] overflow-y-auto pr-0.5">
+                                    {productItems.map((item) => {
+                                        const isRemoved = item.status === "removed";
+                                        const catLabel = item.category ? (CATEGORY_LABELS[item.category] || item.category) : null;
+                                        return (
+                                            <div
+                                                key={`${item.course_id}-${item.status}`}
+                                                className={`p-2 rounded-md border text-[11px] space-y-1.5 ${
+                                                    isRemoved
+                                                        ? "bg-red-500/5 border-red-500/20 opacity-80"
+                                                        : "bg-background/80 border-border/70"
+                                                }`}
+                                            >
+                                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                    <div className="flex items-center gap-1.5 min-w-0">
+                                                        <i className={`ri-book-open-line text-xs shrink-0 ${isRemoved ? "text-red-500" : "text-primary"}`} />
+                                                        <span className={`font-semibold truncate ${isRemoved ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                                                            {item.course_name}
+                                                        </span>
+                                                        {catLabel && (
+                                                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 font-normal text-muted-foreground">
+                                                                {catLabel}
+                                                            </Badge>
+                                                        )}
+                                                        {isRemoved && (
+                                                            <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4 bg-red-500/10 text-red-500">
+                                                                Removido
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                    <PlatformBadge source={item.source || undefined} compact />
+                                                </div>
+
+                                                <div className="flex items-center justify-between gap-2 flex-wrap text-[10px] text-muted-foreground pt-1 border-t border-dashed border-border/50">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        {item.combo_name && (
+                                                            <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-[9px] font-medium">
+                                                                Combo: {item.combo_name}
+                                                            </span>
+                                                        )}
+                                                        {item.is_bonus && item.unlocked_by && (
+                                                            <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded text-[9px] font-medium">
+                                                                Bônus via {item.unlocked_by}
+                                                            </span>
+                                                        )}
+                                                        {item.product_name && item.product_name !== item.course_name && (
+                                                            <span className="bg-muted px-1.5 py-0.5 rounded text-[9px] font-medium text-foreground/80 truncate max-w-[170px]" title={item.product_name}>
+                                                                Checkout: {item.product_name}
+                                                            </span>
+                                                        )}
+                                                        {item.payment_method && (
+                                                            <span className="bg-muted px-1.5 py-0.5 rounded text-[9px] uppercase font-mono text-foreground/80">
+                                                                {item.payment_method}
+                                                            </span>
+                                                        )}
+                                                        {item.transaction_id && (
+                                                            <span className="font-mono text-[9px] text-muted-foreground truncate max-w-[140px]" title={item.transaction_id}>
+                                                                ID: {item.transaction_id}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-[10px] text-muted-foreground whitespace-nowrap ml-auto">
+                                                        {isRemoved && item.removed_at
+                                                            ? `Removido em ${formatBrazilianDateTime(item.removed_at)}`
+                                                            : item.granted_at
+                                                            ? formatBrazilianDateTime(item.granted_at)
+                                                            : ""}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+                            {/* Linha do Tempo de Compras / Movimentações entre Plataformas */}
+                            {chronologicalHistory.length > 0 && (
+                                <div className="pt-2 border-t border-dashed border-border/70 space-y-1.5">
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                                        <i className="ri-git-commit-line text-xs text-primary" />
+                                        Histórico de Movimentações ({chronologicalHistory.length})
+                                    </p>
+                                    <div className="relative pl-3 space-y-2 max-h-[160px] overflow-y-auto before:absolute before:left-1.5 before:top-1.5 before:bottom-1.5 before:w-[1.5px] before:bg-border/60">
+                                        {chronologicalHistory.map((hist, idx) => {
+                                            const isAdd = hist.action !== "remove";
+                                            const coursesText =
+                                                hist.courses && hist.courses.length > 0
+                                                    ? hist.courses.map(c => c.name).join(", ")
+                                                    : hist.course_name || "Curso";
+                                            return (
+                                                <div key={`${hist.timestamp || idx}-${idx}`} className="relative flex items-start gap-2 min-w-0">
+                                                    <div
+                                                        className={`-ml-[17px] shrink-0 w-4 h-4 mt-0.5 rounded-full flex items-center justify-center border text-[9px] ${
+                                                            isAdd
+                                                                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
+                                                                : "bg-red-500/10 text-red-500 border-red-500/30"
+                                                        }`}
+                                                    >
+                                                        <i className={isAdd ? "ri-add-line" : "ri-subtract-line"} />
+                                                    </div>
+                                                    <div className="min-w-0 flex-1 bg-background/60 p-1.5 rounded border border-border/60 text-[10px] space-y-0.5">
+                                                        <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                                                            <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+                                                                <span className={`font-semibold ${isAdd ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}`}>
+                                                                    {isAdd ? "Liberado" : "Removido"}
+                                                                </span>
+                                                                <PlatformBadge source={hist.source} compact />
+                                                            </div>
+                                                            {hist.timestamp && (
+                                                                <span className="text-[9px] text-muted-foreground whitespace-nowrap">
+                                                                    {formatBrazilianDateTime(hist.timestamp)}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="text-foreground font-medium truncate" title={coursesText}>
+                                                            {hist.combo_name ? `Combo ${hist.combo_name}: ${coursesText}` : coursesText}
+                                                        </div>
+                                                        {(hist.bonus_courses && hist.bonus_courses.length > 0) && (
+                                                            <div className="text-[9px] text-muted-foreground truncate">
+                                                                + Bônus: {hist.bonus_courses.join(", ")}
+                                                            </div>
+                                                        )}
+                                                        {(hist.transaction_id || hist.payment_method) && (
+                                                            <div className="flex items-center gap-2 text-[9px] text-muted-foreground font-mono pt-0.5">
+                                                                {hist.payment_method && <span className="uppercase">{hist.payment_method}</span>}
+                                                                {hist.transaction_id && <span className="truncate">ID: {hist.transaction_id}</span>}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 

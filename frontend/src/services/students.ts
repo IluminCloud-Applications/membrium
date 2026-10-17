@@ -13,6 +13,10 @@ export interface StudentFromAPI {
     courses: { id: number; name: string }[];
     createdAt: string | null;
     lastAccessAt?: string | null;
+    emailStatus?: "opened" | "pending" | "fallback_sent" | "superseded" | string | null;
+    emailOpenedAt?: string | null;
+    emailLastSentAt?: string | null;
+    emailStage?: number | null;
     quickAccessToken: string;
     extra_data?: Record<string, any>;
 }
@@ -56,6 +60,7 @@ interface MutationResponse {
     message: string;
     student?: StudentFromAPI;
     courses?: { id: number; name: string }[];
+    extra_data?: Record<string, any>;
 }
 
 export interface StudentActivity {

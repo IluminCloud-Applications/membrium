@@ -22,8 +22,8 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import type { Student } from "@/types/student";
-import { statusLabels, statusColors } from "@/types/student";
+import type { Student, CourseSourceInfo } from "@/types/student";
+import { statusLabels, statusColors, PLATFORM_CONFIG, getStudentSources } from "@/types/student";
 
 interface StudentTableProps {
     students: Student[];
@@ -80,7 +80,7 @@ export function StudentTable({
     );
 }
 
-function PlatformBadge({ source }: { source?: string }) {
+export function PlatformBadge({ source, compact = false }: { source?: string; compact?: boolean }) {
     if (!source) {
         return (
             <span className="text-xs text-muted-foreground/60 italic pl-2">
@@ -89,42 +89,84 @@ function PlatformBadge({ source }: { source?: string }) {
         );
     }
 
-    if (source === "manual") {
+    const clean = source.toLowerCase();
+    if (clean === "manual") {
         return (
-            <Badge variant="secondary" className="bg-muted text-muted-foreground text-[11px] font-medium border border-border/50 shadow-sm">
-                <i className="ri-user-add-line mr-1.5" /> Manual
+            <Badge variant="secondary" className={`bg-muted text-muted-foreground font-medium border border-border/50 shadow-sm ${compact ? "text-[10px] px-1.5 py-0" : "text-[11px]"}`}>
+                <i className="ri-user-add-line mr-1" /> Manual
             </Badge>
         );
     }
 
-    const platformConfig: Record<string, { name: string; logo: string }> = {
-        hotmart: { name: "Hotmart", logo: "/platforms/hotmart.png" },
-        kiwify: { name: "Kiwify", logo: "/platforms/kiwify.png" },
-        payt: { name: "PayT", logo: "/platforms/payt.png" },
-        monetizze: { name: "Monetizze", logo: "/platforms/monetizze.png" },
-        perfectpay: { name: "PerfectPay", logo: "/platforms/perfectpay.png" },
-        kirvano: { name: "Kirvano", logo: "/platforms/kirvano.png" },
-        lastlink: { name: "LastLink", logo: "/platforms/lastlink.png" },
-        cartpanda: { name: "CartPanda", logo: "/platforms/cartpanda.svg" },
-        activecampaign: { name: "Active", logo: "/platforms/active.png" },
-        hubla: { name: "Hubla", logo: "/platforms/hubla.png" },
-    };
+    const config = PLATFORM_CONFIG[clean];
 
-    const config = platformConfig[source.toLowerCase()];
-
-    if (config) {
+    if (config && config.logo) {
         return (
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-border/50 bg-background/50 shadow-sm w-fit">
-                <img src={config.logo} alt={config.name} className="w-4 h-4 rounded-full object-cover bg-white shrink-0" />
-                <span className="text-[11px] font-medium text-foreground/80">{config.name}</span>
+            <div className={`inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-background/50 shadow-sm w-fit ${compact ? "px-1.5 py-0.5" : "px-2 py-0.5"}`}>
+                <img src={config.logo} alt={config.name} className={`${compact ? "w-3.5 h-3.5" : "w-4 h-4"} rounded-full object-cover bg-white shrink-0`} />
+                <span className={`${compact ? "text-[10px]" : "text-[11px]"} font-medium text-foreground/80`}>{config.name}</span>
             </div>
         );
     }
 
     return (
-        <Badge variant="outline" className="text-[11px] capitalize border-border/50 text-muted-foreground shadow-sm">
+        <Badge variant="outline" className={`${compact ? "text-[10px] px-1.5 py-0" : "text-[11px]"} capitalize border-border/50 text-muted-foreground shadow-sm`}>
             {source}
         </Badge>
+    );
+}
+
+function StudentOriginCell({ student }: { student: Student }) {
+    const extra = student.extra_data || {};
+    const sources = getStudentSources(extra);
+
+    if (sources.length === 0) {
+        return <PlatformBadge source={undefined} />;
+    }
+
+    if (sources.length === 1) {
+        return <PlatformBadge source={sources[0]} />;
+    }
+
+    const courseSourcesMap: Record<string, CourseSourceInfo> =
+        extra.course_sources && typeof extra.course_sources === "object" ? extra.course_sources : {};
+
+    return (
+        <TooltipProvider delayDuration={200}>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <div className="inline-flex items-center gap-1 flex-wrap cursor-default">
+                        <PlatformBadge source={sources[0]} />
+                        <Badge
+                            variant="secondary"
+                            className="text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary font-semibold border border-primary/20"
+                        >
+                            +{sources.length - 1}
+                        </Badge>
+                    </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-[260px] p-2.5 space-y-1.5">
+                    <p className="text-[11px] font-semibold">Plataformas utilizadas ({sources.length}):</p>
+                    <div className="flex flex-wrap gap-1">
+                        {sources.map((src) => (
+                            <PlatformBadge key={src} source={src} compact />
+                        ))}
+                    </div>
+                    {Object.keys(courseSourcesMap).length > 0 && (
+                        <div className="pt-1 border-t border-border/50 space-y-1">
+                            {Object.values(courseSourcesMap).map((cs) => (
+                                <div key={cs.course_id} className="text-[10px] flex items-center justify-between gap-2">
+                                    <span className="truncate font-medium">{cs.course_name}</span>
+                                    <span className="capitalize text-primary font-semibold shrink-0">
+                                        {PLATFORM_CONFIG[cs.source?.toLowerCase()]?.name || cs.source}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
     );
 }
 
@@ -247,7 +289,7 @@ function StudentRow({
 
             {/* Origin */}
             <TableCell className="px-4">
-                <PlatformBadge source={student.extra_data?.source} />
+                <StudentOriginCell student={student} />
             </TableCell>
 
             {/* Status */}

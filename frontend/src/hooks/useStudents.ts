@@ -20,6 +20,11 @@ function mapStudent(s: StudentFromAPI): Student {
         status: s.status,
         courses: s.courses,
         createdAt: s.createdAt ?? "",
+        lastAccessAt: s.lastAccessAt,
+        emailStatus: s.emailStatus,
+        emailOpenedAt: s.emailOpenedAt,
+        emailLastSentAt: s.emailLastSentAt,
+        emailStage: s.emailStage,
         quickAccessToken: s.quickAccessToken,
         extra_data: s.extra_data,
     };

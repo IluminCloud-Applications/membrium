@@ -191,8 +191,19 @@ def import_students():
 
                     if email in existing_map:
                         existing = existing_map[email]
-                        for c in courses:
-                            if c not in existing.courses:
+                        newly_added = [c for c in courses if c not in existing.courses]
+                        if newly_added:
+                            try:
+                                from webhook.core import record_student_course_event
+                                record_student_course_event(
+                                    student=existing,
+                                    courses=newly_added,
+                                    add=True,
+                                    extra_data={'source': 'manual'},
+                                )
+                            except Exception:
+                                pass
+                            for c in newly_added:
                                 existing.courses.append(c)
                         if phone and not existing.phone:
                             existing.phone = phone
@@ -208,6 +219,17 @@ def import_students():
                             extra_data={'source': 'manual'}
                         )
                         db.session.add(new_student)
+                        if courses:
+                            try:
+                                from webhook.core import record_student_course_event
+                                record_student_course_event(
+                                    student=new_student,
+                                    courses=courses,
+                                    add=True,
+                                    extra_data={'source': 'manual'},
+                                )
+                            except Exception:
+                                pass
                         for c in courses:
                             new_student.courses.append(c)
                         imported += 1

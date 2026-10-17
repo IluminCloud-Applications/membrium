@@ -36,12 +36,24 @@ def add_course_to_student(student_id):
         return jsonify({'success': False, 'message': 'Aluno já está matriculado neste curso'}), 400
 
     try:
+        try:
+            from webhook.core import record_student_course_event
+            record_student_course_event(
+                student=student,
+                courses=[course],
+                add=True,
+                extra_data={'source': 'manual'},
+            )
+        except Exception:
+            pass
+
         student.courses.append(course)
         db.session.commit()
         return jsonify({
             'success': True,
             'message': 'Curso adicionado com sucesso',
             'courses': [{'id': c.id, 'name': c.name} for c in student.courses],
+            'extra_data': student.extra_data or {},
         })
     except Exception as e:
         db.session.rollback()
@@ -59,12 +71,24 @@ def remove_course_from_student(student_id, course_id):
         return jsonify({'success': False, 'message': 'Aluno não está matriculado neste curso'}), 400
 
     try:
+        try:
+            from webhook.core import record_student_course_event
+            record_student_course_event(
+                student=student,
+                courses=[course],
+                add=False,
+                extra_data={'source': 'manual'},
+            )
+        except Exception:
+            pass
+
         student.courses.remove(course)
         db.session.commit()
         return jsonify({
             'success': True,
             'message': 'Curso removido com sucesso',
             'courses': [{'id': c.id, 'name': c.name} for c in student.courses],
+            'extra_data': student.extra_data or {},
         })
     except Exception as e:
         db.session.rollback()

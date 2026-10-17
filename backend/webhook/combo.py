@@ -8,7 +8,7 @@ from werkzeug.security import generate_password_hash
 from sqlalchemy.exc import IntegrityError
 from integrations import dispatch_notifications
 from db.integration_helpers import get_integration
-from .core import get_settings_dict, _get_base_url
+from .core import get_settings_dict, _get_base_url, record_student_course_event
 import logging
 
 logger = logging.getLogger(__name__)
@@ -42,45 +42,62 @@ def process_combo_student(nome, email, combo, add=True, password=None, phone=Non
     elif student:
         if phone and not student.phone:
             student.phone = phone
-        if extra_data:
-            from sqlalchemy.orm.attributes import flag_modified
-            existing = dict(student.extra_data or {})
-            existing.update(extra_data)
-            student.extra_data = existing
-            flag_modified(student, 'extra_data')
 
     if not student:
         return jsonify({'error': 'Estudante não encontrado para remoção'}), 404
 
     if add:
-        return _add_student_to_combo(student, combo, password, phone)
-    return _remove_student_from_combo(student, combo)
+        return _add_student_to_combo(student, combo, password, phone, extra_data=extra_data)
+    return _remove_student_from_combo(student, combo, extra_data=extra_data)
 
 
-def _add_student_to_combo(student, combo, password, phone=None):
+def _add_student_to_combo(student, combo, password, phone=None, extra_data=None):
     """Matricula o aluno em todos os cursos do combo + cursos bônus globais."""
     added_courses = []
     already_enrolled = True
 
-    # Adicionar todos os cursos do combo
-    for course in combo.courses:
+    combo_courses_list = list(combo.courses)
+    for course in combo_courses_list:
         if course not in student.courses:
-            student.courses.append(course)
             added_courses.append(course.name)
             already_enrolled = False
 
     # Adicionar cursos bônus globais publicados que não estejam no combo
-    combo_course_ids = [c.id for c in combo.courses]
+    combo_course_ids = [c.id for c in combo_courses_list]
     bonus_courses = Course.query.filter(
         Course.category == 'bonus',
         Course.is_published == True,
         ~Course.id.in_(combo_course_ids)
+    ).all() if combo_course_ids else Course.query.filter(
+        Course.category == 'bonus',
+        Course.is_published == True,
     ).all()
 
+    added_bonus_objs = []
     for bonus in bonus_courses:
         if bonus not in student.courses:
-            student.courses.append(bonus)
+            added_bonus_objs.append(bonus)
             added_courses.append(f"{bonus.name} (Bônus)")
+
+    try:
+        record_student_course_event(
+            student=student,
+            courses=combo_courses_list,
+            add=True,
+            extra_data=extra_data,
+            bonus_courses=added_bonus_objs,
+            combo=combo,
+        )
+    except Exception as e:
+        logger.warning(f"Erro ao registrar histórico de plataforma do combo: {e}")
+
+    for course in combo_courses_list:
+        if course not in student.courses:
+            student.courses.append(course)
+
+    for bonus in added_bonus_objs:
+        if bonus not in student.courses:
+            student.courses.append(bonus)
 
     if already_enrolled and not added_courses:
         try:
@@ -105,27 +122,46 @@ def _add_student_to_combo(student, combo, password, phone=None):
     }), 200
 
 
-def _remove_student_from_combo(student, combo):
+def _remove_student_from_combo(student, combo, extra_data=None):
     """Remove o aluno de todos os cursos que fazem parte do combo e bônus se sair do curso principal."""
     removed_courses = []
+    removed_course_objs = []
     combo_had_principal = False
 
     for course in combo.courses:
         if (course.category or 'principal') == 'principal':
             combo_had_principal = True
         if course in student.courses:
-            student.courses.remove(course)
+            removed_course_objs.append(course)
             removed_courses.append(course.name)
 
-    # Se o combo incluía o curso principal ou o aluno não tem mais nenhum curso principal ativo, remove os bônus
+    remaining_courses = [c for c in student.courses if c not in removed_course_objs]
+    has_principal_left = any((c.category or 'principal') == 'principal' for c in remaining_courses)
+
     removed_bonus = []
-    has_principal_left = any((c.category or 'principal') == 'principal' for c in student.courses)
+    removed_bonus_objs = []
     if combo_had_principal or not has_principal_left:
-        for c in list(student.courses):
+        for c in remaining_courses:
             if c.category == 'bonus':
-                student.courses.remove(c)
+                removed_bonus_objs.append(c)
                 removed_bonus.append(c.name)
                 removed_courses.append(f"{c.name} (Bônus)")
+
+    try:
+        record_student_course_event(
+            student=student,
+            courses=removed_course_objs,
+            add=False,
+            extra_data=extra_data,
+            bonus_courses=removed_bonus_objs,
+            combo=combo,
+        )
+    except Exception as e:
+        logger.warning(f"Erro ao registrar remoção de combo no histórico: {e}")
+
+    for c in removed_course_objs + removed_bonus_objs:
+        if c in student.courses:
+            student.courses.remove(c)
 
     try:
         db.session.commit()
