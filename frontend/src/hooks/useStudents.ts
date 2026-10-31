@@ -109,7 +109,7 @@ export function useStudents() {
     }
 
     /* ---- Mutations ---- */
-    async function createStudent(data: { name: string; email: string; password: string; phone?: string; courseIds: number[] }) {
+    async function createStudent(data: { name: string; email: string; password?: string; phone?: string; courseIds: number[]; sendNotifications?: boolean }) {
         setActionLoading(true);
         try {
             await studentsService.create(data);
@@ -184,10 +184,10 @@ export function useStudents() {
         }
     }
 
-    async function resendAccess(studentId: number) {
+    async function resendAccess(studentId: number, password?: string) {
         setActionLoading(true);
         try {
-            await studentsService.resendAccess(studentId);
+            await studentsService.resendAccess(studentId, password);
             return true;
         } catch (err) {
             console.error("Erro ao reenviar acesso:", err);

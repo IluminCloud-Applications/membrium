@@ -5,6 +5,7 @@ from flask import Blueprint, jsonify, session, request
 from functools import wraps
 from db.database import db
 from models import Admin
+from integrations.utils.url_helper import ensure_https
 
 developer_api_bp = Blueprint('settings_developer_api', __name__)
 
@@ -22,20 +23,16 @@ def admin_required(f):
 
 
 def _get_base_url():
-    """Retorna a URL base pública da aplicação, respeitando CUSTOM_DOMAIN e headers de proxy."""
+    """Retorna a URL base pública da aplicação com https:// garantido."""
     custom_domain = os.environ.get('CUSTOM_DOMAIN')
     if custom_domain and custom_domain.strip():
-        domain = custom_domain.strip()
-        if not domain.startswith(('http://', 'https://')):
-            domain = f"https://{domain}"
-        return domain.rstrip('/')
+        return ensure_https(custom_domain.strip()).rstrip('/')
 
-    proto = request.headers.get('X-Forwarded-Proto')
-    host = request.headers.get('X-Forwarded-Host')
-    if proto and host:
-        return f"{proto}://{host}".rstrip('/')
+    host = request.headers.get('X-Forwarded-Host') or request.host
+    if host:
+        return ensure_https(host).rstrip('/')
 
-    return request.url_root.rstrip('/')
+    return ensure_https(request.url_root.rstrip('/'))
 
 
 @developer_api_bp.route('/api/settings/developer-api', methods=['GET'])

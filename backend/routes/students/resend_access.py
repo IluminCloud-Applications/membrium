@@ -4,7 +4,7 @@ from werkzeug.security import generate_password_hash
 from models import Admin, Student
 from db.integration_helpers import get_integration
 from integrations import dispatch_notifications
-import secrets
+from integrations.utils.url_helper import ensure_https, sanitize_notification_urls
 import logging
 
 logger = logging.getLogger(__name__)
@@ -51,20 +51,17 @@ def _get_settings_dict():
 
 
 def _get_base_url():
-    """Retorna a URL base da aplicação, priorizando o CUSTOM_DOMAIN se configurado."""
+    """Retorna a URL base da aplicação sempre com https://, priorizando CUSTOM_DOMAIN se configurado."""
     import os
     custom_domain = os.environ.get('CUSTOM_DOMAIN')
     if custom_domain and custom_domain.strip():
-        domain = custom_domain.strip()
-        if not domain.startswith(('http://', 'https://')):
-            domain = f"https://{domain}"
-        return domain
+        return ensure_https(custom_domain.strip()).rstrip('/')
 
-    proto = request.headers.get('X-Forwarded-Proto')
-    host = request.headers.get('X-Forwarded-Host')
-    if proto and host:
-        return f"{proto}://{host}"
-    return request.url_root.rstrip('/')
+    host = request.headers.get('X-Forwarded-Host') or request.host
+    if host:
+        return ensure_https(host).rstrip('/')
+
+    return ensure_https(request.url_root.rstrip('/'))
 
 
 @resend_access_bp.route('/<int:student_id>/resend-access', methods=['POST'])
@@ -73,14 +70,22 @@ def resend_student_access(student_id):
     """
     Reenvia credenciais de acesso ao aluno via integrações configuradas
     (email Brevo e/ou WhatsApp Evolution API).
-    Gera uma nova senha temporária para o aluno.
+    Utiliza a senha padrão configurada na plataforma (ou customizada enviada no payload)
+    e sincroniza a senha no banco de dados.
     """
     try:
         student = Student.query.get_or_404(student_id)
 
-        # Gerar nova senha temporária
-        new_password = secrets.token_urlsafe(8)
-        student.set_password(new_password)
+        # Obter senha padrão configurada em Configurações > Geral > Cadastro de Alunos
+        _, signup_config = get_integration('student_signup')
+        default_pw = signup_config.get('new_student_password', '').strip() or 'senha123'
+
+        # Se enviou senha customizada no body, utiliza; caso contrário usa a senha padrão
+        req_data = request.get_json(silent=True) or {}
+        password_to_use = req_data.get('password', '').strip() or default_pw
+
+        # Sincroniza a senha no banco de dados para garantir que a senha real do aluno seja essa
+        student.set_password(password_to_use)
 
         from db.database import db
         db.session.commit()
@@ -96,7 +101,7 @@ def resend_student_access(student_id):
             'name': student.name,
             'first_name': student.name.split()[0] if student.name else student.name,
             'email': student.email,
-            'password': new_password,
+            'password': password_to_use,
             'link': f"{base_url}/login",
             'fast_link': f"{base_url}/access/{student.uuid}",
             'curso': courses_names,
@@ -104,6 +109,8 @@ def resend_student_access(student_id):
             'base_url': base_url,
         }
 
+        # Forçar HTTPS em todos os campos de URL
+        student_data = sanitize_notification_urls(student_data)
 
         # Disparar notificações via dispatcher
         results = dispatch_notifications(

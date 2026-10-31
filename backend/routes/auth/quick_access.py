@@ -129,6 +129,7 @@ def api_quick_access_send():
     courses_names = ', '.join([c.name for c in student.courses]) if student.courses else 'Nenhum curso'
     fast_link = f"{base_url}/access/{student.uuid}"
 
+    from integrations.utils.url_helper import sanitize_notification_urls
     student_data = {
         'name': student.name,
         'first_name': student.name.split()[0] if student.name else student.name,
@@ -137,7 +138,9 @@ def api_quick_access_send():
         'fast_link': fast_link,
         'curso': courses_names,
         'unsubscribe_link': f"{base_url}/unsubscribe?email={student.email}",
+        'base_url': base_url,
     }
+    student_data = sanitize_notification_urls(student_data)
 
     # Override templates for quick access
     if has_email:

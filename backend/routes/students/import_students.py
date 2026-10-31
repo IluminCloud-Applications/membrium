@@ -5,6 +5,7 @@ from sqlalchemy import func
 from uuid import uuid4
 from db.database import db
 from models import Admin, Student, Course
+from integrations.utils.url_helper import sanitize_notification_urls
 import json
 import logging
 import threading
@@ -54,8 +55,8 @@ def start_background_notifications(app, settings_dict, students_list, default_pa
                     'unsubscribe_link': f"{base_url}/unsubscribe?email={student['email']}",
                     'base_url': base_url,
                 }
+                student_data = sanitize_notification_urls(student_data)
 
-                
                 try:
                     dispatch_notifications(
                         settings_dict=settings_dict,

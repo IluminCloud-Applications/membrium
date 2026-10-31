@@ -8,6 +8,7 @@ import requests
 import json
 import logging
 from integrations.utils.template import replace_template_variables, text_to_html
+from integrations.utils.url_helper import force_https_in_html, sanitize_notification_urls
 
 logger = logging.getLogger(__name__)
 
@@ -85,12 +86,18 @@ class BrevoClient:
         if not sender_email:
             return False, "Email do remetente não configurado"
 
+        # Garante que todos os links em student_data usem https://
+        student_data = sanitize_notification_urls(dict(student_data or {}))
+
         subject = replace_template_variables(subject, student_data)
 
         if template_mode == 'html':
             html_content = replace_template_variables(template, student_data)
         else:
             html_content = text_to_html(template, student_data)
+
+        # Forçar HTTPS em todo o conteúdo HTML (links, imagens, atributos href)
+        html_content = force_https_in_html(html_content)
 
         # Injetar pixel invisível de tracking se configurado
         tracking_pixel_url = student_data.get('tracking_pixel_url')
@@ -127,6 +134,9 @@ class BrevoClient:
         if not sender_email:
             return False, "Email do remetente não configurado"
 
+        # Forçar HTTPS em todo o conteúdo HTML
+        html_content = force_https_in_html(html_content)
+
         return self._send_request(
             sender_name=sender_name,
             sender_email=sender_email,
@@ -148,6 +158,9 @@ class BrevoClient:
     ) -> tuple[bool, str]:
         """Faz a requisição HTTP para a API da Brevo."""
         try:
+            # Garantia absoluta: nenhum link pode ir com http:// em disparos de email
+            html_content = force_https_in_html(html_content)
+
             payload = {
                 'sender': {'name': sender_name, 'email': sender_email},
                 'to': [{'email': to_email, 'name': to_name}],

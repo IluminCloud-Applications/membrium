@@ -7,6 +7,7 @@ from db.database import db
 from models import Student
 from db.integration_helpers import get_integration
 from integrations.email.brevo import send_brevo_forgot_email
+from integrations.utils.url_helper import ensure_https, sanitize_notification_urls
 import logging
 
 logger = logging.getLogger(__name__)
@@ -32,20 +33,17 @@ def _get_settings_dict():
 
 
 def _get_base_url():
-    """Retorna a URL base da aplicação, priorizando o CUSTOM_DOMAIN se configurado."""
+    """Retorna a URL base da aplicação sempre com https://, priorizando o CUSTOM_DOMAIN se configurado."""
     import os
     custom_domain = os.environ.get('CUSTOM_DOMAIN')
     if custom_domain and custom_domain.strip():
-        domain = custom_domain.strip()
-        if not domain.startswith(('http://', 'https://')):
-            domain = f"https://{domain}"
-        return domain
+        return ensure_https(custom_domain.strip()).rstrip('/')
 
-    proto = request.headers.get('X-Forwarded-Proto')
-    host = request.headers.get('X-Forwarded-Host')
-    if proto and host:
-        return f"{proto}://{host}"
-    return request.url_root.rstrip('/')
+    host = request.headers.get('X-Forwarded-Host') or request.host
+    if host:
+        return ensure_https(host).rstrip('/')
+
+    return ensure_https(request.url_root.rstrip('/'))
 
 
 @password_bp.route('/api/auth/reset-password', methods=['POST'])
@@ -106,6 +104,7 @@ def api_forgot_password():
         'link': f"{base_url}/login",
         'recovery_link': f"{base_url}/change-password?id={student.uuid}",
     }
+    student_data = sanitize_notification_urls(student_data)
 
     # Enviar email via Brevo
     success, message = send_brevo_forgot_email(settings_dict, student_data)

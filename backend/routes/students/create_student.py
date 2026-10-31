@@ -4,6 +4,10 @@ from werkzeug.security import generate_password_hash
 from sqlalchemy.exc import IntegrityError
 from db.database import db
 from models import Admin, Student, Course
+from db.integration_helpers import get_integration
+import logging
+
+logger = logging.getLogger(__name__)
 
 create_student_bp = Blueprint('create_student', __name__)
 
@@ -29,12 +33,18 @@ def create_student():
 
     name = data.get('name', '').strip()
     email = data.get('email', '').strip().lower()
-    password = data.get('password', '').strip()
+    raw_password = data.get('password', '').strip()
     phone = data.get('phone', '').strip()
     course_ids = data.get('courseIds', [])
+    send_notifications = data.get('sendNotifications', data.get('sendEmail', False))
 
-    if not name or not email or not password:
-        return jsonify({'success': False, 'message': 'Nome, email e senha são obrigatórios'}), 400
+    if not name or not email:
+        return jsonify({'success': False, 'message': 'Nome e email são obrigatórios'}), 400
+
+    # Obter senha padrão configurada no sistema se não informada
+    _, signup_config = get_integration('student_signup')
+    default_pw = signup_config.get('new_student_password', '').strip() or 'senha123'
+    password = raw_password or default_pw
 
     # Block student email from being the same as admin email
     admin = Admin.query.get(session['user_id'])
@@ -70,6 +80,35 @@ def create_student():
                 new_student.courses.append(course)
 
         db.session.commit()
+
+        # Disparar notificações de boas-vindas se solicitado
+        if send_notifications:
+            try:
+                from routes.students.resend_access import _get_settings_dict, _get_base_url
+                from integrations import dispatch_notifications
+
+                settings_dict = _get_settings_dict()
+                base_url = _get_base_url()
+                courses_names = ', '.join([c.name for c in enrolled_courses]) if enrolled_courses else 'Nenhum curso'
+
+                student_data = {
+                    'name': new_student.name,
+                    'first_name': new_student.name.split()[0] if new_student.name else new_student.name,
+                    'email': new_student.email,
+                    'password': password,
+                    'link': f"{base_url}/login",
+                    'fast_link': f"{base_url}/access/{new_student.uuid}",
+                    'curso': courses_names,
+                    'unsubscribe_link': f"{base_url}/unsubscribe?email={new_student.email}",
+                    'base_url': base_url,
+                }
+                dispatch_notifications(
+                    settings_dict=settings_dict,
+                    student_data=student_data,
+                    phone=new_student.phone,
+                )
+            except Exception as e:
+                logger.error(f"Erro ao disparar notificações para aluno criado manualmente: {e}")
 
         return jsonify({
             'success': True,

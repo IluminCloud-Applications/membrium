@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash
 from sqlalchemy.exc import IntegrityError
 from integrations import dispatch_notifications
 from db.integration_helpers import get_integration
+from integrations.utils.url_helper import ensure_https, sanitize_notification_urls
 import logging
 
 logger = logging.getLogger(__name__)
@@ -475,6 +476,7 @@ def _trigger_notifications(student, course, password, phone=None):
         'base_url': base_url,
     }
 
+    student_data = sanitize_notification_urls(student_data)
 
     results = dispatch_notifications(
         settings_dict=settings_dict,
@@ -486,15 +488,14 @@ def _trigger_notifications(student, course, password, phone=None):
 
 
 def _get_base_url():
-    """Retorna a URL base da aplicação, priorizando o CUSTOM_DOMAIN se configurado."""
+    """Retorna a URL base da aplicação sempre com https://, priorizando o CUSTOM_DOMAIN se configurado."""
     import os
     custom_domain = os.environ.get('CUSTOM_DOMAIN')
     if custom_domain and custom_domain.strip():
-        domain = custom_domain.strip()
-        if not domain.startswith(('http://', 'https://')):
-            domain = f"https://{domain}"
-        return domain
+        return ensure_https(custom_domain.strip()).rstrip('/')
 
-    if request.headers.get('X-Forwarded-Proto') and request.headers.get('X-Forwarded-Host'):
-        return f"{request.headers.get('X-Forwarded-Proto')}://{request.headers.get('X-Forwarded-Host')}"
-    return request.url_root.rstrip('/')
+    host = request.headers.get('X-Forwarded-Host') or request.host
+    if host:
+        return ensure_https(host).rstrip('/')
+
+    return ensure_https(request.url_root.rstrip('/'))

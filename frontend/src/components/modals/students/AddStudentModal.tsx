@@ -8,6 +8,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CourseMultiSelect } from "@/components/students/CourseMultiSelect";
 import { studentsService } from "@/services/students";
 
@@ -23,9 +24,10 @@ interface AddStudentModalProps {
 export interface AddStudentFormData {
     name: string;
     email: string;
-    password: string;
+    password?: string;
     phone?: string;
     courseIds: number[];
+    sendNotifications?: boolean;
 }
 
 export function AddStudentModal({
@@ -40,6 +42,7 @@ export function AddStudentModal({
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
     const [password, setPassword] = useState("");
+    const [sendNotifications, setSendNotifications] = useState(true);
     const [showPassword, setShowPassword] = useState(false);
     const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([]);
     const [courseToAdd, setCourseToAdd] = useState<string>("");
@@ -57,6 +60,7 @@ export function AddStudentModal({
         setEmail("");
         setPhone("");
         setPassword("");
+        setSendNotifications(true);
         setSelectedCourseIds([]);
         setCourseToAdd("");
         setEmailExists(false);
@@ -111,10 +115,17 @@ export function AddStudentModal({
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        onSubmit({ name, email, password, phone, courseIds: selectedCourseIds });
+        onSubmit({
+            name,
+            email,
+            password: password.trim() || undefined,
+            phone,
+            courseIds: selectedCourseIds,
+            sendNotifications,
+        });
     }
 
-    const canSubmit = name.trim() && email.trim() && password.trim() && !hasEmailError;
+    const canSubmit = name.trim() && email.trim() && !hasEmailError;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -195,17 +206,21 @@ export function AddStudentModal({
 
                     {/* Password */}
                     <div className="space-y-2">
-                        <Label htmlFor="student-password" className="text-sm font-medium">
-                            Senha
-                        </Label>
+                        <div className="flex items-center justify-between">
+                            <Label htmlFor="student-password" className="text-sm font-medium">
+                                Senha (opcional)
+                            </Label>
+                            <span className="text-[11px] text-muted-foreground">
+                                Vazio = usa senha padrão
+                            </span>
+                        </div>
                         <div className="relative">
                             <Input
                                 id="student-password"
                                 type={showPassword ? "text" : "password"}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                placeholder="Senha de acesso"
-                                required
+                                placeholder="Deixe em branco para usar a senha padrão"
                                 className="pr-10"
                             />
                             <button
@@ -216,6 +231,24 @@ export function AddStudentModal({
                                 <i className={showPassword ? "ri-eye-off-line" : "ri-eye-line"} />
                             </button>
                         </div>
+                        <p className="text-xs text-muted-foreground">
+                            Se não informada, será usada a senha padrão definida nas configurações.
+                        </p>
+                    </div>
+
+                    {/* Disparar notificações */}
+                    <div className="flex items-center space-x-2 pt-1 pb-1">
+                        <Checkbox
+                            id="sendNotifications"
+                            checked={sendNotifications}
+                            onCheckedChange={(checked) => setSendNotifications(checked === true)}
+                        />
+                        <Label
+                            htmlFor="sendNotifications"
+                            className="text-xs font-medium cursor-pointer text-muted-foreground hover:text-foreground select-none"
+                        >
+                            Enviar dados de acesso por e-mail/WhatsApp para o aluno
+                        </Label>
                     </div>
 
                     {/* Courses — multi-select */}

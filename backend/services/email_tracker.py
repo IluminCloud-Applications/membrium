@@ -5,6 +5,7 @@ from db.database import db
 from models import StudentEmailAccessTracker, Student
 from integrations.email.brevo import BrevoClient, send_brevo_email
 from db.integration_helpers import get_integration
+from integrations.utils.url_helper import ensure_https, force_https_in_html, sanitize_notification_urls
 
 logger = logging.getLogger(__name__)
 
@@ -44,16 +45,21 @@ def send_spam_fallback_email(
     if not client.is_configured():
         return False, "Brevo não está configurada"
 
+    student_data = sanitize_notification_urls(dict(student_data or {}))
+    base_url = ensure_https(base_url)
+
     name = student_data.get('name') or student_data.get('first_name') or 'Aluno(a)'
     first_name = student_data.get('first_name') or name.split()[0]
     email = student_data.get('email', '')
     password = student_data.get('password', '')
-    login_link = student_data.get('link') or f"{base_url}/login"
-    fast_link = student_data.get('fast_link')
+    login_link = ensure_https(student_data.get('link') or f"{base_url}/login")
+    fast_link = ensure_https(student_data.get('fast_link')) if student_data.get('fast_link') else ""
     curso = student_data.get('curso') or 'seu curso'
 
     sender_name = settings_dict.get('sender_name') or 'Suporte'
     wa_link, clean_wa = format_whatsapp_link(support_whatsapp)
+    if wa_link:
+        wa_link = ensure_https(wa_link)
 
     # Assunto direto e anti-spam
     subject = f"Aviso importante: Seu acesso ao {curso} pode estar no Spam"
@@ -89,7 +95,7 @@ def send_spam_fallback_email(
     # Pixel de rastreamento para saber se este e-mail foi aberto
     tracking_pixel_tag = ""
     if base_url and tracking_token:
-        tracking_pixel_url = f"{base_url}/api/track/email-open/{tracking_token}"
+        tracking_pixel_url = ensure_https(f"{base_url}/api/track/email-open/{tracking_token}")
         tracking_pixel_tag = f'<img src="{tracking_pixel_url}" width="1" height="1" style="display:none;width:1px;height:1px;border:0;opacity:0;" alt="" />'
 
     html_content = f"""<!DOCTYPE html>
@@ -191,8 +197,8 @@ def process_email_tracking_queue(app):
                     logger.info(f"[Email Tracker] Aluno {tracker.email} já abriu ou acessou. Rastreamento finalizado.")
                     continue
 
-                student_data = dict(tracker.student_data or {})
-                base_url = tracker.base_url or ''
+                student_data = sanitize_notification_urls(dict(tracker.student_data or {}))
+                base_url = ensure_https(tracker.base_url or '')
 
                 if tracker.stage == 1:
                     # ─── ETAPA 2: 30 minutos sem abertura -> Reenviar dados de acesso ───

@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash
 from sqlalchemy.exc import IntegrityError
 from integrations import dispatch_notifications
 from db.integration_helpers import get_integration
+from integrations.utils.url_helper import sanitize_notification_urls
 from .core import get_settings_dict, _get_base_url, record_student_course_event
 import logging
 
@@ -200,6 +201,7 @@ def _trigger_combo_notifications(student, combo, password, phone=None):
         'base_url': base_url,
     }
 
+    student_data = sanitize_notification_urls(student_data)
 
     results = dispatch_notifications(
         settings_dict=settings_dict,

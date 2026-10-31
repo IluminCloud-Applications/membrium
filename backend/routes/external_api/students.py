@@ -8,26 +8,23 @@ from db.database import db
 from models import Student, Course, Lesson, Module, student_courses, StudentActivityLog, StudentEmailAccessTracker
 from db.integration_helpers import get_integration
 from integrations import dispatch_notifications
+from integrations.utils.url_helper import ensure_https, sanitize_notification_urls
 from .auth import external_api_key_required
 
 external_students_bp = Blueprint('external_students', __name__)
 
 
 def _get_base_url():
-    """Retorna a URL base pública da aplicação, respeitando CUSTOM_DOMAIN e headers de proxy."""
+    """Retorna a URL base pública da aplicação com https:// garantido."""
     custom_domain = os.environ.get('CUSTOM_DOMAIN')
     if custom_domain and custom_domain.strip():
-        domain = custom_domain.strip()
-        if not domain.startswith(('http://', 'https://')):
-            domain = f"https://{domain}"
-        return domain.rstrip('/')
+        return ensure_https(custom_domain.strip()).rstrip('/')
 
-    proto = request.headers.get('X-Forwarded-Proto')
-    host = request.headers.get('X-Forwarded-Host')
-    if proto and host:
-        return f"{proto}://{host}".rstrip('/')
+    host = request.headers.get('X-Forwarded-Host') or request.host
+    if host:
+        return ensure_https(host).rstrip('/')
 
-    return request.url_root.rstrip('/')
+    return ensure_https(request.url_root.rstrip('/'))
 
 
 def find_student(identifier: str):
@@ -325,10 +322,17 @@ def reset_student_password(identifier):
     if not student:
         return jsonify({'success': False, 'error': 'Aluno não encontrado.'}), 404
 
-    # Pode receber senha customizada no body JSON ou gerar uma automática
+    # Pode receber senha customizada no body JSON ou usar a senha padrão do sistema
     req_data = request.get_json(silent=True) or {}
     custom_password = req_data.get('password', '').strip()
-    new_password = custom_password if custom_password else secrets.token_urlsafe(8)
+
+    _, signup_config = get_integration('student_signup')
+    default_pw = signup_config.get('new_student_password', '').strip() or 'senha123'
+
+    if req_data.get('generate_random'):
+        new_password = secrets.token_urlsafe(8)
+    else:
+        new_password = custom_password if custom_password else default_pw
 
     # Atualiza a senha no banco
     student.set_password(new_password)
@@ -369,6 +373,8 @@ def reset_student_password(identifier):
         'unsubscribe_link': f"{base_url}/unsubscribe?email={student.email}",
         'base_url': base_url,
     }
+
+    student_data = sanitize_notification_urls(student_data)
 
     results = dispatch_notifications(
         settings_dict=settings_dict,

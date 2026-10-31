@@ -38,9 +38,10 @@ export interface StudentStats {
 export interface CreateStudentPayload {
     name: string;
     email: string;
-    password: string;
+    password?: string;
     phone?: string;
     courseIds: number[];
+    sendNotifications?: boolean;
 }
 
 export interface UpdateStudentPayload {
@@ -168,10 +169,10 @@ export const studentsService = {
         ),
 
     /** Resend access email to a student */
-    resendAccess: (studentId: number) =>
+    resendAccess: (studentId: number, password?: string) =>
         apiClient.post<MutationResponse>(
             `/students/${studentId}/resend-access`,
-            {}
+            password ? { password } : {}
         ),
 
     /** Get recent activity logs for a student */

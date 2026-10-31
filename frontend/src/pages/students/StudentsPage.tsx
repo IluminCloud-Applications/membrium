@@ -64,7 +64,7 @@ export function StudentsPage() {
     }, [courseFilter, search, applyFilters]);
 
     /* ---- CRUD Handlers ---- */
-    async function handleCreate(data: { name: string; email: string; password: string; phone?: string; courseIds: number[] }) {
+    async function handleCreate(data: { name: string; email: string; password?: string; phone?: string; courseIds: number[]; sendNotifications?: boolean }) {
         const ok = await createStudent(data);
         if (ok) setAddModalOpen(false);
     }
@@ -102,8 +102,8 @@ export function StudentsPage() {
         }
     }
 
-    async function handleResendAccess(studentId: number) {
-        const ok = await resendAccess(studentId);
+    async function handleResendAccess(studentId: number, password?: string) {
+        const ok = await resendAccess(studentId, password);
         if (ok) setResendTarget(null);
     }
 

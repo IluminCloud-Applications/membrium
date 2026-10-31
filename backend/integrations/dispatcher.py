@@ -8,6 +8,7 @@ verifica quais integrações estão habilitadas e dispara cada uma.
 import logging
 from integrations.email.brevo import send_brevo_email
 from integrations.whatsapp.evolutionapi import send_whatsapp_message
+from integrations.utils.url_helper import ensure_https, sanitize_notification_urls
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,9 @@ def dispatch_notifications(
     Returns:
         Dicionário com o resultado de cada integração disparada
     """
+    # Forçar https em todos os links antes de qualquer envio
+    student_data = sanitize_notification_urls(student_data)
+
     print(f"\n=== DISPATCH NOTIFICATIONS ===")
     print(f"Student: {student_data.get('name')} ({student_data.get('email')})")
     print(f"Brevo enabled: {settings_dict.get('brevo_enabled')}, API key: {'SET' if settings_dict.get('brevo_api_key') else 'EMPTY'}")
@@ -56,6 +60,9 @@ def _dispatch_email(settings_dict: dict, student_data: dict) -> dict:
         print("[Brevo] Não está configurado ou habilitado")
         return {'sent': False, 'reason': 'not_configured'}
 
+    # Forçar https nos links
+    student_data = sanitize_notification_urls(student_data)
+
     # Verificar blacklist de email
     from models import EmailBlacklist
     email = student_data.get('email', '')
@@ -70,13 +77,15 @@ def _dispatch_email(settings_dict: dict, student_data: dict) -> dict:
     base_url = student_data.get('base_url')
     if not base_url and student_data.get('link'):
         base_url = student_data['link'].replace('/login', '').rstrip('/')
+    if base_url:
+        base_url = ensure_https(base_url)
         student_data['base_url'] = base_url
 
     if not is_retry and base_url and email:
         import secrets
         tracking_token = secrets.token_urlsafe(32)
         student_data['tracking_token'] = tracking_token
-        student_data['tracking_pixel_url'] = f"{base_url}/api/track/email-open/{tracking_token}"
+        student_data['tracking_pixel_url'] = ensure_https(f"{base_url}/api/track/email-open/{tracking_token}")
 
     try:
         print(f"[Brevo] Enviando email para {email}...")
