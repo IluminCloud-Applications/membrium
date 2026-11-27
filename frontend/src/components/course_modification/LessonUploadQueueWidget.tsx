@@ -58,89 +58,121 @@ export function useLessonUploadQueue(onLessonSaved: () => Promise<void> | void) 
     jobsRef.current = jobs;
 
     const updateJob = useCallback((id: string, patch: Partial<LessonUploadJob>) => {
-        setJobs((prev) => prev.map((j) => (j.id === id ? { ...j, ...patch } : j)));
+        setJobs((prev) => {
+            const next = prev.map((j) => (j.id === id ? { ...j, ...patch } : j));
+            jobsRef.current = next;
+            return next;
+        });
     }, []);
 
-    const processNext = useCallback(async () => {
+    const drainQueue = useCallback(async () => {
         if (processingRef.current) return;
-        const nextJob = jobsRef.current.find((j) => j.status === "queued");
-        if (!nextJob) return;
-
         processingRef.current = true;
-        const controller = new AbortController();
-        abortMapRef.current.set(nextJob.id, controller);
 
         try {
-            let cloudflareVideoUrl = nextJob.data.cloudflareUrl;
-            let browserThumbnail: File | null = null;
+            while (true) {
+                const nextJob = jobsRef.current.find((j) => j.status === "queued");
+                if (!nextJob) break;
 
-            if (nextJob.data.videoPlatform === "cloudflare" && nextJob.data.cloudflareFile) {
-                updateJob(nextJob.id, { status: "uploading", progress: 0 });
-                // Extract thumbnail in the browser (client CPU/GPU) in parallel with presign+upload
-                const thumbPromise = extractVideoThumbnail(nextJob.data.cloudflareFile).catch(() => null);
-                const result = await cloudflareUploadService.upload(nextJob.data.cloudflareFile, {
-                    signal: controller.signal,
-                    onProgress: (fraction) => {
-                        const pct = Math.max(0, Math.min(100, Math.round(fraction * 100)));
-                        updateJob(nextJob.id, { progress: pct });
-                    },
-                });
-                cloudflareVideoUrl = result.publicUrl;
-                browserThumbnail = await thumbPromise;
-            }
+                const controller = new AbortController();
+                abortMapRef.current.set(nextJob.id, controller);
 
-            if (controller.signal.aborted) {
-                updateJob(nextJob.id, { status: "cancelled" });
-                return;
-            }
+                try {
+                    let cloudflareVideoUrl = nextJob.data.cloudflareUrl;
+                    let browserThumbnail: File | null = null;
 
-            updateJob(nextJob.id, { status: "saving", progress: 100 });
-            const formData = buildLessonFormData(nextJob.data, cloudflareVideoUrl);
-            if (browserThumbnail) {
-                formData.append("thumbnail", browserThumbnail);
-            }
-
-            if (nextJob.lessonId) {
-                for (const attId of nextJob.removedAttachmentIds || []) {
-                    try {
-                        await courseModificationService.deleteLessonFile(nextJob.lessonId, attId);
-                    } catch (err) {
-                        console.error(`Erro ao deletar anexo ${attId}:`, err);
+                    if (nextJob.data.videoPlatform === "cloudflare" && nextJob.data.cloudflareFile) {
+                        updateJob(nextJob.id, { status: "uploading", progress: 0 });
+                        // Extract thumbnail in the browser in parallel with presign+upload.
+                        // Never let a background-throttled <video> element stall the upload queue.
+                        const thumbPromise = extractVideoThumbnail(nextJob.data.cloudflareFile).catch(() => null);
+                        const result = await cloudflareUploadService.upload(nextJob.data.cloudflareFile, {
+                            signal: controller.signal,
+                            onProgress: (fraction) => {
+                                const pct = Math.max(0, Math.min(100, Math.round(fraction * 100)));
+                                updateJob(nextJob.id, { progress: pct });
+                            },
+                        });
+                        cloudflareVideoUrl = result.publicUrl;
+                        browserThumbnail = await Promise.race([
+                            thumbPromise,
+                            new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 1500)),
+                        ]);
                     }
-                }
-                await courseModificationService.updateLesson(nextJob.lessonId, formData);
-            } else {
-                const res = await courseModificationService.createLesson(nextJob.moduleId, formData);
-                if (res.transcript_imported) {
-                    toast.success(
-                        nextJob.data.videoPlatform === "cloudflare"
-                            ? `Transcrição agendada: ${nextJob.title}`
-                            : `Transcrição importada: ${nextJob.title}`
-                    );
-                }
-            }
 
-            updateJob(nextJob.id, { status: "done", progress: 100 });
-            await onLessonSaved();
-        } catch (err) {
-            if (err instanceof DOMException && err.name === "AbortError") {
-                updateJob(nextJob.id, { status: "cancelled" });
-            } else {
-                const msg = err instanceof Error ? err.message : "Erro ao enviar aula";
-                updateJob(nextJob.id, { status: "error", error: msg });
-                toast.error(`Erro em "${nextJob.title}": ${msg}`);
+                    if (controller.signal.aborted) {
+                        updateJob(nextJob.id, { status: "cancelled" });
+                        continue;
+                    }
+
+                    updateJob(nextJob.id, { status: "saving", progress: 100 });
+                    const formData = buildLessonFormData(nextJob.data, cloudflareVideoUrl);
+                    if (browserThumbnail) {
+                        formData.append("thumbnail", browserThumbnail);
+                    }
+
+                    if (nextJob.lessonId) {
+                        for (const attId of nextJob.removedAttachmentIds || []) {
+                            try {
+                                await courseModificationService.deleteLessonFile(nextJob.lessonId, attId);
+                            } catch (err) {
+                                console.error(`Erro ao deletar anexo ${attId}:`, err);
+                            }
+                        }
+                        await courseModificationService.updateLesson(nextJob.lessonId, formData);
+                    } else {
+                        const res = await courseModificationService.createLesson(nextJob.moduleId, formData);
+                        if (res.transcript_imported) {
+                            toast.success(
+                                nextJob.data.videoPlatform === "cloudflare"
+                                    ? `Transcrição agendada: ${nextJob.title}`
+                                    : `Transcrição importada: ${nextJob.title}`
+                            );
+                        }
+                    }
+
+                    updateJob(nextJob.id, { status: "done", progress: 100 });
+                    // Refresh course list without blocking the next queued upload
+                    Promise.resolve(onLessonSaved()).catch((err) => {
+                        console.error("Erro ao atualizar lista de aulas:", err);
+                    });
+                } catch (err) {
+                    if (err instanceof DOMException && err.name === "AbortError") {
+                        updateJob(nextJob.id, { status: "cancelled" });
+                    } else {
+                        const msg = err instanceof Error ? err.message : "Erro ao enviar aula";
+                        updateJob(nextJob.id, { status: "error", error: msg });
+                        toast.error(`Erro em "${nextJob.title}": ${msg}`);
+                    }
+                } finally {
+                    abortMapRef.current.delete(nextJob.id);
+                }
             }
         } finally {
-            abortMapRef.current.delete(nextJob.id);
             processingRef.current = false;
+            if (jobsRef.current.some((j) => j.status === "queued")) {
+                queueMicrotask(() => {
+                    void drainQueue();
+                });
+            }
         }
     }, [onLessonSaved, updateJob]);
 
     useEffect(() => {
         if (!processingRef.current && jobs.some((j) => j.status === "queued")) {
-            processNext();
+            void drainQueue();
         }
-    }, [jobs, processNext]);
+    }, [jobs, drainQueue]);
+
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (!document.hidden && !processingRef.current && jobsRef.current.some((j) => j.status === "queued")) {
+                void drainQueue();
+            }
+        };
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+    }, [drainQueue]);
 
     const enqueue = useCallback(
         (params: {
@@ -161,9 +193,16 @@ export function useLessonUploadQueue(onLessonSaved: () => Promise<void> | void) 
                 status: "queued",
                 progress: 0,
             };
-            setJobs((prev) => [...prev, newJob]);
+            setJobs((prev) => {
+                const next = [...prev, newJob];
+                jobsRef.current = next;
+                return next;
+            });
+            queueMicrotask(() => {
+                void drainQueue();
+            });
         },
-        [],
+        [drainQueue],
     );
 
     const cancelJob = useCallback((id: string) => {
@@ -171,17 +210,23 @@ export function useLessonUploadQueue(onLessonSaved: () => Promise<void> | void) 
         if (controller) {
             controller.abort();
         }
-        setJobs((prev) =>
-            prev.map((j) =>
+        setJobs((prev) => {
+            const next = prev.map((j) =>
                 j.id === id && (j.status === "queued" || j.status === "uploading")
-                    ? { ...j, status: "cancelled" }
+                    ? { ...j, status: "cancelled" as const }
                     : j
-            )
-        );
+            );
+            jobsRef.current = next;
+            return next;
+        });
     }, []);
 
     const clearFinished = useCallback(() => {
-        setJobs((prev) => prev.filter((j) => j.status === "queued" || j.status === "uploading" || j.status === "saving"));
+        setJobs((prev) => {
+            const next = prev.filter((j) => j.status === "queued" || j.status === "uploading" || j.status === "saving");
+            jobsRef.current = next;
+            return next;
+        });
     }, []);
 
     return { jobs, enqueue, cancelJob, clearFinished };

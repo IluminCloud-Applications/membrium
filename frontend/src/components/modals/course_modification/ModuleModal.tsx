@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import type { CourseModule, ModuleFormData } from "@/types/course-modification";
 import { BannerPromptModal } from "@/components/modals/course_modification/BannerPromptModal";
+import { useFileDrop } from "@/hooks/useFileDrop";
 
 interface ModuleModalProps {
     open: boolean;
@@ -55,13 +56,23 @@ export function ModuleModal({
         }
     }, [editModule, open]);
 
-    function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const file = e.target.files?.[0] ?? null;
-        if (file) {
+    function setModuleImageFile(file: File | null) {
+        if (file && file.type.startsWith("image/")) {
             const preview = URL.createObjectURL(file);
             setForm((prev) => ({ ...prev, imageFile: file, imagePreview: preview }));
         }
     }
+
+    function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+        setModuleImageFile(e.target.files?.[0] ?? null);
+    }
+
+    const { isDragging: isDraggingImage, dropProps: imageDropProps } = useFileDrop({
+        onDropFiles: (files) => {
+            const img = files.find((f) => f.type.startsWith("image/"));
+            if (img) setModuleImageFile(img);
+        },
+    });
 
     function handleRemoveImage() {
         setForm((prev) => ({ ...prev, imageFile: null, imagePreview: null }));
@@ -112,13 +123,24 @@ export function ModuleModal({
                         </p>
 
                         {form.imagePreview ? (
-                            <div className="space-y-3">
-                                <div className="rounded-lg overflow-hidden border bg-muted max-w-[200px]">
+                            <div
+                                {...imageDropProps}
+                                className={`space-y-3 rounded-lg transition-all ${
+                                    isDraggingImage ? "ring-2 ring-primary ring-offset-2 bg-primary/5 p-2" : ""
+                                }`}
+                            >
+                                <div className="relative rounded-lg overflow-hidden border bg-muted max-w-[200px]">
                                     <img
                                         src={form.imagePreview}
                                         alt="Preview"
                                         className="w-full h-auto object-cover"
                                     />
+                                    {isDraggingImage && (
+                                        <div className="absolute inset-0 bg-primary/20 backdrop-blur-[1px] flex flex-col items-center justify-center gap-1 text-primary font-medium text-xs border-2 border-dashed border-primary rounded-lg">
+                                            <i className="ri-download-2-line text-xl" />
+                                            Solte para substituir
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                     <Button
@@ -159,11 +181,16 @@ export function ModuleModal({
                                 <button
                                     type="button"
                                     onClick={() => fileRef.current?.click()}
-                                    className="w-full border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 flex flex-col items-center justify-center gap-2 hover:border-primary/50 hover:bg-primary/2 transition-all cursor-pointer"
+                                    {...imageDropProps}
+                                    className={`w-full border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
+                                        isDraggingImage
+                                            ? "border-primary bg-primary/10 text-primary scale-[1.01]"
+                                            : "border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/2 text-muted-foreground"
+                                    }`}
                                 >
-                                    <i className="ri-image-add-line text-3xl text-muted-foreground" />
-                                    <p className="text-sm font-medium text-muted-foreground">
-                                        Clique para enviar uma imagem
+                                    <i className={`${isDraggingImage ? "ri-download-2-line" : "ri-image-add-line"} text-3xl`} />
+                                    <p className="text-sm font-medium">
+                                        {isDraggingImage ? "Solte a imagem aqui" : "Clique ou arraste uma imagem"}
                                     </p>
                                 </button>
                                 <Button

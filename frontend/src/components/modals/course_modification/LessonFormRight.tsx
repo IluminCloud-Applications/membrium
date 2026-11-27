@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import type { LessonFormData } from "@/types/course-modification";
+import { useFileDrop } from "@/hooks/useFileDrop";
 
 interface LessonFormRightProps {
     form: LessonFormData;
@@ -13,6 +14,12 @@ interface LessonFormRightProps {
 
 export function LessonFormRight({ form, onChange }: LessonFormRightProps) {
     const fileRef = useRef<HTMLInputElement>(null);
+
+    const { isDragging: isDraggingAttachments, dropProps: attachmentsDropProps } = useFileDrop({
+        onDropFiles: (files) => {
+            onChange("attachments", [...form.attachments, ...files]);
+        },
+    });
 
     function handleFilesChange(e: React.ChangeEvent<HTMLInputElement>) {
         const files = Array.from(e.target.files ?? []);
@@ -138,16 +145,21 @@ export function LessonFormRight({ form, onChange }: LessonFormRightProps) {
                     </div>
                 )}
 
-                {/* Upload button */}
+                {/* Upload button (supports click + drag and drop) */}
                 <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={() => fileRef.current?.click()}
-                    className="w-full gap-2"
+                    {...attachmentsDropProps}
+                    className={`w-full gap-2 border-dashed transition-all ${
+                        isDraggingAttachments
+                            ? "border-primary bg-primary/10 text-primary ring-2 ring-primary/20"
+                            : ""
+                    }`}
                 >
-                    <i className="ri-upload-2-line" />
-                    Anexar Arquivos
+                    <i className={isDraggingAttachments ? "ri-download-2-line" : "ri-upload-2-line"} />
+                    {isDraggingAttachments ? "Solte os arquivos aqui" : "Anexar ou arrastar arquivos"}
                 </Button>
 
                 <input

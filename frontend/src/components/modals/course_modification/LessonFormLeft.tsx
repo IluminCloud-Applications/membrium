@@ -15,6 +15,7 @@ import type { LessonFormData, VideoPlatform } from "@/types/course-modification"
 import { integrationsService } from "@/services/integrations";
 import { youtubeUploadService } from "@/services/youtubeUpload";
 import { VTurbPicker } from "./VTurbPicker";
+import { useFileDrop } from "@/hooks/useFileDrop";
 
 interface LessonFormLeftProps {
     form: LessonFormData;
@@ -44,10 +45,7 @@ export function LessonFormLeft({ form, onChange }: LessonFormLeftProps) {
         checkStatus();
     }, []);
 
-    async function handleVideoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
+    async function uploadYouTubeFile(file: File) {
         const title = form.title.trim() || file.name.replace(/\.[^/.]+$/, "");
         setUploadingVideo(true);
         setUploadFeedback(null);
@@ -68,6 +66,12 @@ export function LessonFormLeft({ form, onChange }: LessonFormLeftProps) {
             if (fileInputRef.current) fileInputRef.current.value = "";
             setTimeout(() => setUploadFeedback(null), 5000);
         }
+    }
+
+    async function handleVideoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        await uploadYouTubeFile(file);
     }
 
     return (
@@ -167,6 +171,7 @@ export function LessonFormLeft({ form, onChange }: LessonFormLeftProps) {
                     uploadFeedback={uploadFeedback}
                     fileInputRef={fileInputRef}
                     onUpload={handleVideoUpload}
+                    onDropVideo={uploadYouTubeFile}
                 />
             )}
 
@@ -226,8 +231,15 @@ function CloudflarePlatformFields({ form, onChange }: CloudflarePlatformFieldsPr
         if (fileRef.current) fileRef.current.value = "";
     }
 
+    const { isDragging, dropProps } = useFileDrop({
+        onDropFiles: (files) => {
+            const video = files.find((f) => f.type.startsWith("video/")) ?? files[0];
+            if (video) onChange("cloudflareFile", video);
+        },
+    });
+
     return (
-        <div className="space-y-3">
+        <div className="space-y-3" {...dropProps}>
             <Label>Vídeo</Label>
             <input
                 ref={fileRef}
@@ -238,10 +250,18 @@ function CloudflarePlatformFields({ form, onChange }: CloudflarePlatformFieldsPr
             />
 
             {file ? (
-                <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-3">
-                    <i className="ri-film-line text-orange-600 text-xl flex-shrink-0" />
+                <div
+                    className={`flex items-center gap-3 rounded-lg border p-3 transition-all ${
+                        isDragging
+                            ? "border-primary border-dashed bg-primary/10 ring-2 ring-primary/20"
+                            : "bg-muted/30"
+                    }`}
+                >
+                    <i className={`${isDragging ? "ri-download-2-line text-primary" : "ri-film-line text-orange-600"} text-xl flex-shrink-0`} />
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{file.name}</p>
+                        <p className="text-sm font-medium truncate">
+                            {isDragging ? "Solte o vídeo para substituir" : file.name}
+                        </p>
                         <p className="text-[11px] text-muted-foreground">
                             {(file.size / (1024 * 1024)).toFixed(1)} MB · será enviado ao R2 ao criar a aula
                         </p>
@@ -259,10 +279,18 @@ function CloudflarePlatformFields({ form, onChange }: CloudflarePlatformFieldsPr
                     type="button"
                     variant="outline"
                     onClick={() => fileRef.current?.click()}
-                    className="w-full gap-2 border-dashed"
+                    className={`w-full gap-2 border-dashed transition-all ${
+                        isDragging
+                            ? "border-primary bg-primary/10 text-primary ring-2 ring-primary/20"
+                            : ""
+                    }`}
                 >
-                    <i className="ri-upload-cloud-2-line text-orange-600" />
-                    {existingUrl ? "Trocar vídeo" : "Selecionar vídeo"}
+                    <i className={isDragging ? "ri-download-2-line text-primary" : "ri-upload-cloud-2-line text-orange-600"} />
+                    {isDragging
+                        ? "Solte o vídeo aqui"
+                        : existingUrl
+                          ? "Trocar vídeo (clique ou arraste)"
+                          : "Selecionar ou arrastar vídeo"}
                 </Button>
             )}
 
@@ -290,11 +318,20 @@ interface YouTubePlatformFieldsProps {
     uploadFeedback: string | null;
     fileInputRef: React.RefObject<HTMLInputElement | null>;
     onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onDropVideo: (file: File) => void;
 }
 
 function YouTubePlatformFields({
-    form, onChange, youtubeConnected, uploadingVideo, uploadFeedback, fileInputRef, onUpload,
+    form, onChange, youtubeConnected, uploadingVideo, uploadFeedback, fileInputRef, onUpload, onDropVideo,
 }: YouTubePlatformFieldsProps) {
+    const { isDragging, dropProps } = useFileDrop({
+        disabled: uploadingVideo,
+        onDropFiles: (files) => {
+            const video = files.find((f) => f.type.startsWith("video/")) ?? files[0];
+            if (video) onDropVideo(video);
+        },
+    });
+
     return (
         <div className="space-y-3">
             <div className="space-y-2">
@@ -332,17 +369,27 @@ function YouTubePlatformFields({
                         size="sm"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploadingVideo}
-                        className="w-full gap-2 border-dashed text-xs"
+                        {...dropProps}
+                        className={`w-full gap-2 border-dashed text-xs transition-all ${
+                            isDragging
+                                ? "border-primary bg-primary/10 text-primary ring-2 ring-primary/20"
+                                : ""
+                        }`}
                     >
                         {uploadingVideo ? (
                             <>
                                 <i className="ri-loader-4-line animate-spin" />
                                 Enviando para YouTube...
                             </>
+                        ) : isDragging ? (
+                            <>
+                                <i className="ri-download-2-line" />
+                                Solte o vídeo aqui
+                            </>
                         ) : (
                             <>
                                 <i className="ri-upload-cloud-2-line" />
-                                Upload para YouTube
+                                Upload para YouTube (clique ou arraste)
                             </>
                         )}
                     </Button>
