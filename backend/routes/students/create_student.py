@@ -81,11 +81,12 @@ def create_student():
 
         db.session.commit()
 
-        # Disparar notificações de boas-vindas se solicitado
+        # Disparar notificações de boas-vindas em background se solicitado
         if send_notifications:
             try:
+                from flask import current_app
                 from routes.students.resend_access import _get_settings_dict, _get_base_url
-                from integrations import dispatch_notifications
+                from integrations import dispatch_notifications_async
 
                 settings_dict = _get_settings_dict()
                 base_url = _get_base_url()
@@ -102,7 +103,8 @@ def create_student():
                     'unsubscribe_link': f"{base_url}/unsubscribe?email={new_student.email}",
                     'base_url': base_url,
                 }
-                dispatch_notifications(
+                dispatch_notifications_async(
+                    app=current_app._get_current_object(),
                     settings_dict=settings_dict,
                     student_data=student_data,
                     phone=new_student.phone,

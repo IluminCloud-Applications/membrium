@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, jsonify, request, session, current_app
 from functools import wraps
 from datetime import datetime
 from werkzeug.utils import secure_filename
@@ -6,7 +6,11 @@ from db.database import db
 from db.utils import ensure_upload_directory
 from models import Admin, Module, Lesson, Document, FAQ, LessonTranscript
 from .transcript_sync import auto_fetch_transcript
-from services.lesson_thumbnail import youtube_thumbnail_url, extract_r2_thumbnail
+from services.lesson_thumbnail import (
+    youtube_thumbnail_url,
+    extract_r2_thumbnail_background,
+    save_uploaded_thumbnail,
+)
 import os
 import logging
 from cache import invalidate_lesson
@@ -71,12 +75,20 @@ def create_lesson(module_id):
 
     db.session.commit()
 
-    # For R2 videos: extract thumbnail from the uploaded video (runs after commit so lesson.id exists)
+    # For R2 videos: prefer client-generated thumbnail; fallback to background extraction only if missing
     if video_type == 'cloudflare' and video_url and not thumbnail:
-        r2_thumb = extract_r2_thumbnail(video_url, new_lesson.id)
-        if r2_thumb:
-            new_lesson.thumbnail_url = r2_thumb
+        uploaded_thumb = save_uploaded_thumbnail(request.files.get('thumbnail'), new_lesson.id)
+        if uploaded_thumb:
+            new_lesson.thumbnail_url = uploaded_thumb
             db.session.commit()
+        else:
+            extract_r2_thumbnail_background(
+                current_app._get_current_object(),
+                new_lesson.id,
+                video_url,
+                module.course_id,
+                module_id,
+            )
 
     # Auto-fetch transcript: synchronous for YouTube, background for Cloudflare/AssemblyAI
     transcript_result = {"success": False, "message": "Skipped"}
@@ -126,13 +138,21 @@ def update_lesson(lesson_id):
     _handle_document_uploads(request, lesson)
     db.session.commit()
 
-    # Extract R2 thumbnail after commit (needs lesson.id in filename)
+    # For R2 videos: prefer client-generated thumbnail; fallback to background extraction only if missing
     if video_changed and lesson.video_type == 'cloudflare' and lesson.video_url:
         _delete_old_thumbnail(lesson)  # remove old local file if any
-        r2_thumb = extract_r2_thumbnail(lesson.video_url, lesson.id)
-        if r2_thumb:
-            lesson.thumbnail_url = r2_thumb
+        uploaded_thumb = save_uploaded_thumbnail(request.files.get('thumbnail'), lesson.id)
+        if uploaded_thumb:
+            lesson.thumbnail_url = uploaded_thumb
             db.session.commit()
+        else:
+            extract_r2_thumbnail_background(
+                current_app._get_current_object(),
+                lesson.id,
+                lesson.video_url,
+                lesson.module.course_id,
+                lesson.module_id,
+            )
 
     invalidate_lesson(lesson.module.course_id, lesson.module_id)
     return jsonify({

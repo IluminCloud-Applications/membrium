@@ -6,11 +6,34 @@ O webhook chama apenas `dispatch_notifications()` e o dispatcher
 verifica quais integrações estão habilitadas e dispara cada uma.
 """
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from integrations.email.brevo import send_brevo_email
 from integrations.whatsapp.evolutionapi import send_whatsapp_message
 from integrations.utils.url_helper import ensure_https, sanitize_notification_urls
 
 logger = logging.getLogger(__name__)
+
+_DISPATCH_EXECUTOR = ThreadPoolExecutor(max_workers=4, thread_name_prefix="notif-dispatch")
+
+
+def dispatch_notifications_async(
+    app,
+    settings_dict: dict,
+    student_data: dict,
+    phone: str | None = None,
+) -> None:
+    """Dispara notificações em background para não bloquear a requisição HTTP."""
+    settings_copy = dict(settings_dict or {})
+    student_copy = dict(student_data or {})
+
+    def _task():
+        with app.app_context():
+            try:
+                dispatch_notifications(settings_copy, student_copy, phone=phone)
+            except Exception as exc:
+                logger.error(f"[Async Dispatch] Erro ao enviar notificações: {exc}")
+
+    _DISPATCH_EXECUTOR.submit(_task)
 
 
 def dispatch_notifications(

@@ -24,9 +24,13 @@ import io
 import logging
 import os
 import re
+from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
 logger = logging.getLogger("services.lesson_thumbnail")
+
+# Bounded pool so queued/bulk uploads never spawn dozens of concurrent cv2 decoders
+_THUMBNAIL_EXECUTOR = ThreadPoolExecutor(max_workers=2, thread_name_prefix="r2-thumb")
 
 UPLOADS_DIR = "static/uploads"
 THUMBNAIL_MAX_WIDTH = 640   # thumbnail doesn't need full 1280px
@@ -142,3 +146,82 @@ def extract_r2_thumbnail(video_url: str, lesson_id: int) -> Optional[str]:
     finally:
         if cap is not None:
             cap.release()
+
+
+def extract_r2_thumbnail_background(
+    app,
+    lesson_id: int,
+    video_url: str,
+    course_id: int,
+    module_id: int,
+) -> None:
+    """Schedule R2 thumbnail extraction in a bounded background thread pool.
+
+    Prevents HTTP requests (create_lesson / update_lesson) from blocking on
+    remote video demuxing/decoding and avoids 504 Gateway Timeouts.
+    """
+    if not video_url:
+        return
+
+    def _worker():
+        with app.app_context():
+            from db.database import db
+            from models import Lesson
+            from cache import invalidate_lesson
+
+            try:
+                thumb_path = extract_r2_thumbnail(video_url, lesson_id)
+                if thumb_path:
+                    lesson = Lesson.query.get(lesson_id)
+                    if lesson and lesson.video_url == video_url:
+                        lesson.thumbnail_url = thumb_path
+                        db.session.commit()
+                        invalidate_lesson(course_id, module_id)
+            except Exception as exc:
+                logger.error(
+                    "Background thumbnail extraction failed for lesson %s: %s",
+                    lesson_id,
+                    exc,
+                )
+                try:
+                    db.session.rollback()
+                except Exception:
+                    pass
+
+    _THUMBNAIL_EXECUTOR.submit(_worker)
+
+
+def save_uploaded_thumbnail(file_storage, lesson_id: int) -> Optional[str]:
+    """Save a client-extracted thumbnail image as compressed WebP in static/uploads.
+
+    Returns '/static/uploads/lesson_thumb_{lesson_id}_compress.webp' on success,
+    or None if the file is missing/invalid.
+    """
+    if not file_storage or not getattr(file_storage, "filename", ""):
+        return None
+
+    os.makedirs(UPLOADS_DIR, exist_ok=True)
+    out_filename = f"lesson_thumb_{lesson_id}_compress.webp"
+    out_path = os.path.join(UPLOADS_DIR, out_filename)
+
+    try:
+        from PIL import Image
+
+        img = Image.open(file_storage.stream).convert("RGB")
+        w, h = img.size
+        if w > THUMBNAIL_MAX_WIDTH:
+            ratio = THUMBNAIL_MAX_WIDTH / w
+            img = img.resize((THUMBNAIL_MAX_WIDTH, int(h * ratio)), Image.LANCZOS)
+
+        img.save(
+            out_path,
+            format="WEBP",
+            quality=THUMBNAIL_QUALITY,
+            method=4,
+            optimize=True,
+        )
+        logger.info("Client-generated thumbnail saved: %s", out_path)
+        return f"/static/uploads/{out_filename}"
+    except Exception as exc:
+        logger.warning("Failed to save uploaded thumbnail for lesson %s: %s", lesson_id, exc)
+        return None

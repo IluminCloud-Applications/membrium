@@ -12,6 +12,7 @@ import { BulkUploadProgress } from "./BulkUploadProgress";
 import { youtubeUploadService, type YouTubeUploadResult } from "@/services/youtubeUpload";
 import { cloudflareUploadService } from "@/services/cloudflareUpload";
 import { courseModificationService } from "@/services/courseModification";
+import { extractVideoThumbnail } from "@/utils/videoThumbnail";
 
 type BulkResult = YouTubeUploadResult;
 type Platform = "youtube" | "cloudflare";
@@ -115,6 +116,7 @@ export function BulkUploadModal({
                     const v = videos[i];
                     setProgressNote(`Enviando ${i + 1}/${videos.length}: ${v.title}`);
                     try {
+                        const thumbPromise = extractVideoThumbnail(v.file).catch(() => null);
                         const upload = await cloudflareUploadService.upload(v.file, {
                             onProgress: (frac) => {
                                 setProgressNote(
@@ -122,6 +124,7 @@ export function BulkUploadModal({
                                 );
                             },
                         });
+                        const thumbFile = await thumbPromise;
 
                         const formData = new FormData();
                         formData.append("title", v.title);
@@ -129,6 +132,9 @@ export function BulkUploadModal({
                         formData.append("video_platform", "cloudflare");
                         formData.append("video_url", upload.publicUrl);
                         formData.append("has_cta", "false");
+                        if (thumbFile) {
+                            formData.append("thumbnail", thumbFile);
+                        }
 
                         const created = await courseModificationService.createLesson(moduleId, formData);
 

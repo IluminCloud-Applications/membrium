@@ -15,7 +15,7 @@ import type {
 } from "@/types/course-modification";
 import { courseModificationService } from "@/services/courseModification";
 import { integrationsService } from "@/services/integrations";
-import { cloudflareUploadService } from "@/services/cloudflareUpload";
+import { useLessonUploadQueue, LessonUploadQueueWidget } from "@/components/course_modification/LessonUploadQueueWidget";
 import { useCourseModification } from "./useCourseModification";
 import { toast } from "sonner";
 
@@ -52,6 +52,9 @@ export function CourseModificationPage() {
     const [lessonSubmitting, setLessonSubmitting] = useState(false);
     const [autoDescriptionOpen, setAutoDescriptionOpen] = useState(false);
     const [publishLessonsOpen, setPublishLessonsOpen] = useState(false);
+
+    const { jobs: uploadJobs, enqueue: enqueueLessonUpload, cancelJob: cancelUploadJob, clearFinished: clearFinishedUploads } =
+        useLessonUploadQueue(refetch);
 
     // Check connection statuses
     useEffect(() => {
@@ -135,34 +138,40 @@ export function CourseModificationPage() {
     }
 
     async function handleLessonSubmit(data: LessonFormData) {
-        // Guard against double submission
+        // Queue new lessons (and edits with a new Cloudflare video upload) so the modal closes immediately
+        const isCloudflareUpload = data.videoPlatform === "cloudflare" && Boolean(data.cloudflareFile);
+        if (!editingLesson && activeModuleId) {
+            enqueueLessonUpload({
+                title: data.title,
+                moduleId: activeModuleId,
+                data,
+            });
+            setLessonModalOpen(false);
+            setEditingLesson(null);
+            setActiveModuleId(null);
+            return;
+        }
+
+        if (editingLesson && isCloudflareUpload) {
+            const removedAttachmentIds = editingLesson.attachments
+                .filter((att) => !data.existingAttachments.some((ea) => ea.id === att.id))
+                .map((att) => att.id);
+            enqueueLessonUpload({
+                title: data.title,
+                moduleId: activeModuleId ?? 0,
+                lessonId: editingLesson.id,
+                removedAttachmentIds,
+                data,
+            });
+            setLessonModalOpen(false);
+            setEditingLesson(null);
+            setActiveModuleId(null);
+            return;
+        }
+
+        // Fast synchronous path for editing an existing lesson without a new video upload
         if (lessonSubmitting) return;
         setLessonSubmitting(true);
-
-        // ── If Cloudflare and a new file is selected, upload to R2 first ──
-        let cloudflareVideoUrl = data.cloudflareUrl;
-        if (data.videoPlatform === "cloudflare" && data.cloudflareFile) {
-            const uploadToast = toast.loading("Enviando vídeo ao Cloudflare R2...");
-            try {
-                const result = await cloudflareUploadService.upload(data.cloudflareFile, {
-                    onProgress: (fraction) => {
-                        toast.loading(
-                            `Enviando ao Cloudflare R2... ${Math.round(fraction * 100)}%`,
-                            { id: uploadToast }
-                        );
-                    },
-                });
-                cloudflareVideoUrl = result.publicUrl;
-                toast.success("Vídeo enviado ao Cloudflare R2!", { id: uploadToast });
-            } catch (err) {
-                toast.error(
-                    err instanceof Error ? err.message : "Erro ao enviar vídeo ao R2",
-                    { id: uploadToast }
-                );
-                setLessonSubmitting(false);
-                return;
-            }
-        }
 
         const formData = new FormData();
         formData.append("title", data.title);
@@ -173,7 +182,7 @@ export function CourseModificationPage() {
         } else if (data.videoPlatform === "vturb") {
             formData.append("video_url", data.vturbVideoId);
         } else if (data.videoPlatform === "cloudflare") {
-            formData.append("video_url", cloudflareVideoUrl);
+            formData.append("video_url", data.cloudflareUrl);
         } else if (data.videoPlatform === "none") {
             formData.append("video_url", "");
         } else {
@@ -189,7 +198,6 @@ export function CourseModificationPage() {
 
         try {
             if (editingLesson) {
-                // Remove attachments that were deleted in the UI
                 const removedAttachments = editingLesson.attachments.filter(
                     (att) => !data.existingAttachments.some((ea) => ea.id === att.id)
                 );
@@ -200,17 +208,7 @@ export function CourseModificationPage() {
                         console.error(`Erro ao deletar anexo ${att.id}:`, err);
                     }
                 }
-
                 await courseModificationService.updateLesson(editingLesson.id, formData);
-            } else if (activeModuleId) {
-                const result = await courseModificationService.createLesson(activeModuleId, formData);
-                if (result.transcript_imported) {
-                    if (data.videoPlatform === "cloudflare") {
-                        toast.success("Transcrição agendada automaticamente (AssemblyAI).");
-                    } else {
-                        toast.success("Transcrição importada automaticamente do YouTube!");
-                    }
-                }
             }
             await refetch();
         } catch (err) {
@@ -415,6 +413,13 @@ export function CourseModificationPage() {
                     onSuccess={refetch}
                 />
             )}
+
+            {/* Floating Lesson Upload Queue */}
+            <LessonUploadQueueWidget
+                jobs={uploadJobs}
+                onCancel={cancelUploadJob}
+                onClearFinished={clearFinishedUploads}
+            />
         </div>
     );
 }

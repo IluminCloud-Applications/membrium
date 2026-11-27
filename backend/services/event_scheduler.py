@@ -1,3 +1,4 @@
+import os
 import threading
 import time
 from datetime import datetime, timedelta
@@ -6,9 +7,36 @@ from models import Event, Student, IntegrationConfig
 from integrations.email.brevo import BrevoClient
 from integrations.whatsapp.evolutionapi import EvolutionClient
 
+try:
+    import fcntl
+except ImportError:  # pragma: no cover (non-POSIX)
+    fcntl = None
+
+_SCHEDULER_LOCK_PATH = os.environ.get("SCHEDULER_LOCK_PATH", "/tmp/membrium_event_scheduler.lock")
+
+
+def _try_acquire_scheduler_lock():
+    """Acquire an exclusive non-blocking process lock so only 1 Gunicorn worker runs the scheduler."""
+    if fcntl is None:
+        return True
+    try:
+        fd = open(_SCHEDULER_LOCK_PATH, "w")
+        fcntl.flock(fd.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return fd
+    except (BlockingIOError, OSError):
+        return None
+
+
 def run_scheduler(app):
+    lock_fd = None
     with app.app_context():
         while True:
+            if lock_fd is None:
+                lock_fd = _try_acquire_scheduler_lock()
+                if lock_fd is None:
+                    # Another Gunicorn worker owns the scheduler lock; stand by as failover.
+                    time.sleep(60)
+                    continue
             try:
                 now = datetime.utcnow()
                 target_time = now + timedelta(minutes=30)

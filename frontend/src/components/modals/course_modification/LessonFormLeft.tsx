@@ -274,7 +274,7 @@ function CloudflarePlatformFields({ form, onChange }: CloudflarePlatformFieldsPr
             )}
 
             <p className="text-[11px] text-muted-foreground">
-                O vídeo é enviado para o servidor e depois para o seu bucket R2 automaticamente.
+                O vídeo é enviado diretamente para o seu bucket R2 em segundo plano, permitindo continuar criando outras aulas.
             </p>
         </div>
     );
