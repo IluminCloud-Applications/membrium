@@ -13,6 +13,7 @@ import { youtubeUploadService, type YouTubeUploadResult } from "@/services/youtu
 import { cloudflareUploadService } from "@/services/cloudflareUpload";
 import { courseModificationService } from "@/services/courseModification";
 import { extractVideoThumbnail } from "@/utils/videoThumbnail";
+import { optimizeMp4Faststart } from "@/utils/videoFaststart";
 
 type BulkResult = YouTubeUploadResult;
 type Platform = "youtube" | "cloudflare";
@@ -117,7 +118,13 @@ export function BulkUploadModal({
                     setProgressNote(`Enviando ${i + 1}/${videos.length}: ${v.title}`);
                     try {
                         const thumbPromise = extractVideoThumbnail(v.file).catch(() => null);
-                        const upload = await cloudflareUploadService.upload(v.file, {
+                        const optimizedFile = await optimizeMp4Faststart(v.file, {
+                            onStage: () => {
+                                setProgressNote(`Otimizando ${i + 1}/${videos.length}: ${v.title}`);
+                            },
+                        });
+                        setProgressNote(`Enviando ${i + 1}/${videos.length}: ${v.title}`);
+                        const upload = await cloudflareUploadService.upload(optimizedFile, {
                             onProgress: (frac) => {
                                 setProgressNote(
                                     `Enviando ${i + 1}/${videos.length}: ${v.title} — ${Math.round(frac * 100)}%`

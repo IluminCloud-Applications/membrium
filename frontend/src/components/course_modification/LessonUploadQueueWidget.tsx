@@ -3,10 +3,11 @@ import { Button } from "@/components/ui/button";
 import { cloudflareUploadService } from "@/services/cloudflareUpload";
 import { courseModificationService } from "@/services/courseModification";
 import { extractVideoThumbnail } from "@/utils/videoThumbnail";
+import { optimizeMp4Faststart } from "@/utils/videoFaststart";
 import type { LessonFormData } from "@/types/course-modification";
 import { toast } from "sonner";
 
-export type UploadJobStatus = "queued" | "uploading" | "saving" | "done" | "error" | "cancelled";
+export type UploadJobStatus = "queued" | "optimizing" | "uploading" | "saving" | "done" | "error" | "cancelled";
 
 export interface LessonUploadJob {
     id: string;
@@ -82,11 +83,24 @@ export function useLessonUploadQueue(onLessonSaved: () => Promise<void> | void) 
                     let browserThumbnail: File | null = null;
 
                     if (nextJob.data.videoPlatform === "cloudflare" && nextJob.data.cloudflareFile) {
-                        updateJob(nextJob.id, { status: "uploading", progress: 0 });
-                        // Extract thumbnail in the browser in parallel with presign+upload.
-                        // Never let a background-throttled <video> element stall the upload queue.
+                        // Extract thumbnail in the browser in parallel.
                         const thumbPromise = extractVideoThumbnail(nextJob.data.cloudflareFile).catch(() => null);
-                        const result = await cloudflareUploadService.upload(nextJob.data.cloudflareFile, {
+
+                        // Faststart MP4 check + client-side remux if needed (0% server CPU)
+                        const optimizedFile = await optimizeMp4Faststart(nextJob.data.cloudflareFile, {
+                            signal: controller.signal,
+                            onStage: () => {
+                                updateJob(nextJob.id, { status: "optimizing", progress: 0 });
+                            },
+                        });
+
+                        if (controller.signal.aborted) {
+                            updateJob(nextJob.id, { status: "cancelled" });
+                            continue;
+                        }
+
+                        updateJob(nextJob.id, { status: "uploading", progress: 0 });
+                        const result = await cloudflareUploadService.upload(optimizedFile, {
                             signal: controller.signal,
                             onProgress: (fraction) => {
                                 const pct = Math.max(0, Math.min(100, Math.round(fraction * 100)));
@@ -212,7 +226,7 @@ export function useLessonUploadQueue(onLessonSaved: () => Promise<void> | void) 
         }
         setJobs((prev) => {
             const next = prev.map((j) =>
-                j.id === id && (j.status === "queued" || j.status === "uploading")
+                j.id === id && (j.status === "queued" || j.status === "optimizing" || j.status === "uploading")
                     ? { ...j, status: "cancelled" as const }
                     : j
             );
@@ -223,7 +237,9 @@ export function useLessonUploadQueue(onLessonSaved: () => Promise<void> | void) 
 
     const clearFinished = useCallback(() => {
         setJobs((prev) => {
-            const next = prev.filter((j) => j.status === "queued" || j.status === "uploading" || j.status === "saving");
+            const next = prev.filter(
+                (j) => j.status === "queued" || j.status === "optimizing" || j.status === "uploading" || j.status === "saving"
+            );
             jobsRef.current = next;
             return next;
         });
@@ -247,7 +263,7 @@ export function LessonUploadQueueWidget({
 
     if (jobs.length === 0) return null;
 
-    const activeJob = jobs.find((j) => j.status === "uploading" || j.status === "saving");
+    const activeJob = jobs.find((j) => j.status === "optimizing" || j.status === "uploading" || j.status === "saving");
     const queuedCount = jobs.filter((j) => j.status === "queued").length;
     const doneCount = jobs.filter((j) => j.status === "done").length;
     const errorCount = jobs.filter((j) => j.status === "error").length;
@@ -271,9 +287,11 @@ export function LessonUploadQueueWidget({
                     <div className="min-w-0">
                         <p className="text-xs font-semibold truncate">
                             {activeJob
-                                ? activeJob.status === "uploading"
-                                    ? `Enviando (${activeJob.progress}%): ${activeJob.title}`
-                                    : `Salvando aula: ${activeJob.title}`
+                                ? activeJob.status === "optimizing"
+                                    ? `Otimizando vídeo: ${activeJob.title}`
+                                    : activeJob.status === "uploading"
+                                        ? `Enviando (${activeJob.progress}%): ${activeJob.title}`
+                                        : `Salvando aula: ${activeJob.title}`
                                 : hasPending
                                     ? `${queuedCount} na fila`
                                     : errorCount > 0
@@ -323,7 +341,7 @@ export function LessonUploadQueueWidget({
                     {jobs.map((job) => (
                         <div key={job.id} className="px-3.5 py-2 flex items-center gap-2.5 text-xs">
                             <div className="flex-shrink-0">
-                                {job.status === "uploading" || job.status === "saving" ? (
+                                {job.status === "optimizing" || job.status === "uploading" || job.status === "saving" ? (
                                     <i className="ri-loader-4-line animate-spin text-primary text-sm" />
                                 ) : job.status === "queued" ? (
                                     <i className="ri-time-line text-muted-foreground text-sm" />
@@ -340,6 +358,7 @@ export function LessonUploadQueueWidget({
                                 <p className="font-medium truncate">{job.title}</p>
                                 <p className="text-[11px] text-muted-foreground truncate">
                                     {job.status === "queued" && "Aguardando na fila..."}
+                                    {job.status === "optimizing" && "Otimizando MP4 para streaming..."}
                                     {job.status === "uploading" && `Enviando vídeo... ${job.progress}%`}
                                     {job.status === "saving" && "Salvando aula..."}
                                     {job.status === "done" && "Aula salva com sucesso"}
@@ -348,7 +367,7 @@ export function LessonUploadQueueWidget({
                                 </p>
                             </div>
 
-                            {(job.status === "queued" || job.status === "uploading") && (
+                            {(job.status === "queued" || job.status === "optimizing" || job.status === "uploading") && (
                                 <button
                                     type="button"
                                     onClick={() => onCancel(job.id)}
